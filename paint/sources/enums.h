@@ -266,6 +266,21 @@ typedef enum {
 	LAYER_SLOT_TYPE_GROUP = 2,
 } layer_slot_type_t;
 
+// Quick effects of the Add Effect menu, each one a node graph reading the layer or mask below it
+typedef enum {
+	EFFECT_TYPE_FILTER          = 0,
+	EFFECT_TYPE_FILL            = 1,
+	EFFECT_TYPE_LEVELS          = 2,
+	EFFECT_TYPE_HSV             = 3,
+	EFFECT_TYPE_COLOR_BALANCE   = 4,
+	EFFECT_TYPE_SHARPEN         = 5,
+	EFFECT_TYPE_BLUR            = 6,
+	EFFECT_TYPE_COMPARE_MASK    = 7,
+	EFFECT_TYPE_COLOR_SELECTION = 8,
+	EFFECT_TYPE_ANCHOR          = 9,
+	EFFECT_TYPE_COUNT           = 10,
+} effect_type_t;
+
 typedef enum {
 	TOOL_TYPE_BRUSH     = 0,
 	TOOL_TYPE_ERASER    = 1,

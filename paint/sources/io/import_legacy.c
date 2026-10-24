@@ -224,6 +224,7 @@ project_t *import_arm_from_map_to_arm(any_map_t *old) {
 			ld->blending_ch        = any_map_get(old, "blending_ch"); // Version 22, derived from blending when missing
 			ld->opacity_ch         = any_map_get(old, "opacity_ch");
 			ld->locked             = armpack_map_get_i32(old, "locked") > 0;
+			ld->effect             = armpack_map_get_i32(old, "effect") > 0;
 			any_array_push(project->layer_datas, ld);
 		}
 	}

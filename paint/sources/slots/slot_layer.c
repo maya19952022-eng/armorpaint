@@ -396,6 +396,7 @@ slot_layer_t *slot_layer_duplicate(slot_layer_t *raw) {
 
 	l->visible       = raw->visible;
 	l->locked        = raw->locked;
+	l->effect        = raw->effect;
 	l->mask_opacity  = raw->mask_opacity;
 	l->fill_material = raw->fill_material;
 	l->object_mask   = raw->object_mask;
@@ -562,7 +563,113 @@ bool slot_layer_is_locked(slot_layer_t *raw) {
 }
 
 bool slot_layer_is_visible(slot_layer_t *raw) {
+	if (slot_layer_is_mask(raw) && raw->effect) { // Hiding a mask hides its effects
+		slot_layer_t *base = slot_layer_effect_base(raw);
+		if (base != NULL && !base->visible) {
+			return false;
+		}
+	}
 	return raw->visible && (raw->parent == NULL || raw->parent->visible);
+}
+
+// Effect chains: the filters of a layer, oldest at the bottom right below the masks, and the masks marked as effect
+// right above the mask they change. Each effect is a fill whose material reads the visible element below it in the
+// chain, only the top visible element of a chain is composited.
+
+bool slot_layer_is_effect(slot_layer_t *raw) {
+	return slot_layer_is_filter(raw) || (slot_layer_is_mask(raw) && raw->effect);
+}
+
+// The layer of a filter, the mask a mask effect changes, NULL when the mask effect lost its mask
+slot_layer_t *slot_layer_effect_base(slot_layer_t *raw) {
+	if (slot_layer_is_filter(raw)) {
+		return raw->parent;
+	}
+	if (!slot_layer_is_mask(raw) || !raw->effect) {
+		return NULL;
+	}
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	for (i32 i = array_index_of(layers, raw) - 1; i >= 0; --i) {
+		slot_layer_t *l = layers->buffer[i];
+		if (!slot_layer_is_mask(l) || l->parent != raw->parent) {
+			return NULL;
+		}
+		if (!l->effect) {
+			return l;
+		}
+	}
+	return NULL;
+}
+
+// What an effect reads: the nearest visible effect below it in its chain, else the layer or mask of the chain
+slot_layer_t *slot_layer_effect_input(slot_layer_t *raw) {
+	slot_layer_t *base = slot_layer_effect_base(raw);
+	if (base == NULL) {
+		return NULL;
+	}
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	for (i32 i = array_index_of(layers, raw) - 1; i >= 0; --i) {
+		slot_layer_t *l = layers->buffer[i];
+		if (l == base) {
+			return base;
+		}
+		bool same_chain = slot_layer_is_filter(raw) ? (slot_layer_is_filter(l) && l->parent == raw->parent) : true;
+		if (same_chain && l->visible) {
+			return l;
+		}
+	}
+	return base;
+}
+
+// A visible effect above it in its chain replaces it in the composite
+bool slot_layer_is_covered(slot_layer_t *raw) {
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	i32                   index  = array_index_of(layers, raw);
+	if (slot_layer_is_filter(raw)) {
+		for (i32 i = index + 1; i < layers->length; ++i) {
+			slot_layer_t *l = layers->buffer[i];
+			if (l == raw->parent) {
+				break;
+			}
+			if (slot_layer_is_filter(l) && l->parent == raw->parent && l->visible) {
+				return true;
+			}
+		}
+		return false;
+	}
+	if (slot_layer_is_layer(raw)) {
+		return slot_layer_has_visible_filter(raw);
+	}
+	if (slot_layer_is_mask(raw)) {
+		for (i32 i = index + 1; i < layers->length; ++i) {
+			slot_layer_t *l = layers->buffer[i];
+			if (!slot_layer_is_mask(l) || l->parent != raw->parent || !l->effect) {
+				break;
+			}
+			if (l->visible) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+// Masks of the composite of a layer: those of its layer for a filter, and of each mask chain only the top
+slot_layer_t_array_t *slot_layer_get_composite_masks(slot_layer_t *raw) {
+	if (slot_layer_is_filter(raw)) {
+		raw = raw->parent;
+	}
+	slot_layer_t_array_t *masks = slot_layer_get_masks(raw, true);
+	if (masks == NULL) {
+		return NULL;
+	}
+	slot_layer_t_array_t *res = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < masks->length; ++i) {
+		if (!slot_layer_is_covered(masks->buffer[i])) {
+			any_array_push(res, masks->buffer[i]);
+		}
+	}
+	return res->length > 0 ? res : NULL;
 }
 
 slot_layer_t_array_t *slot_layer_get_children(slot_layer_t *raw) {
@@ -715,6 +822,13 @@ bool slot_layer_has_visible_filter(slot_layer_t *raw) {
 
 f32 slot_layer_get_opacity(slot_layer_t *raw) {
 	f32 f = raw->mask_opacity;
+	if (slot_layer_is_filter(raw)) { // The filter shows in place of its layer
+		return f * slot_layer_get_opacity(raw->parent);
+	}
+	if (slot_layer_is_mask(raw) && raw->effect) {
+		slot_layer_t *base = slot_layer_effect_base(raw);
+		return base != NULL ? f * base->mask_opacity : f;
+	}
 	if (slot_layer_is_layer(raw) && raw->parent != NULL) {
 		f *= raw->parent->mask_opacity;
 	}

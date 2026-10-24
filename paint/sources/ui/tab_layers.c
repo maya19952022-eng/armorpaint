@@ -208,6 +208,20 @@ void tab_layers_draw_layer_slot_mini(slot_layer_t *l, i32 i) {
 void tab_layers_delete_layer(slot_layer_t *l) {
 	slot_layer_t_array_t *pointers = tab_layers_init_layer_map();
 
+	// Effects go with the layer or mask they change
+	slot_layer_t_array_t *effects = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		slot_layer_t *e = g_project->_->layers->buffer[i];
+		if (slot_layer_is_effect(e) && slot_layer_effect_base(e) == l) {
+			any_array_push(effects, e);
+		}
+	}
+	for (i32 i = effects->length - 1; i >= 0; --i) {
+		g_context->layer = effects->buffer[i];
+		history_delete_layer();
+		slot_layer_delete(effects->buffer[i]);
+	}
+
 	if (slot_layer_is_layer(l) && slot_layer_has_masks(l, false)) {
 		slot_layer_t_array_t *masks = slot_layer_get_masks(l, false);
 		for (i32 i = 0; i < masks->length; ++i) {
@@ -273,6 +287,31 @@ void tab_layers_delete_layer(slot_layer_t *l) {
 	tab_layers_remap_all_layer_pointers(pointers);
 	tab_stages_prune();
 	base_redraw_status();
+}
+
+static effect_type_t tab_layers_effect_type = EFFECT_TYPE_FILTER;
+
+void tab_layers_add_effect_on_next_frame(void *_) {
+	layers_add_effect(tab_layers_l, tab_layers_effect_type);
+}
+
+// Effects that fit the layer or mask, the new one goes on top of its effect stack
+void tab_layers_draw_effect_menu() {
+	bool mask = slot_layer_is_mask(tab_layers_l);
+	ui_menu_label(tr("Add Effect"), NULL);
+	for (i32 t = 0; t < EFFECT_TYPE_COUNT; ++t) {
+		if (!layers_effect_allowed(t, mask)) {
+			continue;
+		}
+		if (ui_menu_button(layers_effect_name(t), "", t == EFFECT_TYPE_FILL ? ICON_MASK_FILL : ICON_FILTER)) {
+			tab_layers_effect_type = t;
+			sys_notify_on_next_frame(&tab_layers_add_effect_on_next_frame, NULL);
+		}
+	}
+}
+
+void tab_layers_show_effect_menu(void *_) {
+	ui_menu_draw(&tab_layers_draw_effect_menu, -1, -1);
 }
 
 void tab_layers_draw_layer_slot_full_delete_layer(void *_) {
@@ -451,6 +490,9 @@ void tab_layers_layer_toggle_visible(slot_layer_t *l) {
 	l->visible              = !l->visible;
 	ui_view2d_hwnd->redraws = 2;
 	make_material_parse_mesh_material();
+	if (layers_has_effects()) { // A hidden effect is skipped by the next one
+		layers_update_effects();
+	}
 }
 
 bool tab_layers_can_delete(slot_layer_t *l) {
@@ -721,6 +763,10 @@ bool tab_layers_can_merge_down(slot_layer_t *l) {
 	if (index == 0) {
 		return false;
 	}
+	// Effects of the layer are below it, they would be merged into
+	if (slot_layer_is_layer(l) && slot_layer_get_filters(l, false) != NULL) {
+		return false;
+	}
 	// Lowest layer that has masks
 	if (slot_layer_is_layer(l) && slot_layer_is_mask(g_project->_->layers->buffer[0]) && g_project->_->layers->buffer[0]->parent == l) {
 		return false;
@@ -943,6 +989,11 @@ void tab_layers_draw_layer_context_menu_draw() {
 
 	if (ui_menu_button(tr("Duplicate"), "ctrl+d", ICON_DUPLICATE)) {
 		sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_duplicate, NULL);
+	}
+
+	if (!slot_layer_is_group(l) && l->texpaint_sculpt == NULL && ui_menu_button(tr("Add Effect"), "", ICON_FILTER)) {
+		tab_layers_l = l;
+		sys_notify_on_next_frame(&tab_layers_show_effect_menu, NULL);
 	}
 
 	if (ui_menu_button(tr("Copy"), "ctrl+c", ICON_COPY)) {

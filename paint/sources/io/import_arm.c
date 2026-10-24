@@ -1002,6 +1002,7 @@ void import_arm_run_project(char *path) {
 		}
 		l->visible      = ld->visible;
 		l->locked       = ld->locked;
+		l->effect       = ld->effect;
 		l->mask_opacity = ld->opacity_mask; // Groups have an opacity too
 		any_array_push(g_project->_->layers, l);
 		if (!is_group) {

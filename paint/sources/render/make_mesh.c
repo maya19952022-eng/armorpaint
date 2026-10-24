@@ -248,9 +248,10 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 			node_shader_add_texture(kong, "texuvmap", "_texuvmap");
 		}
 
-		if (g_context->viewport_mode == VIEWPORT_MODE_MASK && slot_layer_get_masks(g_context->layer, true) != NULL) {
-			for (i32 i = 0; i < slot_layer_get_masks(g_context->layer, true)->length; ++i) {
-				slot_layer_t *m = slot_layer_get_masks(g_context->layer, true)->buffer[i];
+		if (g_context->viewport_mode == VIEWPORT_MODE_MASK && slot_layer_get_composite_masks(g_context->layer) != NULL) {
+			slot_layer_t_array_t *view_masks = slot_layer_get_composite_masks(g_context->layer);
+			for (i32 i = 0; i < view_masks->length; ++i) {
+				slot_layer_t *m = view_masks->buffer[i];
 				if (!slot_layer_is_visible(m)) {
 					continue;
 				}
@@ -286,13 +287,13 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 			if (!slot_layer_is_layer(l)) {
 				continue;
 			}
-			if (slot_layer_has_visible_filter(l)) {
+			if (slot_layer_is_covered(l)) { // A visible effect above shows instead
 				continue;
 			}
 
 			i32 count = 3;
 
-			slot_layer_t_array_t *masks = slot_layer_get_masks(l, true);
+			slot_layer_t_array_t *masks = slot_layer_get_composite_masks(l);
 			if (masks != NULL) {
 				count += masks->length;
 			}
@@ -348,7 +349,7 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 				node_shader_write_frag(kong, "if (texpaint_opac <= dither) { discard; }");
 			}
 
-			slot_layer_t_array_t *masks = slot_layer_get_masks(l, true);
+			slot_layer_t_array_t *masks = slot_layer_get_composite_masks(l);
 			if (masks != NULL) {
 				bool has_visible = false;
 				for (i32 i = 0; i < masks->length; ++i) {
@@ -652,7 +653,7 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 			}
 		}
 		else if (g_context->viewport_mode == VIEWPORT_MODE_MASK &&
-		         (slot_layer_get_masks(g_context->layer, true) != NULL || slot_layer_is_mask(g_context->layer))) {
+		         (slot_layer_get_composite_masks(g_context->layer) != NULL || slot_layer_is_mask(g_context->layer))) {
 			if (slot_layer_is_mask(g_context->layer)) {
 				i32 id = g_context->layer->id;
 				node_shader_write_frag(kong,
@@ -660,8 +661,9 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 			}
 			else {
 				node_shader_write_frag(kong, "float mask_view = 1.0;");
-				for (i32 i = 0; i < slot_layer_get_masks(g_context->layer, true)->length; ++i) {
-					slot_layer_t *m = slot_layer_get_masks(g_context->layer, true)->buffer[i];
+				slot_layer_t_array_t *view_masks = slot_layer_get_composite_masks(g_context->layer);
+				for (i32 i = 0; i < view_masks->length; ++i) {
+					slot_layer_t *m = view_masks->buffer[i];
 					if (!slot_layer_is_visible(m)) {
 						continue;
 					}

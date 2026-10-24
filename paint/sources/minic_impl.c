@@ -878,6 +878,33 @@ void script_layer_set_locked(slot_layer_t *l, bool locked) {
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 
+// Shows or hides a layer, mask or effect like its eye button, an undo step
+void script_layer_set_visible(slot_layer_t *l, bool visible) {
+	if (!script_layer_valid(l) || l->visible == visible) {
+		return;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	tab_layers_layer_toggle_visible(l);
+	script_gpu_end(current, in_use);
+	g_context->ddirty = 2;
+}
+
+// New effect on top of the effect stack of a layer or mask, type is an effect_type_t
+slot_layer_t *script_layer_add_effect(slot_layer_t *l, i32 type) {
+	if (!script_layer_valid(l)) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	base_init_undo_layers();
+	slot_layer_t *e = layers_add_effect(l, type);
+	script_layer_op_end(current, in_use);
+	return e;
+}
+
 // Selection like ctrl+click (toggle) and shift+click (range) in the layers tab, both false selects only l
 void script_layer_select(slot_layer_t *l, bool toggle, bool range) {
 	if (!script_layer_valid(l)) {
@@ -1904,6 +1931,7 @@ void script_material_update(void) {
 		util_render_make_decal_preview();
 	}
 	base_update_tools_nodes();
+	layers_update_fill_layers(); // Fill layers and effects using the material, like editing nodes in the node editor
 
 	script_gpu_end(current, in_use);
 

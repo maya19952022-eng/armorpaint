@@ -304,7 +304,75 @@ bool layers_is_fill_material() {
 	return false;
 }
 
+static void layers_update_fill_layers_material();
+
+// Fill layers and masks of the current material, then the effects that may read them
 void layers_update_fill_layers() {
+	layers_update_fill_layers_material();
+	layers_update_effects();
+}
+
+// Points the Effect Input node of an effect material to the layer or mask it reads
+static void layers_set_effect_input(slot_material_t *m, slot_layer_t *input) {
+	i32 index = array_index_of(g_project->_->layers, input);
+	for (i32 i = 0; i < m->canvas->nodes->length; ++i) {
+		ui_node_t *n = m->canvas->nodes->buffer[i];
+		if ((string_equals(n->type, "LAYER") || string_equals(n->type, "LAYER_MASK")) && string_equals(n->name, "Effect Input")) {
+			n->buttons->buffer[0]->default_value->buffer[0] = index;
+		}
+	}
+}
+
+// Effects are refilled from the bottom of the stack up, so each one reads the fresh output of the one below it
+void layers_update_effects() {
+	if (bake_texture_node_baking) {
+		return;
+	}
+	slot_layer_t    *_layer    = g_context->layer;
+	slot_material_t *_material = g_context->material;
+	bool             any       = false;
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		slot_layer_t *e = g_project->_->layers->buffer[i];
+		if (!slot_layer_is_effect(e) || e->fill_material == NULL || e->texpaint_sculpt != NULL) {
+			continue;
+		}
+		slot_layer_t *input = slot_layer_effect_input(e);
+		if (input != NULL) {
+			layers_set_effect_input(e->fill_material, input);
+		}
+		g_context->layer    = e;
+		g_context->material = e->fill_material;
+		layers_set_object_mask();
+		layers_update_fill_layer(true);
+		any = true;
+	}
+	if (!any) {
+		return;
+	}
+	g_context->layer    = _layer;
+	g_context->material = _material;
+	layers_set_object_mask();
+	make_material_parse_paint_material(false);
+	g_context->rtdirty              = 1;
+	g_context->ddirty               = 2;
+	g_context->layers_preview_dirty = true;
+}
+
+bool layers_has_effects() {
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		slot_layer_t *e = g_project->_->layers->buffer[i];
+		if (slot_layer_is_effect(e) && e->fill_material != NULL) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void layers_update_effects_on_next_frame(void *_) {
+	layers_update_effects();
+}
+
+static void layers_update_fill_layers_material() {
 	if (bake_texture_node_baking)
 		return;
 
@@ -348,13 +416,13 @@ void layers_update_fill_layers() {
 	bool has_fill_mask  = false;
 	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
 		slot_layer_t *l = g_project->_->layers->buffer[i];
-		if (slot_layer_is_layer(l) && l->fill_material == g_context->material) {
+		if (slot_layer_is_layer(l) && l->fill_material == g_context->material && !slot_layer_is_effect(l)) {
 			has_fill_layer = true;
 		}
 	}
 	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
 		slot_layer_t *l = g_project->_->layers->buffer[i];
-		if (slot_layer_is_mask(l) && l->fill_material == g_context->material) {
+		if (slot_layer_is_mask(l) && l->fill_material == g_context->material && !slot_layer_is_effect(l)) {
 			has_fill_mask = true;
 		}
 	}
@@ -372,7 +440,7 @@ void layers_update_fill_layers() {
 			bool first = true;
 			for (i32 i = 0; i < g_project->_->layers->length; ++i) {
 				slot_layer_t *l = g_project->_->layers->buffer[i];
-				if (slot_layer_is_layer(l) && l->fill_material == g_context->material) {
+				if (slot_layer_is_layer(l) && l->fill_material == g_context->material && !slot_layer_is_effect(l)) {
 					g_context->layer = l;
 					if (first) {
 						first = false;
@@ -400,7 +468,7 @@ void layers_update_fill_layers() {
 			bool first = true;
 			for (i32 i = 0; i < g_project->_->layers->length; ++i) {
 				slot_layer_t *l = g_project->_->layers->buffer[i];
-				if (slot_layer_is_mask(l) && l->fill_material == g_context->material) {
+				if (slot_layer_is_mask(l) && l->fill_material == g_context->material && !slot_layer_is_effect(l)) {
 					g_context->layer = l;
 					if (first) {
 						first = false;
@@ -513,9 +581,10 @@ void layers_update_linked_layers() {
 		any_linked          = true;
 		g_context->material = m;
 		make_material_bake_node_previews_linked();
-		layers_update_fill_layers();
+		layers_update_fill_layers_material();
 	}
 	g_context->material = _material;
+	layers_update_effects();
 	if (any_linked) {
 		make_material_parse_paint_material(false);
 	}
@@ -806,6 +875,169 @@ void layers_create_filter() {
 	sys_notify_on_next_frame(&layers_create_filter_on_next_frame, NULL);
 }
 
+char *layers_effect_name(effect_type_t type) {
+	switch (type) {
+	case EFFECT_TYPE_FILL:
+		return tr("Fill");
+	case EFFECT_TYPE_LEVELS:
+		return tr("Levels");
+	case EFFECT_TYPE_HSV:
+		return tr("Hue/Saturation/Value");
+	case EFFECT_TYPE_COLOR_BALANCE:
+		return tr("Color Balance");
+	case EFFECT_TYPE_SHARPEN:
+		return tr("Sharpen");
+	case EFFECT_TYPE_BLUR:
+		return tr("Blur");
+	case EFFECT_TYPE_COMPARE_MASK:
+		return tr("Compare Mask");
+	case EFFECT_TYPE_COLOR_SELECTION:
+		return tr("Color Selection");
+	case EFFECT_TYPE_ANCHOR:
+		return tr("Anchor Point");
+	default:
+		return tr("Filter");
+	}
+}
+
+// Color effects are for layers, mask generators for masks
+bool layers_effect_allowed(effect_type_t type, bool mask) {
+	if (type < 0 || type >= EFFECT_TYPE_COUNT) {
+		return false;
+	}
+	if (type == EFFECT_TYPE_HSV || type == EFFECT_TYPE_COLOR_BALANCE) {
+		return !mask;
+	}
+	if (type == EFFECT_TYPE_COMPARE_MASK || type == EFFECT_TYPE_COLOR_SELECTION) {
+		return mask;
+	}
+	return true;
+}
+
+static ui_node_t *layers_effect_add_node(slot_material_t *m, char *type, f32 x, f32 y) {
+	ui_node_t *n = ui_nodes_make_node(nodes_material_get_node_t(type), m->nodes, m->canvas);
+	n->x         = x;
+	n->y         = y;
+	any_array_push(m->canvas->nodes, n);
+	return n;
+}
+
+// Effect Input (the layer or mask below) -> effect node -> Material Output, the other channels of a layer pass through
+static slot_material_t *layers_new_effect_material(char *name, bool mask, effect_type_t type) {
+	slot_material_t  *m      = slot_material_create(g_project->_->materials->buffer[0]->data, NULL);
+	ui_node_canvas_t *canvas = m->canvas;
+	canvas->name             = string_copy(slot_material_unique_name(canvas, name));
+	ui_node_t *output        = NULL;
+	for (i32 i = canvas->nodes->length - 1; i >= 0; --i) {
+		ui_node_t *n = canvas->nodes->buffer[i];
+		if (string_equals(n->type, "OUTPUT_MATERIAL_PBR")) {
+			output = n;
+		}
+		else {
+			array_remove(canvas->nodes, n);
+		}
+	}
+	canvas->links->length = 0;
+	nodes_material_init();
+	ui_node_t *input = layers_effect_add_node(m, mask ? "LAYER_MASK" : "LAYER", output->x - 500, output->y);
+	input->name      = "Effect Input";
+
+	char *node_type = type == EFFECT_TYPE_FILL              ? "MIX_RGB"
+	                  : type == EFFECT_TYPE_LEVELS          ? "LEVELS"
+	                  : type == EFFECT_TYPE_HSV             ? "HUE_SAT"
+	                  : type == EFFECT_TYPE_COLOR_BALANCE   ? "COLOR_BALANCE"
+	                  : type == EFFECT_TYPE_SHARPEN         ? "SHARPEN"
+	                  : type == EFFECT_TYPE_BLUR            ? "BLUR"
+	                  : type == EFFECT_TYPE_COMPARE_MASK    ? "COMPARE_MASK"
+	                  : type == EFFECT_TYPE_COLOR_SELECTION ? "COLOR_SELECTION"
+	                                                        : NULL;
+	i32   from_id   = input->id;
+	if (node_type != NULL) {
+		ui_node_t *e      = layers_effect_add_node(m, node_type, output->x - 250, output->y);
+		i32        socket = type == EFFECT_TYPE_FILL ? 1 : type == EFFECT_TYPE_HSV ? 4 : 0; // Color 1 of Mix, Color of HSV
+		if (type == EFFECT_TYPE_FILL) {
+			e->inputs->buffer[0]->default_value->buffer[0] = 1.0; // Factor
+			f32_array_t *color                             = e->inputs->buffer[2]->default_value;
+			color->buffer[0]                               = 1.0; // White, a fill starts fully visible in a mask
+			color->buffer[1]                               = 1.0;
+			color->buffer[2]                               = 1.0;
+		}
+		if (type == EFFECT_TYPE_COMPARE_MASK) {
+			e->inputs->buffer[1]->default_value->buffer[0] = 0.5; // B
+		}
+		if (type != EFFECT_TYPE_COLOR_SELECTION) { // Selection reads an id map linked by the user
+			any_array_push(canvas->links, project_create_node_link(canvas->links, input->id, 0, e->id, socket));
+		}
+		from_id = e->id;
+	}
+	any_array_push(canvas->links, project_create_node_link(canvas->links, from_id, 0, output->id, 0));
+	if (!mask) {
+		for (i32 i = 1; i < input->outputs->length && i < output->inputs->length; ++i) {
+			any_array_push(canvas->links, project_create_node_link(canvas->links, input->id, i, output->id, i));
+		}
+	}
+
+	any_array_push(g_project->_->materials, m);
+	g_context->material = m;
+	tab_materials_update_material();
+	history_new_material();
+	return m;
+}
+
+// New effect on top of the effect chain of a layer or mask, each effect has its own material
+slot_layer_t *layers_add_effect(slot_layer_t *target, effect_type_t type) {
+	if (target == NULL || slot_layer_is_group(target) || target->texpaint_sculpt != NULL) {
+		return NULL;
+	}
+	bool mask = slot_layer_is_mask(target);
+	if (slot_layer_is_effect(target) && slot_layer_effect_base(target) != NULL) {
+		target = slot_layer_effect_base(target);
+	}
+	if (!layers_effect_allowed(type, mask) || g_project->_->layers->length > layers_max_layers) {
+		return NULL;
+	}
+	char            *name = layers_effect_name(type);
+	slot_material_t *m    = layers_new_effect_material(string_tmp("%s %s", target->name, name), mask, type);
+
+	slot_layer_t_array_t *pointers = tab_layers_init_layer_map();
+	slot_layer_t         *e        = NULL;
+	context_set_layer(target);
+	if (mask) {
+		i32 top = array_index_of(g_project->_->layers, target);
+		while (top + 1 < g_project->_->layers->length) {
+			slot_layer_t *l = g_project->_->layers->buffer[top + 1];
+			if (!slot_layer_is_mask(l) || l->parent != target->parent || !l->effect) {
+				break;
+			}
+			top++;
+		}
+		e         = layers_new_mask(false, target->parent, top + 1);
+		e->effect = true;
+	}
+	else {
+		e = layers_new_layer(false, -1, target); // Right below the layer, the top of its filters
+	}
+	tab_layers_remap_all_layer_pointers(pointers);
+	char *old_name = e->name;
+	e->name        = string_copy(slot_layer_unique_name(e, name));
+	tab_stages_rename_layer(old_name, e->name); // The layers tab lists the names of the stage
+	if (mask) {
+		history_new_fill_mask();
+		history_keep_layer_props(e);
+	}
+	else {
+		history_new_layer();
+		history_keep_layer_props(e);
+		history_to_fill_layer();
+	}
+	layers_set_effect_input(m, slot_layer_effect_input(e));
+	g_context->material = m;
+	slot_layer_to_fill_layer(e);
+	make_material_parse_mesh_material();
+	g_context->layers_preview_dirty = true;
+	return e;
+}
+
 // Own material for a new fill mask: white base color, so the mask starts fully visible
 slot_material_t *layers_new_mask_material(char *name) {
 	slot_material_t  *m      = slot_material_create(g_project->_->materials->buffer[0]->data, NULL);
@@ -891,6 +1123,15 @@ void layers_duplicate_layer(slot_layer_t *l) {
 				array_insert(g_project->_->layers, array_index_of(g_project->_->layers, new_layer), m);
 			}
 		}
+		slot_layer_t_array_t *filters = slot_layer_get_filters(l, false); // Effects, in the same order
+		if (filters != NULL) {
+			for (i32 i = 0; i < filters->length; ++i) {
+				slot_layer_t *f = slot_layer_duplicate(filters->buffer[i]);
+				f->parent       = new_layer;
+				array_remove(g_project->_->layers, f);
+				array_insert(g_project->_->layers, array_index_of(g_project->_->layers, new_layer), f);
+			}
+		}
 		context_set_layer(new_layer);
 	}
 	else {
@@ -929,7 +1170,55 @@ void layers_duplicate_layer(slot_layer_t *l) {
 	}
 }
 
+// Before masks are merged: masks shown through their effects and hidden effects are dropped, the effects keep their result
+static void layers_delete_covered_masks(slot_layer_t *l) {
+	slot_layer_t_array_t *masks = slot_layer_get_masks(l, true);
+	if (masks == NULL) {
+		return;
+	}
+	slot_layer_t_array_t *drop = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < masks->length; ++i) {
+		slot_layer_t *m = masks->buffer[i];
+		if (slot_layer_is_covered(m) || (m->effect && !slot_layer_is_visible(m))) {
+			any_array_push(drop, m);
+		}
+	}
+	for (i32 i = 0; i < drop->length; ++i) {
+		slot_layer_delete(drop->buffer[i]);
+	}
+}
+
+// The top visible filter of a layer replaces its content and the filters are removed, used before destructive merges
+void layers_bake_filters(slot_layer_t *l) {
+	slot_layer_t_array_t *filters = slot_layer_get_filters(l, false);
+	if (filters == NULL) {
+		return;
+	}
+	slot_layer_t *top = NULL;
+	for (i32 i = 0; i < filters->length; ++i) {
+		if (slot_layer_is_visible(filters->buffer[i]) && !slot_layer_is_covered(filters->buffer[i])) {
+			top = filters->buffer[i];
+		}
+	}
+	if (top != NULL) {
+		gpu_texture_t *from[] = {top->texpaint, top->texpaint_nor, top->texpaint_pack};
+		gpu_texture_t *to[]   = {l->texpaint, l->texpaint_nor, l->texpaint_pack};
+		for (i32 i = 0; i < 3; ++i) {
+			draw_begin(to[i], false, 0);
+			draw_set_pipeline(pipes_copy);
+			draw_image(from[i], 0, 0);
+			draw_set_pipeline(NULL);
+			draw_end();
+		}
+		l->fill_material = NULL;
+	}
+	for (i32 i = 0; i < filters->length; ++i) {
+		slot_layer_delete(filters->buffer[i]);
+	}
+}
+
 void layers_apply_masks(slot_layer_t *l) {
+	layers_delete_covered_masks(l);
 	slot_layer_t_array_t *masks = slot_layer_get_masks(l, true);
 
 	if (masks != NULL) {
@@ -980,6 +1269,9 @@ slot_layer_t *layers_merge_group_history(slot_layer_t *l, bool history) {
 	}
 
 	slot_layer_t_array_t *children = slot_layer_get_children(l);
+	for (i32 i = 0; i < children->length; ++i) {
+		layers_bake_filters(children->buffer[i]);
+	}
 
 	if (children->length == 1 && slot_layer_has_masks(children->buffer[0], false)) {
 		layers_apply_masks(children->buffer[0]);
@@ -994,6 +1286,7 @@ slot_layer_t *layers_merge_group_history(slot_layer_t *l, bool history) {
 	}
 
 	// Now apply the group masks
+	layers_delete_covered_masks(l);
 	slot_layer_t_array_t *masks = slot_layer_get_masks(l, true);
 	if (masks != NULL) {
 		for (i32 i = 0; i < masks->length - 1; ++i) {
@@ -1256,7 +1549,7 @@ slot_layer_t *layers_flatten_group(slot_layer_t *group) {
 }
 
 void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
-	if (!l1->visible || slot_layer_is_group(l1)) {
+	if (!l1->visible || slot_layer_is_group(l1) || (l1->effect && !slot_layer_is_visible(l1))) {
 		return;
 	}
 
@@ -1271,7 +1564,7 @@ void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
 	render_target_t      *empty_rt = any_map_get(render_path_render_targets, "empty_white");
 	gpu_texture_t        *empty    = empty_rt->_image;
 	gpu_texture_t        *mask     = empty;
-	slot_layer_t_array_t *l1masks  = use_mask ? slot_layer_get_masks(l1, true) : NULL;
+	slot_layer_t_array_t *l1masks  = use_mask ? slot_layer_get_composite_masks(l1) : NULL;
 	if (l1masks != NULL) {
 		// for (let i: i32 = 1; i < l1masks.length - 1; ++i) {
 		// 	merge_layer(l1masks[i + 1], l1masks[i]);
@@ -1501,12 +1794,12 @@ slot_layer_t *layers_flatten(bool height_to_normal, slot_layer_t_array_t *layers
 		if (!slot_layer_is_layer(l1)) {
 			continue;
 		}
-		if (slot_layer_has_visible_filter(l1)) {
+		if (slot_layer_is_covered(l1)) {
 			continue;
 		}
 
 		gpu_texture_t        *mask    = empty;
-		slot_layer_t_array_t *l1masks = slot_layer_get_masks(l1, true);
+		slot_layer_t_array_t *l1masks = slot_layer_get_composite_masks(l1);
 		if (l1masks != NULL) {
 			layers_make_temp_mask_img();
 			draw_begin(pipes_temp_mask_image, GPU_CLEAR_COLOR, 0xffffffff);

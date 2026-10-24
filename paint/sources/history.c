@@ -375,10 +375,8 @@ void history_undo() {
 			l->mask_opacity = step->layer_opacity;
 			history_set_channels(step, l);
 			l->object_mask = step->layer_object;
-			if (step->layer_name != NULL) {
-				l->name    = string_copy(step->layer_name);
-				l->visible = step->layer_visible;
-				l->locked  = step->layer_locked;
+			if (step->layer_props != NULL) {
+				history_set_layer_props(step->layer_props, l);
 			}
 			make_material_parse_mesh_material();
 
@@ -427,8 +425,8 @@ void history_undo() {
 			history_undo_i    = history_undo_i - 1 < 0 ? g_config->undo_steps - 1 : history_undo_i - 1;
 			slot_layer_t *lay = history_undo_slot(history_undo_i);
 			slot_layer_swap(g_context->layer, lay);
-			if (step->layer_below != NULL) {
-				history_set_layer_props(step->layer_below, l);
+			if (step->layer_props != NULL) {
+				history_set_layer_props(step->layer_props, l);
 			}
 
 			l = slot_layer_create("", step->layer_type, parent);
@@ -609,6 +607,10 @@ void history_undo() {
 		}
 	}
 	nodes_mesh_request_refresh(); // Layer masks used by mesh nodes
+	if (layers_has_effects()) {
+		// Effects read layers the step changed, refilled after the parts of the step that run on the next frame
+		sys_notify_on_next_frame(&layers_update_effects_on_next_frame, NULL);
+	}
 	base_redraw_status();
 }
 
@@ -749,6 +751,9 @@ void history_redo() {
 			else if (step->action == HISTORY_ACTION_NEW_FILL_MASK) {
 				g_context->material = g_project->_->materials->buffer[step->material];
 				sys_notify_on_next_frame(&history_redo_new_fill_mask, l);
+			}
+			if (step->layer_props != NULL) { // Effects keep their name and kind
+				history_set_layer_props(step->layer_props, l);
 			}
 			g_context->layer_preview_dirty = true;
 			context_set_layer(l);
@@ -934,6 +939,10 @@ void history_redo() {
 		}
 	}
 	nodes_mesh_request_refresh(); // Layer masks used by mesh nodes
+	if (layers_has_effects()) {
+		// Effects read layers the step changed, refilled after the parts of the step that run on the next frame
+		sys_notify_on_next_frame(&layers_update_effects_on_next_frame, NULL);
+	}
 	base_redraw_status();
 }
 
@@ -1054,9 +1063,7 @@ void history_duplicate_layer() {
 void history_delete_layer() {
 	history_swap_active();
 	history_step_t *step = history_push(HISTORY_ACTION_DELETE_LAYER);
-	step->layer_name     = string_copy(g_context->layer->name);
-	step->layer_visible  = g_context->layer->visible;
-	step->layer_locked   = g_context->layer->locked;
+	step->layer_props    = history_layer_props(g_context->layer);
 }
 
 void history_clear_layer() {
@@ -1134,12 +1141,19 @@ void history_apply_layer_order(history_step_t *step, bool undo) {
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 
+// The last step remembers the properties of l, redo of a new layer step gives them back
+void history_keep_layer_props(slot_layer_t *l) {
+	history_steps->buffer[history_steps->length - 1]->layer_props = history_layer_props(l);
+}
+
 history_layer_props_t *history_layer_props(slot_layer_t *l) {
 	history_layer_props_t *p =
 	    ALLOC_INIT(history_layer_props_t,
 	               {.name = string_copy(l->name), .visible = l->visible, .locked = l->locked, .mask_opacity = l->mask_opacity, .object_mask = l->object_mask});
 	memcpy(p->blending, l->blending, sizeof(p->blending));
 	memcpy(p->opacity, l->opacity, sizeof(p->opacity));
+	p->fill_material = l->fill_material != NULL ? array_index_of(g_project->_->materials, l->fill_material) + 1 : 0;
+	p->effect        = l->effect;
 	return p;
 }
 
@@ -1154,6 +1168,10 @@ void history_set_layer_props(history_layer_props_t *p, slot_layer_t *l) {
 	l->object_mask  = p->object_mask;
 	memcpy(l->blending, p->blending, sizeof(l->blending));
 	memcpy(l->opacity, p->opacity, sizeof(l->opacity));
+	if (p->fill_material > 0 && p->fill_material <= g_project->_->materials->length) {
+		l->fill_material = g_project->_->materials->buffer[p->fill_material - 1];
+	}
+	l->effect = p->effect;
 }
 
 void history_merge_layers() {
@@ -1165,7 +1183,7 @@ void history_merge_layers() {
 		step->layer -= slot_layer_get_masks(g_context->layer, true)->length;
 	}
 	step->layer_name  = string_copy(g_context->layer->name);
-	step->layer_below = history_layer_props(g_project->_->layers->buffer[step->layer]);
+	step->layer_props = history_layer_props(g_project->_->layers->buffer[step->layer]);
 	array_shift(history_steps); // Merge consumes 2 steps
 	history_undos--;
 	// TODO: use undo layer in app_merge_down to save memory

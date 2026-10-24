@@ -50,6 +50,7 @@ typedef struct slot_layer {
 	char                 *ext;
 	bool                  visible;
 	bool                  locked;   // Painting is blocked, masks and filters follow their layer
+	bool                  effect;   // Mask computed from the mask below it, see slot_layer_effect_base
 	struct slot_layer    *parent;   // Group (for layers) or layer (for masks and filters)
 	struct gpu_texture   *texpaint; // Base or mask
 	struct gpu_texture   *texpaint_nor;
@@ -545,6 +546,8 @@ typedef struct history_layer_props {
 	i32   object_mask;
 	i32   blending[LAYER_CH_COUNT];
 	f32   opacity[LAYER_CH_COUNT];
+	i32   fill_material; // Index + 1, 0 for a paint layer
+	bool  effect;
 } history_layer_props_t;
 
 typedef struct history_step {
@@ -562,9 +565,8 @@ typedef struct history_step {
 	i32                          layer_object;
 	i32                          layer_blending[LAYER_CH_COUNT];
 	f32                          layer_opacity_ch[LAYER_CH_COUNT];
-	bool                         layer_visible; // Group visibility before a flatten, layer visibility before a delete
-	bool                         layer_locked;  // Lock before a delete
-	struct history_layer_props  *layer_below;   // Merge down: the lower layer
+	bool                         layer_visible; // Group visibility before a flatten
+	struct history_layer_props  *layer_props;   // Merge down: the lower layer, delete and new effect: the layer
 	i32                          prev_order;    // Previous layer position
 	struct i32_array            *layer_order;   // Layer move: position before the move of each layer after it
 	struct i32_array            *layer_parents; // Layer move: parent position + 1 of each layer before the move, then after it
@@ -746,6 +748,7 @@ typedef struct layer_data {
 	i32_array_t      *blending_ch; // Per layer_channel_t, version 22
 	f32_array_t      *opacity_ch;
 	bool              locked;
+	bool              effect;
 } layer_data_t;
 
 typedef struct timeline_layer_keyframe_data {
