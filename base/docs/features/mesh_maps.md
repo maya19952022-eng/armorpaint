@@ -64,7 +64,7 @@ Cada mapa guarda uma assinatura do que o produziu: os ajustes que valem para ele
 | **Auto Rebake** (rebake automático, desligado por padrão) | Quando os ajustes e a cena param de mudar por meio segundo, os mapas desatualizados entram na fila sozinhos. Mudar de novo durante o bake descarta o bake velho e recomeça. Só refaz slots que já têm mapa e não cria passos de histórico (arrastar um slider encheria o histórico) |
 | **Quick Rebake** (ligado por padrão, vale com o Auto Rebake) | Primeiro assa uma prévia em um quarto da resolução, com 1 amostra por texel e um quarto dos raios, e logo depois o mapa completo. Abaixo de 512 vai direto ao mapa completo |
 
-**Rebake incremental**: quando só alguns objetos mudaram (movidos, girados, reimportados) e o resto que o mapa usa ficou igual (ajustes, resolução, a caixa que envolve a cena, nenhum high poly), o bake refaz só os texels das ilhas desses objetos e mantém os outros do mapa anterior; a dilatação é refeita no mapa inteiro, então o resultado é o mesmo de um bake completo. Ambient Occlusion, Bent Normals e Thickness sempre refazem tudo, porque os raios veem os outros objetos. Depois de um undo, Clear, prévia rápida ou projeto reaberto, o próximo bake é completo.
+**Rebake incremental**: quando só alguns objetos mudaram (movidos, girados, reimportados) e o resto que o mapa usa ficou igual (ajustes, resolução, a caixa que envolve a cena, nenhum high poly), o bake refaz só os texels das ilhas desses objetos e mantém os outros do mapa anterior; a dilatação é refeita no mapa inteiro, então o resultado é o mesmo de um bake completo. Ambient Occlusion, Bent Normals e Thickness sempre refazem tudo, porque os raios veem os outros objetos; também refazem tudo o ID por ilha UV (as cores são numeradas em todos os objetos) e mapas com objetos que dividem texels na UV. Depois de um undo, Clear, prévia rápida ou projeto reaberto, o próximo bake é completo.
 
 Cancelar um bake (no botão do mapa, na barra de progresso ou por script) faz o Auto Rebake deixar esse mapa como está até a próxima mudança. Uma prévia do Quick Rebake conta como desatualizada até o mapa completo chegar. Undo e redo trazem de volta o mapa com a assinatura dele; com o Auto Rebake ligado, um mapa antigo trazido pelo undo é assado de novo.
 
@@ -94,7 +94,7 @@ High polys continuam visíveis no viewport; esconda-os na aba Meshes ao pintar.
 
 Com as normais suavizadas (Average Normals), perto de uma quina os raios se inclinam na direção dela, e detalhes do high poly (parafusos, frisos) saem deslocados ou esticados. O **skew map** diz, texel a texel, quanto o raio vira da normal suavizada para a normal do triângulo: preto deixa a normal suavizada, branco usa a do triângulo.
 
-O skew map é uma camada de pintura especial, chamada "Skew Map". Ela fica de fora do material e do export, só o bake a lê. Na aba Baking, seção **Skew Map**:
+O skew map é uma camada de pintura especial, chamada "Skew Map". Ela fica de fora do material e do export, só o bake a lê. Aparece na aba Layers e pode ser apagada ou movida; não pode ser duplicada nem entrar num Merge Down, e um grupo achatado a deixa de fora. Undo e redo a trazem de volta com o papel. Na aba Baking, seção **Skew Map**:
 
 | Controle | O que faz |
 |---|---|
