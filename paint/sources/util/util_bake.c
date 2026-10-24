@@ -69,6 +69,7 @@ struct bake_job {
 	bool  quick;         // Preview at a quarter of the resolution
 	u32   settings_hash; // util_bake_settings_hash of the settings it was queued with
 	u32   sig;           // Settings and scene it bakes, set when it starts
+	u32   queued_sig;    // Auto rebake: the signature it was queued for
 };
 
 // clang-format off
@@ -304,9 +305,12 @@ bool util_bake_listed_high_poly(char *name) {
 }
 
 // The high poly objects: the ones listed in the settings, and with match by name the ones ending in _high
-bool util_bake_is_high_poly(char *name) {
-	bake_settings_t *s = &util_bake_settings;
+static bool util_bake_settings_high_poly(bake_settings_t *s, char *name) {
 	return (s->match_by_name && util_bake_ends_with(name, "_high")) || util_bake_list_has(s->high_polys, name);
+}
+
+bool util_bake_is_high_poly(char *name) {
+	return util_bake_settings_high_poly(&util_bake_settings, name);
 }
 
 // Lists the object as high poly or takes it out of the list
@@ -518,12 +522,12 @@ static void util_bake_vertex_curvature(util_bake_mesh_t *m, f32 size) {
 }
 
 // Triangles of the objects in world space, uvs in texels of a res sized map
-static void util_bake_mesh_build(util_bake_mesh_t *m, bool high, i32 res, bool colors, i32 *groups, util_bake_raster_t *r) {
+static void util_bake_mesh_build(bake_settings_t *s, util_bake_mesh_t *m, bool high, i32 res, bool colors, i32 *groups, util_bake_raster_t *r) {
 	mesh_object_t_array_t *objects = g_project->_->paint_objects;
 	i32                    count   = 0;
 	for (i32 oi = 0; oi < objects->length; ++oi) {
 		mesh_object_t *o = objects->buffer[oi];
-		if (util_bake_is_high_poly(o->base->name) == high) {
+		if (util_bake_settings_high_poly(s, o->base->name) == high) { // The settings of the job, the list may have changed since
 			count += o->data->index_array->length / 3;
 		}
 	}
@@ -538,7 +542,7 @@ static void util_bake_mesh_build(util_bake_mesh_t *m, bool high, i32 res, bool c
 
 	for (i32 oi = 0; oi < objects->length; ++oi) {
 		mesh_object_t *o = objects->buffer[oi];
-		if (util_bake_is_high_poly(o->base->name) != high) {
+		if (util_bake_settings_high_poly(s, o->base->name) != high) {
 			continue;
 		}
 		mesh_data_t    *md   = o->data;
@@ -795,8 +799,8 @@ static util_bake_raster_t *util_bake_raster_create(bake_settings_t *s, i32 res, 
 			}
 		}
 	}
-	util_bake_mesh_build(&r->low, false, res, colors, groups, r);
-	util_bake_mesh_build(&r->high, true, res, colors, groups, r);
+	util_bake_mesh_build(s, &r->low, false, res, colors, groups, r);
+	util_bake_mesh_build(s, &r->high, true, res, colors, groups, r);
 	free(groups);
 
 	if (r->min[0] > r->max[0]) { // No geometry
@@ -1491,8 +1495,10 @@ static u32 util_bake_fnv_i32(u32 h, i32 v) {
 	return util_bake_fnv(h, &v, sizeof(v));
 }
 
+// Rounded, so a value that went through a text field or a saved project hashes the same
 static u32 util_bake_fnv_f32(u32 h, f32 v) {
-	return util_bake_fnv(h, &v, sizeof(v));
+	v = v < -1000.0f ? -1000.0f : v > 1000.0f ? 1000.0f : v;
+	return util_bake_fnv_i32(h, (i32)lroundf(v * 1e6f));
 }
 
 static u32 util_bake_fnv_string(u32 h, char *s) {
@@ -1541,11 +1547,11 @@ static bool util_bake_uses_colors(i32 slot, bake_settings_t *s) {
 
 // The objects as the bakers see them: names, transforms and a sample of each vertex array, and the skew and cage maps
 // when there is a high poly
-static u32 util_bake_scene_hash(bool colors) {
+static u32 util_bake_scene_hash(bake_settings_t *s, bool colors) {
 	mesh_object_t_array_t *objects = g_project->_->paint_objects;
 	u32                    h       = util_bake_fnv_i32(2166136261u, objects != NULL ? objects->length : 0);
 	for (i32 oi = 0; objects != NULL && oi < objects->length; ++oi) {
-		if (util_bake_is_high_poly(objects->buffer[oi]->base->name)) {
+		if (util_bake_settings_high_poly(s, objects->buffer[oi]->base->name)) {
 			h = util_bake_fnv_i32(h, util_bake_roles_hash);
 			break;
 		}
@@ -1554,7 +1560,10 @@ static u32 util_bake_scene_hash(bool colors) {
 		mesh_object_t *o  = objects->buffer[oi];
 		mesh_data_t   *md = o->data;
 		h                 = util_bake_fnv_string(h, o->base->name);
-		h                 = util_bake_fnv(h, &o->base->transform->world_unpack, sizeof(mat4_t));
+		f32 *w            = (f32 *)&o->base->transform->world_unpack;
+		for (i32 i = 0; i < 16; ++i) { // Rounded: a loaded transform is rebuilt from its parts and can differ in the last bits
+			h = util_bake_fnv_f32(h, roundf(w[i] * 1e4f) / 1e4f);
+		}
 		h                 = util_bake_fnv_f32(h, md->scale_tex);
 		u32_array_t *ind  = md->index_array;
 		i32          step = ind->length / UTIL_BAKE_HASH_SAMPLES > 1 ? ind->length / UTIL_BAKE_HASH_SAMPLES : 1;
@@ -1562,18 +1571,21 @@ static u32 util_bake_scene_hash(bool colors) {
 		for (i32 i = 0; i < ind->length; i += step) {
 			h = util_bake_fnv_i32(h, ind->buffer[i]);
 		}
-		char *arrays[] = {"pos", "nor", "tex", "col"};
+		char *arrays[]     = {"pos", "nor", "tex", "col"};
+		i32   components[] = {4, 2, 2, 4}; // Values per vertex
 		for (i32 a = 0; a < (colors ? 4 : 3); ++a) {
 			vertex_array_t *va = mesh_data_get_vertex_array(md, arrays[a]);
 			if (va == NULL) {
 				h = util_bake_fnv_i32(h, -1);
 				continue;
 			}
-			i16_array_t *v = va->values;
-			step           = v->length / UTIL_BAKE_HASH_SAMPLES > 1 ? v->length / UTIL_BAKE_HASH_SAMPLES : 1;
-			h              = util_bake_fnv_i32(h, v->length);
-			for (i32 i = 0; i < v->length; i += step) {
-				h = util_bake_fnv(h, &v->buffer[i], sizeof(i16));
+			i16_array_t *v     = va->values;
+			i32          c     = components[a];
+			i32          verts = v->length / c;
+			step               = verts / UTIL_BAKE_HASH_SAMPLES > 1 ? verts / UTIL_BAKE_HASH_SAMPLES : 1;
+			h                  = util_bake_fnv_i32(h, v->length);
+			for (i32 i = 0; i < verts; i += step) { // Whole vertices, a step in values could skip the same component every time
+				h = util_bake_fnv(h, &v->buffer[i * c], sizeof(i16) * c);
 			}
 		}
 	}
@@ -1589,7 +1601,7 @@ static u32 util_bake_combine(u32 settings, u32 scene) {
 // What a bake of the slot with the current settings and scene would be made from
 u32 util_bake_signature(i32 slot) {
 	bake_settings_t *s = &util_bake_settings;
-	return util_bake_combine(util_bake_settings_hash(slot, s), util_bake_scene_hash(util_bake_uses_colors(slot, s)));
+	return util_bake_combine(util_bake_settings_hash(slot, s), util_bake_scene_hash(s, util_bake_uses_colors(slot, s)));
 }
 
 // Bit per slot holding a map baked from other settings or another scene, or only a quick preview
@@ -1604,7 +1616,7 @@ i32 util_bake_outdated_mask() {
 		}
 		i32 colors = util_bake_uses_colors(slot, s) ? 1 : 0;
 		if (!hashed[colors]) {
-			scene[colors]  = util_bake_scene_hash(colors);
+			scene[colors]  = util_bake_scene_hash(s, colors);
 			hashed[colors] = true;
 		}
 		if (util_bake_combine(util_bake_settings_hash(slot, s), scene[colors]) != util_bake_sigs[slot]) {
@@ -1747,7 +1759,7 @@ void util_bake_update(void *_) {
 		}
 	}
 	else if (job->raster == NULL) {
-		job->sig = util_bake_combine(job->settings_hash, util_bake_scene_hash(util_bake_uses_colors(job->slot, &job->settings)));
+		job->sig = util_bake_combine(job->settings_hash, util_bake_scene_hash(&job->settings, util_bake_uses_colors(job->slot, &job->settings)));
 		if (job->quick) { // A fast preview, the full bake follows
 			bake_settings_t *s   = &job->settings;
 			s->res               = s->res / 4 > 128 ? s->res / 4 : 128;
@@ -1767,6 +1779,13 @@ void util_bake_update(void *_) {
 		util_bake_step_rows(job);
 	}
 	else {
+		if (job->automatic && util_bake_maps[job->slot] == NULL) { // Cleared or undone to empty while it baked
+			util_bake_finish(job);
+			if (in_use) {
+				draw_begin(current, false, 0);
+			}
+			return;
+		}
 		util_bake_dilate(job->out, job->raster->tri, job->raster->res, job->settings.dilation, job->slot);
 		gpu_texture_t *tex = util_bake_upload(job->slot, job->out, job->raster->res);
 		util_bake_set_map(job->slot, tex, !job->automatic); // Auto rebake would fill the history while a setting is dragged
@@ -1820,13 +1839,14 @@ i32 util_bake_run_outdated() {
 	return count;
 }
 
-static void util_bake_run_auto(i32 slot, u32 settings_hash) {
+static void util_bake_run_auto(i32 slot, u32 settings_hash, u32 sig) {
 	bool quick = util_bake_settings.quick_rebake && util_bake_settings.res >= UTIL_BAKE_QUICK_MIN;
 	for (i32 pass = quick ? 0 : 1; pass < 2; ++pass) {
 		bake_job_t *job    = calloc(1, sizeof(bake_job_t));
 		job->slot          = slot;
 		job->settings      = util_bake_settings;
 		job->settings_hash = settings_hash;
+		job->queued_sig    = sig;
 		job->automatic     = true;
 		job->quick         = pass == 0;
 		util_bake_push(job);
@@ -1834,11 +1854,11 @@ static void util_bake_run_auto(i32 slot, u32 settings_hash) {
 }
 
 // Auto rebake jobs of a slot made for older settings or another scene start over
-static void util_bake_drop_stale(i32 slot, u32 settings_hash, u32 sig) {
+static void util_bake_drop_stale(i32 slot, u32 sig) {
 	i32 kept = 0;
 	for (i32 i = 0; i < util_bake_jobs_count; ++i) {
 		bake_job_t *job = util_bake_jobs[i];
-		if (job->slot == slot && job->automatic && job->settings_hash != settings_hash) {
+		if (job->slot == slot && job->automatic && job->queued_sig != sig) {
 			util_bake_job_free(job);
 		}
 		else {
@@ -1847,7 +1867,7 @@ static void util_bake_drop_stale(i32 slot, u32 settings_hash, u32 sig) {
 	}
 	util_bake_jobs_count = kept;
 	bake_job_t *job      = util_bake_job;
-	if (job != NULL && job->slot == slot && job->automatic && (job->raster != NULL ? job->sig != sig : job->settings_hash != settings_hash)) {
+	if (job != NULL && job->slot == slot && job->automatic && (job->raster != NULL ? job->sig != sig : job->queued_sig != sig)) {
 		util_bake_job_free(job);
 		util_bake_job = NULL; // util_bake_update moves on to the next job
 	}
@@ -1870,12 +1890,12 @@ void util_bake_auto_update() {
 		}
 		i32 colors = util_bake_uses_colors(slot, s) ? 1 : 0;
 		if (!hashed[colors]) {
-			scene[colors]  = util_bake_scene_hash(colors);
+			scene[colors]  = util_bake_scene_hash(s, colors);
 			hashed[colors] = true;
 		}
 		u32 settings_hash = util_bake_settings_hash(slot, s);
 		u32 sig           = util_bake_combine(settings_hash, scene[colors]);
-		util_bake_drop_stale(slot, settings_hash, sig);
+		util_bake_drop_stale(slot, sig);
 		if (util_bake_state(slot, NULL) != BAKE_STATE_IDLE || sig == util_bake_sigs[slot] || sig == util_bake_skip_sigs[slot]) {
 			continue;
 		}
@@ -1885,7 +1905,7 @@ void util_bake_auto_update() {
 			continue;
 		}
 		if (now - util_bake_seen_time[slot] >= UTIL_BAKE_AUTO_DELAY) {
-			util_bake_run_auto(slot, settings_hash);
+			util_bake_run_auto(slot, settings_hash, sig);
 		}
 	}
 }
@@ -2110,15 +2130,15 @@ static char *util_bake_json_string(char *s) {
 char *util_bake_settings_encode() {
 	bake_settings_t *s          = &util_bake_settings;
 	char            *high_polys = util_bake_json_string(s->high_polys);
-	char            *json       = string("{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,"
-	                                                      "\"thickness_distance\":%f,\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d,\"aa\":%d,",
+	char            *json       = string("{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%.9g,\"thickness_samples\":%d,"
+	                                                      "\"thickness_distance\":%.9g,\"curvature_strength\":%.9g,\"id_source\":%d,\"maps\":%d,\"aa\":%d,",
 	                                     s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength,
 	                                     s->id_source, s->maps, s->aa);
-	json = string("%s\"front_distance\":%f,\"rear_distance\":%f,\"average_normals\":%d,\"ignore_backface\":%d,\"match_by_name\":%d,\"high_polys\":%s,", json,
-	              s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys);
+	json = string("%s\"front_distance\":%.9g,\"rear_distance\":%.9g,\"average_normals\":%d,\"ignore_backface\":%d,\"match_by_name\":%d,\"high_polys\":%s,",
+	              json, s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys);
 	json = string("%s\"curvature_mode\":%d,\"auto_rebake\":%d,\"quick_rebake\":%d,\"cage\":%d,", json, s->curvature_mode, s->auto_rebake, s->quick_rebake,
 	              s->cage);
-	json = string("%s\"skew_base\":%d,\"edge_protection\":%d,\"paint_value\":%f,\"baked\":\"", json, s->skew_base, s->edge_protection, s->paint_value);
+	json = string("%s\"skew_base\":%d,\"edge_protection\":%d,\"paint_value\":%.9g,\"baked\":\"", json, s->skew_base, s->edge_protection, s->paint_value);
 	free(high_polys);
 	// What each slot was baked from, so a reopened project still knows which maps are outdated
 	for (i32 slot = 0; slot < MESH_MAP_COUNT; ++slot) {

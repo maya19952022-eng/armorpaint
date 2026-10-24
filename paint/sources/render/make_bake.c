@@ -96,7 +96,12 @@ void make_bake_run(node_shader_context_t *con, node_shader_t *kong) {
 	}
 	else if (g_context->bake_type == BAKE_TYPE_UV_ISLAND) { // Made on the cpu by util_bake_make_uv_islands
 		node_shader_add_texture(kong, "texuvislands", "_texuvislands");
-		node_shader_write_frag(kong, "output[0] = float4(sample_lod(texuvislands, sampler_linear, tex_coord, 0.0).rgb, 1.0);");
+		if (string_array_index_of(kong->outs, "float2 tex_coord_mesh") == -1) { // The islands are in mesh uvs, tex_coord has the brush mapping
+			node_shader_context_add_elem(kong->context, "tex", "short2norm");
+			node_shader_add_out(kong, "float2 tex_coord_mesh");
+			node_shader_write_vert(kong, "output.tex_coord_mesh = input.tex;");
+		}
+		node_shader_write_frag(kong, "output[0] = float4(sample_lod(texuvislands, sampler_linear, input.tex_coord_mesh, 0.0).rgb, 1.0);");
 	}
 	else if (g_context->bake_type == BAKE_TYPE_VERTEX_COLOR) {
 		if (con->allow_vcols) {
