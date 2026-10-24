@@ -30,6 +30,7 @@ Ponto de Âncora
 Rejeição de Ângulo
 Animação
 Anisotropia
+Antisserrilhamento
 Anexar
 Aplicar
 Aplicar Deslocamento
@@ -52,6 +53,7 @@ Atributo
 Automático
 Executar Scripts Automaticamente
 Média
+Média das Normais
 Eixo
 B
 Costas
@@ -383,6 +385,7 @@ Cosseno Hiperbólico
 Seno Hiperbólico
 Tangente Hiperbólica
 ID
+Ignorar Verso
 Textura de Imagem
 Imagem para PBR
 Importar
@@ -462,6 +465,7 @@ Mapeamento
 Máscara
 Cor da Máscara
 Massa
+Casar pelo Nome
 Material
 ID de Material
 Índice de Material
@@ -471,6 +475,8 @@ Materiais
 Matemática
 Máximo
 Distância Máxima
+Distância Frontal Máxima
+Distância Traseira Máxima
 Máximo
 Mesclar para Baixo
 Mesclar Geometria
@@ -923,6 +929,7 @@ Aumentar Zoom
 Diminuir Zoom
 Ajustar Zoom
 Tipo de Mistura
+pelo nome
 Espaço de Cor
 Ctrl+F para procurar
 Esc para cancelar
@@ -930,6 +937,7 @@ fBM
 Arquivo
 Memória GPU
 Tipo de Gradiente
+nome_low só é cozido a partir de nome_high, e objetos terminados em _high são high poly
 nós
 Operação
 empacotado

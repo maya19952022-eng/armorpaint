@@ -30,6 +30,7 @@ Sudut
 Tolak Sudut
 Animasi
 Anisotropi
+
 Tambahkan
 Terapkan
 Terapkan Perpindahan
@@ -52,6 +53,7 @@ Atribut
 Otomatis
 
 Rata-rata
+
 Sumbu
 B
 Belakang
@@ -383,6 +385,7 @@ Kosinus Hiperbolik
 Sinus Hiperbolik
 Tangen Hiperbolik
 
+
 Tekstur Gambar
 Gambar ke PBR
 Impor
@@ -462,6 +465,7 @@ Pemetaan
 Masker
 Warna Masker
 Massa
+
 Material
 ID Material
 Indeks Material
@@ -470,6 +474,8 @@ Material...
 Material
 Matematika
 Maks
+
+
 
 Maksimum
 Gabung ke Bawah
@@ -923,6 +929,7 @@ Perbesar
 Perkecil
 Zoom Sesuai Muat
 jenis_campur
+
 ruang_warna
 Ctrl+F untuk mencari
 Esc untuk batal
@@ -930,6 +937,7 @@ fBM
 berkas
 memori gpu
 jenis_gradasi
+
 node
 operasi
 terkemas

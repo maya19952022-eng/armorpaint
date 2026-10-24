@@ -30,6 +30,7 @@ Kąt
 Odrzucenie kątu
 Animacja
 Anizotropia
+
 Dołącz
 Zatwierdź
 Zatwierdź Przemieszczenie
@@ -52,6 +53,7 @@ Atrybut
 Automatyczny
 
 Średnia
+
 Oś
 B
 Tył
@@ -383,6 +385,7 @@ Cosinus hiperboliczny
 Sinus hiperboliczny
 Tangens hiperboliczny
 
+
 Tekstura obrazu
 Obraz do PBR
 Importuj
@@ -462,6 +465,7 @@ Mapowanie
 Maska
 Kolor maski
 Masa
+
 Materiał
 ID materiału
 Indeks materiału
@@ -470,6 +474,8 @@ Materiał...
 Materiały
 Matematyka
 Maks
+
+
 
 Maksimum
 Połącz w dół
@@ -923,6 +929,7 @@ Przybliż
 Oddal
 Dopasuj powiększenie
 Typ mieszania
+
 Przestrzeń kolorów
 ctrl+f aby szukać
 esc aby anulować
@@ -930,6 +937,7 @@ fBM
 plik
 pamięć GPU
 Typ gradientu
+
 węzły
 Operacja
 spakowane

@@ -30,6 +30,7 @@ Angle
 Angle Reject
 Animation
 Anisotropy
+Antialiasing
 Append
 Apply
 Apply Displacement
@@ -52,6 +53,7 @@ Attribute
 Auto
 Auto Run Scripts
 Average
+Average Normals
 Axis
 B
 Back
@@ -383,6 +385,7 @@ Hyperbolic Cosine
 Hyperbolic Sine
 Hyperbolic Tangent
 ID
+Ignore Backface
 Image Texture
 Image to PBR
 Import
@@ -462,6 +465,7 @@ Mapping
 Mask
 Mask Color
 Mass
+Match by Name
 Material
 Material ID
 Material Index
@@ -471,6 +475,8 @@ Materials
 Math
 Max
 Max Distance
+Max Frontal Distance
+Max Rear Distance
 Maximum
 Merge Down
 Merge Geometry
@@ -923,6 +929,7 @@ Zoom In
 Zoom Out
 Zoom to Fit
 blend_type
+by name
 color_space
 ctrl+f to search
 esc to cancel
@@ -930,6 +937,7 @@ fBM
 file
 gpu memory
 gradient_type
+name_low is baked only from name_high, and objects ending in _high are high poly
 nodes
 operation
 packed

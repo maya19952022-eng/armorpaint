@@ -30,6 +30,7 @@ Winkel
 Winkel verwerfen
 Animation
 Anisotropie
+
 Hinzufügen
 Anwenden
 Displacement anwenden
@@ -52,6 +53,7 @@ Attribut
 Automatisch
 
 Mittelwert
+
 Achse
 B
 Hinten
@@ -383,6 +385,7 @@ Kosinus Hyperbolicus
 Sinus Hyperbolicus
 Tangens Hyperbolicus
 
+
 Bild Textur
 Bild zu PBR
 Importieren
@@ -462,6 +465,7 @@ Mapping
 Maske
 Maskenfarbe
 Masse
+
 Material
 Material ID
 Material Index
@@ -470,6 +474,8 @@ Material...
 Materialien
 Mathematik
 Max
+
+
 
 Maximum
 Nach unten vereinen
@@ -923,6 +929,7 @@ Vergrößern
 Verkleinern
 Auf Fenstergröße zoomen
 Überblendungsart
+
 Farbraum
 Suchen mit ctrl+f
 Abbrechen mit esc
@@ -930,6 +937,7 @@ fBM
 Datei
 GPU-Speicher
 Farbverlauf Art
+
 Nodes
 Operation
 gepackt

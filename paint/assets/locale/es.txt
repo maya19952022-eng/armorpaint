@@ -30,6 +30,7 @@ Cantidad
 Rechazar por ángulo
 Animación
 Anisotropía
+
 Adjuntar
 Aplicar
 Aplicar desplazamiento
@@ -52,6 +53,7 @@ Atributo
 Automático
 
 Promedio
+
 Ejes
 A
 Trasera
@@ -383,6 +385,7 @@ Coseno hiperbólico
 Seno hiperbólico
 Tangente hiperbólica
 
+
 Imagen
 Imagen a PBR
 Importar
@@ -462,6 +465,7 @@ Mapeado
 Máscara
 Color de máscara
 Masa
+
 Material
 ID de material
 Índice de materiales
@@ -470,6 +474,8 @@ Material...
 Materiales
 Matemática
 Máx
+
+
 
 Máximo
 Fusionar hacia abajo
@@ -923,6 +929,7 @@ Acercar
 Alejar
 Ajustar a la ventana
 Tipo de mezcla
+
 Espacio de color
 Ctrl+F para buscar
 Esc para cancelar
@@ -930,6 +937,7 @@ fBM
 Archivo
 memoria gpu
 Tipo de gradiente
+
 nodos
 Operación
 empaquetado

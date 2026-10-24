@@ -30,6 +30,7 @@ Szög
 Szög elvetése
 Animáció
 Anizotrópia
+
 Hozzáfűzés
 Alkalmazás
 Eltolás alkalmazása
@@ -52,6 +53,7 @@ Attribútum
 Auto
 
 Átlag
+
 Tengely
 B
 Hátul
@@ -383,6 +385,7 @@ Hiperbolikus koszinusz
 Hiperbolikus szinusz
 Hiperbolikus tangens
 
+
 Kép textúra
 Képből PBR
 Importálás
@@ -462,6 +465,7 @@ Leképzés
 Maszk
 Maszk színe
 Massza
+
 Anyag
 Anyag ID
 Anyag Index
@@ -470,6 +474,8 @@ Anyag...
 Anyagok
 Matematika
 Max
+
+
 
 Maximum
 Egyesítés lefelé
@@ -923,6 +929,7 @@ Nagyítás
 Kicsinyítés
 Nagyítás igazítása
 Keverés típusa
+
 Színtér
 Keresés: Ctrl+F
 Mégse: Esc
@@ -930,6 +937,7 @@ fBM
 Fájl
 GPU memória
 Színátmenet típusa
+
 Csomópontok
 Művelet
 csomagolt

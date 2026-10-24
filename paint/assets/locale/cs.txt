@@ -30,6 +30,7 @@ Množství
 Odmítnout úhel
 Animace
 Anizotropie
+
 Připojit
 Použít
 Použít posunutí
@@ -52,6 +53,7 @@ Atribut
 Automaticky
 
 Průměr
+
 Osa
 B
 Zadní
@@ -383,6 +385,7 @@ Hyperbolický kosinus
 Hyperbolický sinus
 Hyperbolický tangens
 
+
 Textura obrázku
 Obrázek na PBR
 Importovat
@@ -462,6 +465,7 @@ Mapování
 Maska
 Barva masky
 Hmotnost
+
 Materiál
 ID materiálu
 Index materiálu
@@ -470,6 +474,8 @@ Materiál...
 Materiály
 Matematika
 Max
+
+
 
 Maximum
 Sloučit dolů
@@ -923,6 +929,7 @@ Přiblížit
 Oddálit
 Přizpůsobit zobrazení
 typ_míchání
+
 barevný_prostor
 ctrl+f pro hledání
 esc pro zrušení
@@ -930,6 +937,7 @@ fBM
 soubor
 paměť gpu
 typ_přechodu
+
 uzly
 operace
 zabalené

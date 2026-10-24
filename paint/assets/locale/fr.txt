@@ -30,6 +30,7 @@ Angle
 Rejet par angle
 Animation
 Anisotropie
+
 Ajouter
 Appliquer
 Appliquer déplacement
@@ -52,6 +53,7 @@ Attributs
 Auto
 
 Moyenne
+
 Axe
 B
 Arrière
@@ -383,6 +385,7 @@ Cosinus hyperbolique
 Sinus hyperbolique
 Tangente hyperbolique
 
+
 Texture image
 Image vers PBR
 Importer
@@ -462,6 +465,7 @@ Mappage
 Masque
 Couleur de masque
 Masse
+
 Matériau
 ID matériau
 Index de matériau
@@ -470,6 +474,8 @@ Matériau...
 Matériaux
 Mathématique
 Max
+
+
 
 Maximum
 Fusionner vers le bas
@@ -923,6 +929,7 @@ Zoom avant
 Zoom arrière
 Ajuster à la vue
 type_de_mélange
+
 espace_couleur
 Ctrl+F pour rechercher
 Échap pour annuler
@@ -930,6 +937,7 @@ fBM
 fichier
 mémoire GPU
 type_de_dégradé
+
 nœuds
 opération
 empaqueté
