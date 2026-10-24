@@ -2,7 +2,8 @@
 
 // Baking tab: the settings every mesh map shares, the settings of each map and the maps to bake
 
-static bool tab_baking_common_open = true;
+static bool tab_baking_common_open    = true;
+static bool tab_baking_high_poly_open = true;
 static bool tab_baking_map_open[MESH_MAP_COUNT];
 
 static i32 tab_baking_res[] = {128, 256, 512, 1024, 2048, 4096, 8192, 16384};
@@ -56,6 +57,42 @@ static void tab_baking_common(bake_settings_t *s) {
 	if (ui_item_changed()) {
 		s->dilation = (i32)dilation;
 	}
+
+	i32 aa = s->aa >= 8 ? 3 : s->aa >= 4 ? 2 : s->aa >= 2 ? 1 : 0;
+	ui_combo(&aa, any_array_create_from_raw_tmp((void *[]){tr("None"), "2x2", "4x4", "8x8"}, 4), tr("Antialiasing"), true, UI_ALIGN_LEFT, true);
+	if (ui_item_changed()) {
+		s->aa = 1 << aa;
+	}
+}
+
+// Objects baked from, and the rays that look for them
+static void tab_baking_high_poly(bake_settings_t *s) {
+	mesh_object_t_array_t *objects = g_project->_->paint_objects;
+	for (i32 i = 0; i < objects->length; ++i) {
+		char *name    = objects->buffer[i]->base->name;
+		bool  high    = util_bake_is_high_poly(name);
+		bool  by_name = s->match_by_name && high && !util_bake_listed_high_poly(name);
+		ui_check(&high, by_name ? string_tmp("%s (%s)", name, tr("by name")) : name, "");
+		if (ui_item_changed() && !by_name) {
+			util_bake_set_high_poly(name, high);
+		}
+	}
+	ui_check(&s->match_by_name, tr("Match by Name"), "");
+	if (g_ui->is_hovered) {
+		ui_tooltip(tr("name_low is baked only from name_high, and objects ending in _high are high poly"));
+	}
+	f32 front = s->front_distance;
+	ui_slider(&front, tr("Max Frontal Distance"), 0.0, 1.0, true, 1000, true, UI_ALIGN_RIGHT, true);
+	if (ui_item_changed()) {
+		s->front_distance = front;
+	}
+	f32 rear = s->rear_distance;
+	ui_slider(&rear, tr("Max Rear Distance"), 0.0, 1.0, true, 1000, true, UI_ALIGN_RIGHT, true);
+	if (ui_item_changed()) {
+		s->rear_distance = rear;
+	}
+	ui_check(&s->average_normals, tr("Average Normals"), "");
+	ui_check(&s->ignore_backface, tr("Ignore Backface"), "");
 }
 
 // Settings that change only this map, false when it has none
@@ -157,6 +194,9 @@ void tab_baking_draw(i32 *htab) {
 
 	if (ui_panel(&tab_baking_common_open, tr("Common Settings"), false, false, false)) {
 		tab_baking_common(s);
+	}
+	if (ui_panel(&tab_baking_high_poly_open, tr("High Poly"), false, false, false)) {
+		tab_baking_high_poly(s);
 	}
 
 	ui_separator(4, true);
