@@ -675,6 +675,14 @@ void tab_layers_draw_layer_slot_full(slot_layer_t *l, i32 i) {
 		tab_layers_combo_blending(l, false);
 	}
 
+	// Groups are pass-through: each layer of the group mixes with the layers below the group
+	if (slot_layer_is_group(l)) {
+		g_ui->_x = uix + uiw * 0.60;
+		g_ui->_y = uiy + center;
+		g_ui->_w = uiw * 0.30;
+		ui_text(tr("Pass Through"), UI_ALIGN_LEFT, 0x00000000);
+	}
+
 	// Object combo
 	if (!slot_layer_is_group(l) && !slot_layer_is_mask(l) && !slot_layer_is_filter(l)) {
 		g_ui->_x = uix + uiw * 0.60;
