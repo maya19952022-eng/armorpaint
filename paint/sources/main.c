@@ -50,6 +50,7 @@
 #include "nodes_material/camera_texture_node.c"
 #include "nodes_material/checker_texture_node.c"
 #include "nodes_material/clamp_node.c"
+#include "nodes_material/color_balance_node.c"
 #include "nodes_material/color_mask_node.c"
 #include "nodes_material/color_ramp_node.c"
 #include "nodes_material/combine_color_node.c"

@@ -42,6 +42,7 @@ void nodes_material_init() {
 	nodes_material_color = any_array_create_from_raw((void *[]){}, 0);
 	blur_node_init();
 	brightness_contrast_node_init();
+	color_balance_node_init();
 	color_mask_node_init();
 	color_ramp_node_init();
 	combine_color_node_init();

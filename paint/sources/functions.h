@@ -1384,6 +1384,7 @@ void              combine_xyz_node_init();
 void              noise_texture_node_init();
 void              brightness_contrast_node_init();
 void              color_mask_node_init();
+void              color_balance_node_init();
 void              levels_node_init();
 void              rgb_curves_node_init();
 void              vector_curves_node_init();
