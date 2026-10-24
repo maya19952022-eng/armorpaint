@@ -784,6 +784,7 @@ void                   script_bake_node(ui_node_t *node);
 bool                   script_bake_outdated(i32 slot);
 i32                    script_bake_rebake_outdated(void);
 i32                    script_history_undos(void);
+bool                   script_export_set_preset(char *name);
 slot_layer_t          *script_bake_paint_role(i32 role);
 void                   script_bake_role_fill(i32 role, f32 value);
 void                   script_set_viewport_mesh_map(i32 slot);

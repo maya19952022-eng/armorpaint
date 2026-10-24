@@ -1536,6 +1536,18 @@ f32_array_t *script_bake_ray_directions_pixels(void) {
 	return pixels;
 }
 
+// Picks the export preset of the textures by its file name without .json, false when there is none
+bool script_export_set_preset(char *name) {
+	box_export_fetch_presets();
+	i32 i = string_array_index_of(box_export_files, name);
+	if (i < 0) {
+		return false;
+	}
+	box_export_preset_index = i;
+	box_export_parse_preset();
+	return true;
+}
+
 // Steps that undo can take back
 i32 script_history_undos(void) {
 	return history_undos;
