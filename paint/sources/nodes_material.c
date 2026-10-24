@@ -63,6 +63,7 @@ void nodes_material_init() {
 	bump_node_init();
 	clamp_node_init();
 	combine_xyz_node_init();
+	compare_mask_node_init();
 	float_curve_node_init();
 	map_range_node_init();
 	mapping_node_init();
