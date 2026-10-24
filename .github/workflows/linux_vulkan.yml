@@ -23,3 +23,7 @@ jobs:
       run: |
         cd paint
         ../base/make --compile
+    - name: Smoke Test
+      run: |
+        sudo apt install xvfb mesa-vulkan-drivers --yes --quiet
+        base/tests/paint_headless/run.sh
