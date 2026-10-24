@@ -1263,6 +1263,8 @@ slot_layer_t_array_t  *tab_layers_init_layer_map();
 i32_imap_t            *tab_layers_fill_layer_map(slot_layer_t_array_t *old_layers);
 void                   tab_layers_make_mask_preview_rgba32(slot_layer_t *l);
 bool                   tab_layers_can_drop_new_layer(i32 position);
+void                   tab_layers_layer_toggle_visible(slot_layer_t *l);
+void                   tab_layers_isolate_mask(slot_layer_t *m);
 bool                   tab_layers_clipboard_valid();
 void                   tab_layers_draw_layer_context_menu_paste(void *_);
 void                   tab_layers_draw_layer_context_menu_paste_mask(void *_);

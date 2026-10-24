@@ -32,6 +32,22 @@ void tab_layers_set_drag_layer(slot_layer_t *layer, f32 off_x, f32 off_y) {
 	g_context->drag_dest = array_index_of(g_project->_->layers, layer);
 }
 
+// Shows the mask alone in the viewport, again on the same mask goes back to the previous viewport mode
+void tab_layers_isolate_mask(slot_layer_t *m) {
+	static viewport_mode_t prev_mode = VIEWPORT_MODE_LIT;
+	if (g_context->viewport_mode == VIEWPORT_MODE_MASK && g_context->layer == m) {
+		context_set_viewport_mode(prev_mode);
+	}
+	else {
+		if (g_context->viewport_mode != VIEWPORT_MODE_MASK) {
+			prev_mode = g_context->viewport_mode;
+		}
+		context_set_layer(m);
+		context_set_viewport_mode(VIEWPORT_MODE_MASK);
+	}
+	ui_dock_redraw(TAB_AREA_SIDEBAR0);
+}
+
 void tab_layers_handle_layer_icon_state(slot_layer_t *l, i32 i, ui_state_t state, f32 uix, f32 uiy) {
 	gpu_texture_t *texpaint_preview = l->texpaint_preview;
 	tab_layers_show_context_menu    = false;
@@ -63,6 +79,12 @@ void tab_layers_handle_layer_icon_state(slot_layer_t *l, i32 i, ui_state_t state
 	if (state == UI_STATE_STARTED) {
 		context_set_layer(l);
 		tab_layers_set_drag_layer(g_context->layer, -(mouse_x - uix - g_ui->_window_x - 3), -(mouse_y - uiy - g_ui->_window_y + 1));
+	}
+	else if (state == UI_STATE_RELEASED && slot_layer_is_mask(l) && keyboard_down("shift")) {
+		tab_layers_layer_toggle_visible(l); // Disable the mask for a moment
+	}
+	else if (state == UI_STATE_RELEASED && slot_layer_is_mask(l) && keyboard_down("alt")) {
+		tab_layers_isolate_mask(l);
 	}
 	else if (state == UI_STATE_RELEASED) {
 		if (sys_time() - g_context->select_time < 0.2) {
