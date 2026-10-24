@@ -1,6 +1,6 @@
 # Mesh maps
 
-IDs da matriz: BAKE-01, BAKE-02, BAKE-03, BAKE-05, BAKE-08, BAKE-09 · Fase: P2
+IDs da matriz: BAKE-01, BAKE-02, BAKE-03, BAKE-04, BAKE-05, BAKE-08, BAKE-09 · Fase: P2
 
 Texturas calculadas uma vez a partir da geometria do projeto (oclusão, curvatura, posição, espessura...) e lidas por qualquer material pelo nó **Mesh Map**. São a base para materiais que reagem à forma do modelo: sujeira nas cavidades, desgaste nas quinas, cor por objeto. O projeto tem um slot para cada mapa; assar de novo substitui o mapa do slot.
 
@@ -76,10 +76,13 @@ Na aba Baking, seção **High Poly**:
 |---|---|
 | Caixa por objeto | Marca o objeto como high poly. High polys não recebem mapas |
 | **Match by Name** (casar pelo nome) | `nome_low` só acha `nome_high`, e todo objeto terminado em `_high` vira high poly sem precisar marcar ("by name" ao lado do nome) |
-| **Max Frontal Distance** | Altura da cage acima do low poly, relativa à diagonal da cena |
+| **Cage** | **Fixed Distance** (padrão): os raios saem da Max Frontal Distance acima do low poly. **Auto**: cada amostra procura o high poly acima dela (veja abaixo) |
+| **Max Frontal Distance** | Altura da cage acima do low poly, relativa à diagonal da cena; com a cage Auto, até onde a superfície acima é procurada |
 | **Max Rear Distance** | Até onde abaixo do low poly o raio procura, relativa à diagonal da cena |
 | **Average Normals** | Os raios seguem a média das normais dos vértices no mesmo lugar: sem buracos nas quinas vivas do low poly |
 | **Ignore Backface** | O raio atravessa triângulos do high poly vistos por trás |
+
+Com a cage **Auto**, cada amostra lança dois raios curtos antes do raio do bake: um para cima (até a Max Frontal Distance) e um para baixo (até a Max Rear Distance). Se a primeira superfície acima é vista por trás (a amostra está dentro do high poly) e vem antes de qualquer superfície vista de frente abaixo, o raio do bake sai logo depois dela; senão sai do próprio low poly. Assim a cage acompanha o high poly de perto: um objeto mais acima (outra peça, uma tampa) não é atingido por engano, e não é preciso ajustar a distância para cada modelo. Funciona melhor com high polys fechados e com as normais para fora.
 
 Em Common Settings, **Antialiasing** (None, 2x2, 4x4, 8x8) faz várias amostras por texel e tira a média; os raios de oclusão e espessura se dividem entre as amostras. Vale também sem high poly.
 
@@ -114,6 +117,7 @@ Ficam no projeto (`bake_settings` no `.arm`) e valem para os próximos bakes. Na
 | `aa` | 1 | Amostras por lado do texel: 1, 2, 4 ou 8 |
 | `front_distance` | 0.01 | Altura da cage acima do low poly, relativa à diagonal da cena |
 | `rear_distance` | 0.01 | Até onde abaixo do low poly o high poly é procurado |
+| `cage` | `BAKE_CAGE_DISTANCE` | `BAKE_CAGE_AUTO` para a cage automática |
 | `average_normals` | true | Raios pela média das normais nos vértices no mesmo lugar |
 | `ignore_backface` | true | Raios atravessam o verso dos triângulos do high poly |
 | `match_by_name` | false | `nome_low` só acha `nome_high`; objetos terminados em `_high` são high poly |
@@ -158,6 +162,7 @@ s->match_by_name  = true;  // corpo_low só acha corpo_high
 s->front_distance = 0.02;  // relativas à diagonal da cena
 s->rear_distance  = 0.02;
 s->aa             = 4;     // 4x4 amostras por texel
+s->cage           = BAKE_CAGE_AUTO; // cage automática
 s->curvature_mode = MESH_MAP_CURVATURE_MESH; // curvatura pela malha
 s->id_source      = MESH_MAP_ID_UV_ISLAND;   // uma cor por ilha UV
 // A cada frame:
@@ -188,7 +193,7 @@ Os enums `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_
 
 ## Limitações
 
-- A cage é a superfície do low poly deslocada pela Max Frontal Distance; cage automática suavizada, skew map e cage pintada chegam com a BAKE-04, BAKE-06 e BAKE-07.
+- Na cage Fixed Distance, a cage é a superfície do low poly deslocada pela Max Frontal Distance. A cage Auto decide por amostra pela orientação do high poly: faces com a normal para dentro, ou planos soltos virados para baixo sobre o modelo, enganam a decisão. Skew map e cage pintada chegam com a BAKE-06 e a BAKE-07.
 - Não há mapa de altura (Height) vindo do high poly.
 - O rebake refaz o mapa inteiro, mesmo quando só um objeto mudou; não há rebake só da região alterada.
 - A assinatura da cena olha uma amostra de até 1024 valores por array de vértices: uma edição que muda só vértices fora da amostra (raro: reimportar ou aplicar deslocamento muda muitos) não marca o mapa como desatualizado.
