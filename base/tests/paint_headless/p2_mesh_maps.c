@@ -45,6 +45,7 @@ f32_array_t   *saved_occlusion = NULL;
 f32_array_t   *saved_normal    = NULL;
 f32_array_t   *saved_id        = NULL;
 float          occlusion_near  = 0.0;
+float          fill_near       = 0.0;
 gpu_texture_t *before_cancel   = NULL;
 
 void check(int ok, char *name) {
@@ -133,6 +134,8 @@ void step_material() {
 	script_material_update();
 	slot_layer_t *l = script_layer_new_fill();
 	script_layer_set_name(l, "mm_fill");
+	// Another material is selected while baking, the fill layer still follows the mesh map
+	script_material_create("mm_other");
 }
 
 void step_bake_all() {
@@ -194,7 +197,8 @@ void check_slots() {
 	slot_layer_t *l = layer_by_name("mm_fill");
 	float         a = layer_red(l, texel_u(FLOOR_NEAR), texel_u(ROW_TOP));
 	float         b = layer_red(l, texel_u(FLOOR_FAR), texel_u(ROW_TOP));
-	check(a < b - 20.0, string("fill layer reads the baked occlusion: %.0f next to the wall, %.0f away", a, b));
+	check(a < b - 20.0, string("fill layer of an unselected material reads the baked occlusion: %.0f next to the wall, %.0f away", a, b));
+	fill_near = a;
 
 	saved_occlusion = ao;
 
@@ -220,8 +224,11 @@ void check_rebake() {
 	check(near > occlusion_near + 0.1, string("shorter occlusion distance: %.2f (was %.2f)", near, occlusion_near));
 	script_undo();
 	check(absf(slot_px(MESH_MAP_OCCLUSION, FLOOR_NEAR, ROW_TOP, 0) - occlusion_near) < 0.005, "undo brings the previous bake back");
+	slot_layer_t *l = layer_by_name("mm_fill");
+	check(absf(layer_red(l, texel_u(FLOOR_NEAR), texel_u(ROW_TOP)) - fill_near) <= 2.0, "the fill layer follows the undo");
 	script_redo();
 	check(absf(slot_px(MESH_MAP_OCCLUSION, FLOOR_NEAR, ROW_TOP, 0) - near) < 0.005, "redo brings the new bake back");
+	check(layer_red(l, texel_u(FLOOR_NEAR), texel_u(ROW_TOP)) > fill_near + 20.0, "the fill layer follows the redo");
 
 	saved_id = script_mesh_map_pixels(MESH_MAP_ID);
 	script_mesh_map_clear(MESH_MAP_ID);
@@ -237,9 +244,21 @@ void step_cancel() {
 	script_bake_get_settings()->res               = 256;
 	script_bake_get_settings()->thickness_samples = 512;
 	script_bake_mesh_map(MESH_MAP_THICKNESS);
+	script_bake_mesh_map(MESH_MAP_CURVATURE);
+	script_bake_mesh_map(MESH_MAP_CURVATURE);
+	script_bake_mesh_map(MESH_MAP_OPACITY);
 }
 
 void check_cancel() {
+	check(script_bake_state(MESH_MAP_THICKNESS) == BAKE_STATE_RUNNING && script_bake_state(MESH_MAP_CURVATURE) == BAKE_STATE_QUEUED &&
+	          script_bake_state(MESH_MAP_ID) == BAKE_STATE_IDLE,
+	      "queue states: running, queued, idle");
+	gpu_texture_t *curvature = script_mesh_map_get(MESH_MAP_CURVATURE);
+	script_bake_cancel_slot(MESH_MAP_CURVATURE);
+	check(script_bake_state(MESH_MAP_CURVATURE) == BAKE_STATE_IDLE && script_bake_state(MESH_MAP_OPACITY) == BAKE_STATE_QUEUED &&
+	          script_bake_state(MESH_MAP_THICKNESS) == BAKE_STATE_RUNNING,
+	      "cancelling a queued slot leaves the rest of the queue (and a slot is queued once)");
+	check(script_mesh_map_get(MESH_MAP_CURVATURE) == curvature, "the cancelled slot keeps its map");
 	check(script_bake_busy(), "long bake running");
 	script_bake_cancel();
 	check(!script_bake_busy(), "cancel stops the queue");
