@@ -117,6 +117,7 @@ Faktor begrenzen
 Ergebnis begrenzen
 Ton
 Leeren
+
 Ebene leeren
 Farbfelder leeren
 Clip Ende
@@ -262,6 +263,7 @@ Fehler: Textur konnte nicht gefunden werden
 Fehler: Fontdaten konnten nicht gelesen werden
 Fehler: Meshdaten konnten nicht gelesen werden
 Fehler: Unbekanntes Asset Format
+
 Ausschluss
 Beenden
 Experimentelle Funktionen
@@ -329,6 +331,7 @@ Gabor Textur
 Gamma
 Generiert
 Geometrie
+
 Geometrie in den Ursprung
 Loslegen
 Greifen
@@ -378,6 +381,7 @@ Textur importieren
 Importieren...
 Mesh wird importiert
 Eingang
+
 
 
 Einkommend
@@ -526,6 +530,7 @@ Objekt ID
 Objekt Index
 Objekt Information
 Objekt Normale
+
 Occlusion
 Offset
 Alte Farbe
@@ -832,6 +837,7 @@ UV
 UV Insel
 UV Map
 UV Skalierung
+
 UV Unwrap
 UV Map
 Konnte nicht nach Updates suchen.\nBitte {url} aufsuchen.

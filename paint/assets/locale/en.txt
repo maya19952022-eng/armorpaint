@@ -117,6 +117,7 @@ Clamp Factor
 Clamp Result
 Clay
 Clear
+Clear Geometry Mask
 Clear Layer
 Clear Swatches
 Clip End
@@ -262,6 +263,7 @@ Error: Could not locate texture
 Error: Failed to read font data
 Error: Failed to read mesh data
 Error: Unknown asset format
+Exclude
 Exclusion
 Exit
 Experimental Features
@@ -329,6 +331,7 @@ Gabor Texture
 Gamma
 Generated
 Geometry
+Geometry Mask
 Geometry to Origin
 Get Started
 Grab
@@ -380,6 +383,7 @@ Importing mesh
 In
 In Black
 In White
+Include
 Incoming
 Inflate
 Info: Asset already imported
@@ -526,6 +530,7 @@ Object ID
 Object Index
 Object Info
 Object Normal
+Objects
 Occlusion
 Offset
 Old Color
@@ -832,6 +837,7 @@ UV
 UV Island
 UV Map
 UV Scale
+UV Tiles
 UV Unwrap
 UVMap
 Unable to check for updates.\nPlease visit {url}.

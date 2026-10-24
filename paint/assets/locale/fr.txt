@@ -117,6 +117,7 @@ Resserrer le facteur
 Resserrer le résultat
 Argile
 Effacer
+
 Effacer le calque
 Effacer les échantillons
 Fin du clip
@@ -262,6 +263,7 @@ Erreur : Impossible de localiser la texture
 Erreur : Échec lecture données police
 Erreur : Échec lecture données maillage
 Erreur : Format de ressource inconnu
+
 Exclusion
 Quitter
 Fonctionnalités expérimentales
@@ -329,6 +331,7 @@ Texture Gabor
 Gamma
 Générées
 Géométrie
+
 Géométrie vers origine
 Commencer
 Saisir
@@ -378,6 +381,7 @@ Importer le fichier de texture
 Importer...
 Import du maillage
 Entrée
+
 
 
 Entrante
@@ -526,6 +530,7 @@ ID objet
 Index d'objet
 Info d'objet
 Normale objet
+
 Occlusion
 Décalage
 Ancienne couleur
@@ -832,6 +837,7 @@ UV
 Îlot UV
 Carte UV
 Échelle UV
+
 Dépliage UV
 Carte UV
 Impossible de vérifier les mises à jour.\nVeuillez visiter {url}.

@@ -117,6 +117,7 @@ Ogranicz współczynnik
 Ogranicz wynik
 Glina
 Wyczyść
+
 Wyczyść warstwę
 Wyczyść próbki kolorów
 Koniec clipu
@@ -262,6 +263,7 @@ Błąd: Nie można zlokalizować tekstury
 Błąd: Nie udało się odczytać danych czcionki
 Błąd: Nie udało się odczytać danych modelu
 Błąd: Nieznany format zasobu
+
 Wykluczenie
 Wyjście
 Funkcje eksperymentalne
@@ -329,6 +331,7 @@ Tekstura Gabora
 Gamma
 Wygenerowane
 Geometria
+
 Geometria do początku układu
 Rozpocznij
 Chwytaj
@@ -378,6 +381,7 @@ Importuj plik tekstury
 Importuj...
 Importowanie modelu
 Wejście
+
 
 
 Przychodzące
@@ -526,6 +530,7 @@ ID obiektu
 Indeks obiektu
 Informacje o obiekcie
 Normalna obiektu
+
 Okluzja
 Przesunięcie
 Stary kolor
@@ -832,6 +837,7 @@ UV
 Wyspa UV
 Mapa UV
 Skala UV
+
 Rozwijanie UV
 Mapa UV
 Nie można sprawdzić aktualizacji.\nOdwiedź {url}.

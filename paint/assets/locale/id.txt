@@ -117,6 +117,7 @@ Batasi Faktor
 Batasi Hasil
 Tanah Liat
 Bersihkan
+
 Bersihkan Lapisan
 Bersihkan Contoh Warna
 Akhir Klip
@@ -262,6 +263,7 @@ Kesalahan: Tidak dapat menemukan tekstur
 Kesalahan: Gagal membaca data font
 Kesalahan: Gagal membaca data mesh
 Kesalahan: Format aset tidak dikenal
+
 Eksklusi
 Keluar
 Fitur Eksperimental
@@ -329,6 +331,7 @@ Tekstur Gabor
 Gamma
 Dihasilkan
 Geometri
+
 Geometri ke Asal
 Mulai
 Tarik
@@ -378,6 +381,7 @@ Impor berkas tekstur
 Impor...
 Mengimpor mesh
 Masuk
+
 
 
 Masuk
@@ -526,6 +530,7 @@ ID Objek
 Indeks Objek
 Info Objek
 Normal Objek
+
 Okklusi
 Ofset
 Warna Lama
@@ -832,6 +837,7 @@ UV
 Pulau UV
 Peta UV
 Skala UV
+
 Buka Lipatan UV
 Peta UV
 Tidak dapat memeriksa pembaruan.\nSilakan kunjungi {url}.

@@ -117,6 +117,7 @@ Limitar factor
 Limitar resultado
 Arcilla
 Limpiar
+
 Limpiar capa
 Limpiar muestras
 Finalizar recorte
@@ -262,6 +263,7 @@ Error: No se pudo localizar la textura
 Error: Fallo al leer datos de fuente
 Error: No se pudieron leer los datos de la malla
 Error: formato de recurso desconocido
+
 Exclusión
 Salir
 Funciones experimentales
@@ -329,6 +331,7 @@ Textura Gabor
 Gama
 Generado
 Geometría
+
 Geometria al origen
 Comenzar
 Agarrar
@@ -378,6 +381,7 @@ Importar textura
 Importar...
 Importando malla
 Entrada
+
 
 
 Entrante
@@ -526,6 +530,7 @@ ID de objeto
 Índice de Objetos
 Información del objeto
 Normales del objeto
+
 Oclusión
 Compensación
 Color antiguo
@@ -832,6 +837,7 @@ UV
 Isla UV
 Mapa UV
 Escala UV
+
 Desenvolver UV
 Mapa UV
 No se pudo buscar actualizaciones.\nVisita {url}.

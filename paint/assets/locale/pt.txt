@@ -117,6 +117,7 @@ Limitar Fator
 Limitar Resultado
 Argila
 Limpar
+Limpar Máscara Geométrica
 Limpar Camada
 Limpar Amostras
 Fim do Recorte
@@ -262,6 +263,7 @@ Erro: Não foi possível localizar a textura
 Erro: Falha ao ler dados da fonte
 Erro: Falha ao ler dados da malha
 Erro: Formato de ativo desconhecido
+Excluir
 Exclusão
 Sair
 Recursos Experimentais
@@ -329,6 +331,7 @@ Textura Gabor
 Gama
 Gerada
 Geometria
+Máscara Geométrica
 Geometria para Origem
 Começar
 Agarrar
@@ -380,6 +383,7 @@ Importando malha
 Entrada
 Preto de Entrada
 Branco de Entrada
+Incluir
 Entrada
 Inflar
 Info: Ativo já importado
@@ -526,6 +530,7 @@ ID de Objeto
 Índice de Objeto
 Informação do Objeto
 Normal do Objeto
+Objetos
 Oclusão
 Deslocamento
 Cor Antiga
@@ -832,6 +837,7 @@ UV
 Ilha UV
 Mapa UV
 Escala UV
+Tiles UV
 Desenrolar UV
 Mapa UV
 Não foi possível verificar atualizações.\nPor favor visite {url}.

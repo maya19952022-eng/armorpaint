@@ -117,6 +117,7 @@ Omezit faktor
 Omezit výsledek
 Hlína
 Vyčistit
+
 Vyčistit vrstvu
 Vyčistit vzorky
 Konec ořezu
@@ -262,6 +263,7 @@ Chyba: Nelze najít texturu
 Chyba: Selhání čtení dat písma
 Chyba: Selhání čtení dat sítě
 Chyba: Neznámý formát assetu
+
 Vyloučení
 Ukončit
 Experimentální funkce
@@ -329,6 +331,7 @@ Gaborova textura
 Gama
 Generováno
 Geometrie
+
 Geometrie do počátku
 Začít
 Uchopit
@@ -378,6 +381,7 @@ Importovat soubor textury
 Importovat...
 Importování sítě
 Vstup
+
 
 
 Příchozí
@@ -526,6 +530,7 @@ ID objektu
 Index objektu
 Informace o objektu
 Normála objektu
+
 Okluze
 Posun
 Stará barva
@@ -832,6 +837,7 @@ UV
 UV ostrov
 UV mapa
 Měřítko UV
+
 Rozbalení UV
 UV mapa
 Nelze zkontrolovat aktualizace.\nNavštivte prosím {url}.

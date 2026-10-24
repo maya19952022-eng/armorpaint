@@ -117,6 +117,7 @@ Faktor szorítása
 Eredmény szorítása
 Agyag
 Törlés
+
 Réteg törlése
 Színminták törlése
 Vágás vége
@@ -262,6 +263,7 @@ Hiba: A textúra nem található
 Hiba: Nem sikerült beolvasni a betűtípus adatokat
 Hiba: Nem sikerült beolvasni a háló adatokat
 Hiba: Ismeretlen asset formátum
+
 Kizárás
 Kilépés
 Kísérleti funkciók
@@ -329,6 +331,7 @@ Gabor textúra
 Gamma
 Generált
 Geometria
+
 Geometria az origóba
 Kezdés
 Megfogás
@@ -378,6 +381,7 @@ Textúra fájl importálása
 Importálás...
 Háló importálása...
 Bemenet
+
 
 
 Bejövő
@@ -526,6 +530,7 @@ Objektum ID
 Objektum Index
 Objektum Infó
 Objektum Normál
+
 Okklúzió (AO)
 Eltolás
 Régi szín
@@ -832,6 +837,7 @@ UV
 UV sziget
 UV térkép
 UV méretezés
+
 UV kibontás
 UV térkép
 Nem sikerült ellenőrizni a frissítéseket.\nKérjük látogasson el a {url} oldalra.
