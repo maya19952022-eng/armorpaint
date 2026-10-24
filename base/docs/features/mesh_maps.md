@@ -1,6 +1,6 @@
 # Mesh maps
 
-IDs da matriz: BAKE-01, BAKE-02, BAKE-03, BAKE-08, BAKE-09 · Fase: P2
+IDs da matriz: BAKE-01, BAKE-02, BAKE-03, BAKE-05, BAKE-08, BAKE-09 · Fase: P2
 
 Texturas calculadas uma vez a partir da geometria do projeto (oclusão, curvatura, posição, espessura...) e lidas por qualquer material pelo nó **Mesh Map**. São a base para materiais que reagem à forma do modelo: sujeira nas cavidades, desgaste nas quinas, cor por objeto. O projeto tem um slot para cada mapa; assar de novo substitui o mapa do slot.
 
@@ -42,8 +42,9 @@ File → **Bake Mesh Maps...** abre a aba (também em Window → Tabs → Baking
 | **Bake Selected** (assar selecionados) | Assa, em fila, os mapas marcados na lista |
 | **Bake All** (assar todos) | Assa os nove mapas |
 | Barra de progresso | Aparece no lugar dos botões durante o bake, com o nome do mapa; clicar nela cancela a fila |
-| **Common Settings** (ajustes comuns) | **Resolution** (128 a 16384) e **Dilation** (texels em volta das ilhas UV), iguais para todos os mapas |
-| Lista de mapas | Uma caixa por mapa: marcada entra no Bake Selected. "(not baked)" indica slot vazio |
+| **Rebake Outdated (N)** (assar de novo os desatualizados) | Aparece quando N mapas estão desatualizados e os coloca na fila |
+| **Common Settings** (ajustes comuns) | **Resolution** (128 a 16384) e **Dilation** (texels em volta das ilhas UV), iguais para todos os mapas; **Auto Rebake** e **Quick Rebake** (veja abaixo) |
+| Lista de mapas | Uma caixa por mapa: marcada entra no Bake Selected. "(outdated)" ao lado do nome indica um mapa desatualizado |
 | **Settings** de cada mapa | Ajustes só daquele mapa (Samples e Max Distance para Ambient Occlusion, Bent Normals e Thickness; Source e Strength para Curvature; Color Source para ID), a miniatura do mapa assado e os botões **Bake** e **Clear** daquele slot |
 
 Ambient Occlusion e Bent Normals usam os mesmos raios, então dividem Samples e Max Distance. A seleção de mapas e todos os ajustes ficam salvos no projeto.
@@ -52,6 +53,18 @@ Ambient Occlusion e Bent Normals usam os mesmos raios, então dividem Samples e 
 |---|---|
 | Curvature → **Source** (fonte) | **Normals** (padrão): compara a normal de cada texel com a dos vizinhos na mesma ilha UV. **Mesh** (malha): curvatura de cada vértice medida pelas arestas, interpolada no texel; vê as quinas que caem sobre costuras de UV |
 | ID → **Color Source** | **Object** (uma cor por objeto), **Vertex Color** (a cor de vértice), **UV Island** (uma cor por ilha UV de cada objeto) |
+
+## Mapas desatualizados e rebake automático
+
+Cada mapa guarda uma assinatura do que o produziu: os ajustes que valem para ele (resolução, dilatação, antialiasing, high poly, e os do próprio mapa: Samples da oclusão não mudam a curvatura) e a cena (nome, transformação e uma amostra dos vértices, índices e UVs de cada objeto). Quando a assinatura atual difere, o mapa está **desatualizado** ("outdated" na lista).
+
+| Controle | O que faz |
+|---|---|
+| **Rebake Outdated** | Coloca na fila só os mapas desatualizados, cada um vira um passo de histórico |
+| **Auto Rebake** (rebake automático, desligado por padrão) | Quando os ajustes e a cena param de mudar por meio segundo, os mapas desatualizados entram na fila sozinhos. Mudar de novo durante o bake descarta o bake velho e recomeça. Só refaz slots que já têm mapa e não cria passos de histórico (arrastar um slider encheria o histórico) |
+| **Quick Rebake** (ligado por padrão, vale com o Auto Rebake) | Primeiro assa uma prévia em um quarto da resolução, com 1 amostra por texel e um quarto dos raios, e logo depois o mapa completo. Abaixo de 512 vai direto ao mapa completo |
+
+Cancelar um bake (no botão do mapa, na barra de progresso ou por script) faz o Auto Rebake deixar esse mapa como está até a próxima mudança. Uma prévia do Quick Rebake conta como desatualizada até o mapa completo chegar. Undo e redo trazem de volta o mapa com a assinatura dele; com o Auto Rebake ligado, um mapa antigo trazido pelo undo é assado de novo.
 
 ## High poly
 
@@ -105,6 +118,8 @@ Ficam no projeto (`bake_settings` no `.arm`) e valem para os próximos bakes. Na
 | `ignore_backface` | true | Raios atravessam o verso dos triângulos do high poly |
 | `match_by_name` | false | `nome_low` só acha `nome_high`; objetos terminados em `_high` são high poly |
 | `high_polys` | vazio | Nomes dos objetos high poly, um por linha; segue renomeações |
+| `auto_rebake` | false | Assa de novo os mapas desatualizados quando nada muda por meio segundo |
+| `quick_rebake` | true | O Auto Rebake mostra antes uma prévia em um quarto da resolução |
 
 ## Nó Bake Texture
 
@@ -123,7 +138,7 @@ Nenhum atalho novo. Ctrl+Z/Ctrl+Y desfazem e refazem cada bake e cada limpeza de
 
 ## Projeto e export
 
-- O formato do `.arm` sobe para a versão 23, com dois campos no fim do projeto: `mesh_maps` (por slot: `slot`, `set`, `res`, `bpp` e os pixels RGBA comprimidos com LZ4) e `bake_settings` (JSON com os ajustes acima).
+- O formato do `.arm` sobe para a versão 23, com dois campos no fim do projeto: `mesh_maps` (por slot: `slot`, `set`, `res`, `bpp` e os pixels RGBA comprimidos com LZ4) e `bake_settings` (JSON com os ajustes acima e, em `baked`, a assinatura de cada slot, para o projeto reaberto saber o que está desatualizado; sem `baked`, os mapas contam como atualizados).
 - Projetos da versão 22 ou anterior abrem sem mesh maps e com os ajustes padrão.
 - Export as .arm de um grupo (LAY-14) não leva os mesh maps.
 - Os mesh maps não entram no export de texturas; o preset "Mesh maps" é a BAKE-10.
@@ -155,6 +170,11 @@ int   estado   = script_bake_state(MESH_MAP_THICKNESS); // BAKE_STATE_IDLE, _QUE
 script_bake_cancel_slot(MESH_MAP_THICKNESS);           // tira um mapa da fila
 script_bake_cancel();                                   // esvazia a fila
 script_mesh_map_clear(MESH_MAP_ID);
+if (script_bake_outdated(MESH_MAP_OCCLUSION)) { // assado com outros ajustes ou outra cena
+	script_bake_rebake_outdated();               // devolve quantos mapas entraram na fila
+}
+s->auto_rebake  = true;
+s->quick_rebake = false;
 
 // Nó Bake Texture: assa no layer selecionado com o tipo guardado no nó
 ui_node_t *n = script_material_create_node_at("TEX_BAKE", -300.0, 0.0);
@@ -170,6 +190,8 @@ Os enums `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_
 
 - A cage é a superfície do low poly deslocada pela Max Frontal Distance; cage automática suavizada, skew map e cage pintada chegam com a BAKE-04, BAKE-06 e BAKE-07.
 - Não há mapa de altura (Height) vindo do high poly.
+- O rebake refaz o mapa inteiro, mesmo quando só um objeto mudou; não há rebake só da região alterada.
+- A assinatura da cena olha uma amostra de até 1024 valores por array de vértices: uma edição que muda só vértices fora da amostra (raro: reimportar ou aplicar deslocamento muda muitos) não marca o mapa como desatualizado.
 - Um slot por projeto: todos os objetos compartilham o mesmo espaço UV, como as camadas. Texture sets separados são a PRJ-05.
 - UVs fora de 0 a 1 (tiles UDIM além do 1001) não entram nos mapas.
 - Em Normals, quinas que caem numa costura de UV não aparecem; use Source Mesh.

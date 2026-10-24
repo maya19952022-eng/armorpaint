@@ -21,11 +21,11 @@ Como atualizar:
 | Ferramentas e pincel | 28 | 8 | 14 | 6 | 29% |
 | Projeções de fill | 7 | 2 | 1 | 4 | 29% |
 | Procedural e biblioteca | 10 | 1 | 5 | 4 | 10% |
-| Baking | 12 | 7 | 0 | 5 | 58% |
+| Baking | 12 | 7 | 1 | 4 | 58% |
 | Viewport, render e shading | 12 | 2 | 5 | 5 | 17% |
 | Import e export | 13 | 1 | 10 | 2 | 8% |
 | Interface, UX e scripting | 11 | 3 | 6 | 2 | 27% |
-| **Total** | **129** | **38 (29%)** | **52** | **39** | meta: 117 ✅ |
+| **Total** | **129** | **38 (29%)** | **53** | **38** | meta: 117 ✅ |
 
 Fora de escopo nas tabelas: 2. Faltam 79 itens ✅ para a meta.
 
@@ -155,7 +155,7 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 | BAKE-02 | Diálogo Baking mode: settings comuns separados dos por-mapa (12.1), seleção de mapas, bake all/selected | ✅ feito | — | `box_bake.c` (ou modo de workspace "Bake") | P2 | M | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): aba Baking dockável (File → Bake Mesh Maps...) com ajustes comuns (resolução, dilatação) separados dos de cada mapa, seleção de mapas salva no projeto, Bake Selected / Bake All, progresso com cancelar, miniatura, Bake e Clear por mapa. Os ajustes de high poly entram com a BAKE-03. `mesh_maps.md` |
 | BAKE-03 | High-poly list, match by name (sufixos `_low/_high`), cage/offset global, distâncias frontal/rear, average normals, ignore backface, AA 2x2/4x4/8x8, dilation | ✅ feito | high-poly simples, dilate | Estender `render_path_paint.c` bake de high poly: raycast com cage e distâncias; supersample na resolução + downsample; parser de nomes | P2 | L | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): high polys marcados ou casados pelo nome (`_low`/`_high`), raios da cage (Max Frontal Distance) até a Max Rear Distance numa BVH na CPU, normais médias, ignore backface, AA 2x2/4x4/8x8, dilatação; todos os nove mapas vêm do high poly. Normal map em convenção OpenGL. `mesh_maps.md` |
 | BAKE-04 | Auto cage (11.0) | ❌ falta | — | Cage = low-poly extrudido por normal com offset suavizado (`util_geom.c`) | P2 | M |  |
-| BAKE-05 | Auto rebake incremental e quick rebake (12.1) | ❌ falta | — | Marcar região suja (bbox UV) ao mudar parâmetro; rebake só da região; botão "rebake visível" | P2 | M |  |
+| BAKE-05 | Auto rebake incremental e quick rebake (12.1) | 🟡 parcial | — | Marcar região suja (bbox UV) ao mudar parâmetro; rebake só da região; botão "rebake visível" | P2 | M | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): mapas desatualizados (assinatura dos ajustes e da cena) marcados na aba, Rebake Outdated, Auto Rebake (espera 0.5 s sem mudanças, recomeça se mudar de novo, sem passos de histórico) e Quick Rebake (prévia em ¼ da resolução antes do mapa completo). Falta o rebake só da região alterada: o mapa inteiro é refeito. `mesh_maps.md` |
 | BAKE-06 | Skew map painting (12.1): brush/eraser/polygon fill, preview shader, vetores de direção, edge protection, base normal mesh/per-triangle | ❌ falta | — | Skew map = textura RGBA por set; ferramenta de pintura reaproveita brush; bake de normal usa direção do raio = normal interpolada do skew; shader de preview | P2 | L |  |
 | BAKE-07 | Cage painting (12.2): offset de cage por pixel sobre o global, visualização, select/fill, blend, HDR slider, reset | ❌ falta | — | Textura de offset (float) por set; bake lê offset por texel; visualização do cage em wireframe translúcido | P2 | M |  |
 | BAKE-08 | Opacity bake, UV island ID bake | ✅ feito | — | `BAKE_TYPE_OPACITY`, `BAKE_TYPE_UV_ISLAND` em `make_bake.c` | P2 | S | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): tipos Opacity e UV Island no nó Bake Texture (a lista guarda o tipo, não a posição); mesh map ID com Color Source "UV Island"; o slot Opacity vem da BAKE-01. `mesh_maps.md` |
