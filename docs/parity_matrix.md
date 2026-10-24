@@ -21,13 +21,13 @@ Como atualizar:
 | Ferramentas e pincel | 28 | 8 | 14 | 6 | 29% |
 | Projeções de fill | 7 | 2 | 1 | 4 | 29% |
 | Procedural e biblioteca | 10 | 1 | 5 | 4 | 10% |
-| Baking | 12 | 10 | 1 | 1 | 83% |
+| Baking | 12 | 11 | 1 | 0 | 92% |
 | Viewport, render e shading | 12 | 3 | 4 | 5 | 25% |
 | Import e export | 13 | 1 | 10 | 2 | 8% |
 | Interface, UX e scripting | 11 | 3 | 6 | 2 | 27% |
-| **Total** | **129** | **42 (33%)** | **52** | **35** | meta: 117 ✅ |
+| **Total** | **129** | **43 (33%)** | **52** | **34** | meta: 117 ✅ |
 
-Fora de escopo nas tabelas: 2. Faltam 75 itens ✅ para a meta.
+Fora de escopo nas tabelas: 2. Faltam 74 itens ✅ para a meta.
 
 <!-- placar:fim -->
 
@@ -160,7 +160,7 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 | BAKE-07 | Cage painting (12.2): offset de cage por pixel sobre o global, visualização, select/fill, blend, HDR slider, reset | ✅ feito | — | Textura de offset (float) por set; bake lê offset por texel; visualização do cage em wireframe translúcido | P2 | M | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): camada "Cage Map" (fora do material) somada à cage Fixed ou Auto texel a texel: cinza médio = 0, branco/preto = ±Range (aceita valores acima de 1); pincel com modos de mistura, Fill (Face/UV island como seleção), Clear como reset; vista no modo máscara. Sem a malha translúcida da cage no viewport. `mesh_maps.md` |
 | BAKE-08 | Opacity bake, UV island ID bake | ✅ feito | — | `BAKE_TYPE_OPACITY`, `BAKE_TYPE_UV_ISLAND` em `make_bake.c` | P2 | S | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): tipos Opacity e UV Island no nó Bake Texture (a lista guarda o tipo, não a posição); mesh map ID com Color Source "UV Island"; o slot Opacity vem da BAKE-01. `mesh_maps.md` |
 | BAKE-09 | Curvature por geometria (não screen-space) | ✅ feito | — | Curvatura por vértice via adjacência (`util_geom.c`) rasterizada; opção "Mesh" vs "Normal map" | P2 | M | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): Curvature com Source "Mesh": curvatura por vértice pelas arestas (vértices no mesmo lugar soldados), interpolada no texel; enxerga quinas sobre costuras de UV. "Normals" continua o padrão. `mesh_maps.md` |
-| BAKE-10 | Export preset "Mesh maps" grayscale (11.1) | ❌ falta | — | Preset JSON lendo slots de mesh map | P8 | S |  |
+| BAKE-10 | Export preset "Mesh maps" grayscale (11.1) | ✅ feito | — | Preset JSON lendo slots de mesh map | P8 | S | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3) (feito na P2, junto com os mesh maps): preset `mesh_maps` com um arquivo por mapa, AO/curvatura/espessura/opacidade em cinza; canais `mesh_*` disponíveis em qualquer preset. `mesh_maps.md` |
 | BAKE-11 | Bakers GPU RT (AMD) | ✅ feito | (D3D12/Vulkan RT) | — | — | — |  |
 | BAKE-12 | Histórico unificado | ✅ feito | — | — | — | — |  |
 

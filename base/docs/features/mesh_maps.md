@@ -1,6 +1,6 @@
 # Mesh maps
 
-IDs da matriz: BAKE-01, BAKE-02, BAKE-03, BAKE-04, BAKE-05, BAKE-06, BAKE-07, BAKE-08, BAKE-09, VIEW-10 · Fase: P2
+IDs da matriz: BAKE-01 a BAKE-10, VIEW-10 · Fase: P2
 
 Texturas calculadas uma vez a partir da geometria do projeto (oclusão, curvatura, posição, espessura...) e lidas por qualquer material pelo nó **Mesh Map**. São a base para materiais que reagem à forma do modelo: sujeira nas cavidades, desgaste nas quinas, cor por objeto. O projeto tem um slot para cada mapa; assar de novo substitui o mapa do slot.
 
@@ -184,7 +184,8 @@ Nenhum atalho novo. Ctrl+Z/Ctrl+Y desfazem e refazem cada bake e cada limpeza de
 - O formato do `.arm` sobe para a versão 23, com dois campos no fim do projeto: `mesh_maps` (por slot: `slot`, `set`, `res`, `bpp` e os pixels RGBA comprimidos com LZ4) e `bake_settings` (JSON com os ajustes acima e, em `baked`, a assinatura de cada slot, para o projeto reaberto saber o que está desatualizado; sem `baked`, os mapas contam como atualizados).
 - Projetos da versão 22 ou anterior abrem sem mesh maps e com os ajustes padrão.
 - Export as .arm de um grupo (LAY-14) não leva os mesh maps.
-- Os mesh maps não entram no export de texturas; o preset "Mesh maps" é a BAKE-10.
+- File → Export Textures com o preset **mesh_maps** grava um arquivo por mesh map (`<nome>_normal_base`, `_world_space_normals`, `_id`, `_ambient_occlusion`, `_curvature`, `_position`, `_thickness`, `_bent_normals`, `_opacity`), na resolução e no formato do export. Ambient Occlusion, Curvature, Thickness e Opacity saem em tons de cinza. Um slot não assado sai com o valor padrão (e um aviso no console).
+- Qualquer preset pode usar os canais `mesh_ao`, `mesh_curvature`, `mesh_thickness`, `mesh_opacity` (cinza) e `mesh_normal_*`, `mesh_world_normal_*`, `mesh_id_*`, `mesh_position_*`, `mesh_bent_normal_*` (com `_r`, `_g` ou `_b`), por exemplo para juntar oclusão e curvatura em uma textura; eles aparecem na lista de canais do editor de presets.
 
 ## Script
 
@@ -221,6 +222,8 @@ int   estado   = script_bake_state(MESH_MAP_THICKNESS); // BAKE_STATE_IDLE, _QUE
 script_bake_cancel_slot(MESH_MAP_THICKNESS);           // tira um mapa da fila
 script_bake_cancel();                                   // esvazia a fila
 script_mesh_map_clear(MESH_MAP_ID);
+script_export_set_preset("mesh_maps"); // preset de export pelo nome do arquivo
+export_texture_run("/caminho/da/pasta", false);
 if (script_bake_outdated(MESH_MAP_OCCLUSION)) { // assado com outros ajustes ou outra cena
 	script_bake_rebake_outdated();               // devolve quantos mapas entraram na fila
 }
