@@ -37,7 +37,7 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 
 | Fase | PR | ✅ | 🟡 | ❌ | O que mudou |
 |---|---|---|---|---|---|
-| P0 | (este PR) | 20 | 61 | 48 | Matriz criada a partir do plano; nenhum item muda de status na P0 (infraestrutura). |
+| P0 | [PR 1](https://github.com/maya19952022-eng/armorpaint/pull/1) | 20 | 61 | 48 | Matriz criada a partir do plano; nenhum item muda de status na P0 (infraestrutura). |
 
 ## 4.1 Projeto, texture sets e assets
 
