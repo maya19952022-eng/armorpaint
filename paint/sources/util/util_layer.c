@@ -1545,7 +1545,9 @@ slot_layer_t *layers_paste_mask(slot_layer_t *src, slot_layer_t *target) {
 		return NULL;
 	}
 	tab_layers_remap_all_layer_pointers(pointers);
+	m->mask_opacity = src->mask_opacity;
 	history_new_white_mask();
+	history_keep_layer_props(m); // Redo gives back the opacity
 	slot_layer_clear(m, 0xffffffff, NULL, 1.0, layers_default_rough, 0.0);
 	context_set_layer(m);
 	history_paste_mask();
@@ -1554,7 +1556,6 @@ slot_layer_t *layers_paste_mask(slot_layer_t *src, slot_layer_t *target) {
 	draw_scaled_image(src->texpaint, 0, 0, m->texpaint->width, m->texpaint->height);
 	draw_set_pipeline(NULL);
 	draw_end();
-	m->mask_opacity = src->mask_opacity;
 	make_material_parse_mesh_material();
 	g_context->layers_preview_dirty = true;
 	return m;

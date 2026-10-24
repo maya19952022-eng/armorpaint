@@ -50,13 +50,16 @@ void tab_layers_select_on_click(slot_layer_t *l, f32 uix, f32 uiy) {
 // Shows the mask alone in the viewport, again on the same mask goes back to the previous viewport mode
 void tab_layers_isolate_mask(slot_layer_t *m) {
 	static viewport_mode_t prev_mode = VIEWPORT_MODE_LIT;
-	if (g_context->viewport_mode == VIEWPORT_MODE_MASK && g_context->layer == m) {
+	static slot_layer_t   *isolated  = NULL; // The click already made m active, compare with the mask shown
+	if (g_context->viewport_mode == VIEWPORT_MODE_MASK && isolated == m) {
+		isolated = NULL;
 		context_set_viewport_mode(prev_mode);
 	}
 	else {
 		if (g_context->viewport_mode != VIEWPORT_MODE_MASK) {
 			prev_mode = g_context->viewport_mode;
 		}
+		isolated = m;
 		context_set_layer(m);
 		context_set_viewport_mode(VIEWPORT_MODE_MASK);
 	}
