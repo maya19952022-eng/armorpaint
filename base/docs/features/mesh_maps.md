@@ -1,6 +1,6 @@
 # Mesh maps
 
-IDs da matriz: BAKE-01, BAKE-02, BAKE-03, BAKE-04, BAKE-05, BAKE-06, BAKE-08, BAKE-09 · Fase: P2
+IDs da matriz: BAKE-01, BAKE-02, BAKE-03, BAKE-04, BAKE-05, BAKE-06, BAKE-07, BAKE-08, BAKE-09, VIEW-10 · Fase: P2
 
 Texturas calculadas uma vez a partir da geometria do projeto (oclusão, curvatura, posição, espessura...) e lidas por qualquer material pelo nó **Mesh Map**. São a base para materiais que reagem à forma do modelo: sujeira nas cavidades, desgaste nas quinas, cor por objeto. O projeto tem um slot para cada mapa; assar de novo substitui o mapa do slot.
 
@@ -103,7 +103,24 @@ O skew map é uma camada de pintura especial, chamada "Skew Map". Ela fica de fo
 | **Base Normal** | **Mesh** (padrão): onde nada foi pintado, os raios seguem as normais suavizadas e o skew map os vira para a normal do triângulo. **Per Triangle**: o contrário |
 | **Edge Protection** (ligado por padrão) | Perto das quinas vivas (faces a mais de 30 graus, ou borda da malha), o raio volta suavemente à normal suavizada, no quarto do triângulo junto à quina: virar ali abriria buracos entre as faces |
 
-O skew map só muda os raios para o high poly; sem high poly, não muda nada. O valor de um texel é o cinza vezes a opacidade da camada. Mudar o skew map deixa os mapas desatualizados (BAKE-05). Selecionar outra camada volta ao modo de viewport anterior.
+O skew map só muda os raios para o high poly; sem high poly, não muda nada. O valor de um texel é o cinza vezes a opacidade da camada. Mudar o skew map deixa os mapas desatualizados (BAKE-05). Selecionar outra camada volta ao modo de viewport anterior. Para ver o efeito, use o modo de viewport **Ray Directions** (veja abaixo).
+
+## Cage map
+
+A **cage map** desloca a cage, texel a texel, por cima da cage escolhida (Fixed Distance ou Auto): onde uma parte do high poly fica fora da cage, pinte para empurrá-la; onde o raio pega uma peça vizinha, pinte para recolhê-la. É outra camada especial ("Cage Map"), de fora do material, pintada como o skew map.
+
+Na aba Baking, seção **Cage Map**: **Paint**, **Fill**, **Clear** e **Value** como no skew map, e:
+
+| Controle | O que faz |
+|---|---|
+| Cinza pintado | Cinza médio (0.5) não muda nada; branco empurra a cage para fora pela Range; preto a recolhe pela Range. Transparente (Clear, borracha) também não muda nada |
+| **Range** | Deslocamento do branco, relativo à diagonal da cena (padrão 0.05). Valores digitados acima de 1 são aceitos |
+
+O deslocamento é multiplicado pela opacidade da camada, e a cage nunca desce abaixo do low poly. No modo máscara, o viewport mostra a cage map com o cinza médio onde nada foi pintado.
+
+## Viewport
+
+O menu de modos do viewport (Mode na barra de menus, ou o atalho dos modos) ganhou a seção **Mesh Maps**: cada um dos nove mapas, mostrado na UV da malha como o nó Mesh Map o lê (slot vazio mostra o valor padrão), e **Ray Directions**: a direção do raio de cada texel até o high poly, em espaço de mundo (`d * 0.5 + 0.5`), já com o skew map, a Base Normal e a Edge Protection. As direções são calculadas na CPU em 512x512 e refeitas, enquanto o modo está aberto, quando os ajustes, a cena ou o skew map mudam.
 
 ## Como o bake funciona
 
@@ -138,6 +155,7 @@ Ficam no projeto (`bake_settings` no `.arm`) e valem para os próximos bakes. Na
 | `skew_base` | `BAKE_SKEW_BASE_MESH` | `BAKE_SKEW_BASE_TRIANGLE`: sem skew, os raios seguem a normal do triângulo |
 | `edge_protection` | true | Raios voltam à normal suavizada perto das quinas vivas |
 | `paint_value` | 1.0 | Cinza pintado no skew map e no cage map |
+| `cage_range` | 0.05 | Deslocamento da cage onde a cage map é branca, relativo à diagonal da cena |
 | `average_normals` | true | Raios pela média das normais nos vértices no mesmo lugar |
 | `ignore_backface` | true | Raios atravessam o verso dos triângulos do high poly |
 | `match_by_name` | false | `nome_low` só acha `nome_high`; objetos terminados em `_high` são high poly |
@@ -186,6 +204,11 @@ s->aa             = 4;     // 4x4 amostras por texel
 s->cage           = BAKE_CAGE_AUTO; // cage automática
 slot_layer_t *skew = script_bake_paint_role(BAKE_ROLE_SKEW); // cria e seleciona o skew map
 script_bake_role_fill(BAKE_ROLE_SKEW, 1.0);                  // tudo branco; -1 limpa
+script_bake_paint_role(BAKE_ROLE_CAGE);
+script_bake_role_fill(BAKE_ROLE_CAGE, 0.75);                 // cage meia Range para fora
+s->cage_range = 0.1;
+script_set_viewport_mesh_map(MESH_MAP_OCCLUSION);  // modo de viewport do mapa; MESH_MAP_COUNT para Ray Directions
+f32_array_t *dirs = script_bake_ray_directions_pixels(); // depois de um frame no modo Ray Directions
 s->curvature_mode = MESH_MAP_CURVATURE_MESH; // curvatura pela malha
 s->id_source      = MESH_MAP_ID_UV_ISLAND;   // uma cor por ilha UV
 // A cada frame:
@@ -217,7 +240,9 @@ Os enums `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_
 ## Limitações
 
 - Na cage Fixed Distance, a cage é a superfície do low poly deslocada pela Max Frontal Distance. A cage Auto decide por amostra pela orientação do high poly: faces com a normal para dentro, ou planos soltos virados para baixo sobre o modelo, enganam a decisão. A cage pintada chega com a BAKE-07.
-- O skew map é amostrado no texel mais próximo da camada; a visualização dos vetores de direção dos raios ainda não existe.
+- O skew map e a cage map são amostrados no texel mais próximo da camada.
+- A cage aparece como mapa (modo máscara), não como uma malha translúcida no viewport.
+- Ray Directions mostra as direções como cores por texel, não como setas.
 - Não há mapa de altura (Height) vindo do high poly.
 - O rebake refaz o mapa inteiro, mesmo quando só um objeto mudou; não há rebake só da região alterada.
 - A assinatura da cena olha uma amostra de até 1024 vértices inteiros por array (posição, normal, UV, cor) e as transformações arredondadas: uma edição que muda só vértices fora da amostra (raro: reimportar ou aplicar deslocamento muda muitos) não marca o mapa como desatualizado.

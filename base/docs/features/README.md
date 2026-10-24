@@ -64,4 +64,4 @@ IDs da matriz: LAY-01, ... · Fase: P1 · Desde: <PR>
 | [effect_nodes.md](effect_nodes.md) | LAY-06, LAY-07, LAY-08, LAY-10 | P1 |
 | [effect_stack.md](effect_stack.md) | LAY-05, LAY-07, LAY-09 | P1 |
 | [geometry_mask.md](geometry_mask.md) | LAY-11 | P1 |
-| [mesh_maps.md](mesh_maps.md) | BAKE-01, BAKE-02, BAKE-03, BAKE-04, BAKE-05, BAKE-06, BAKE-08, BAKE-09 | P2 |
+| [mesh_maps.md](mesh_maps.md) | BAKE-01, BAKE-02, BAKE-03, BAKE-04, BAKE-05, BAKE-06, BAKE-07, BAKE-08, BAKE-09, VIEW-10 | P2 |

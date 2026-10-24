@@ -21,13 +21,13 @@ Como atualizar:
 | Ferramentas e pincel | 28 | 8 | 14 | 6 | 29% |
 | Projeções de fill | 7 | 2 | 1 | 4 | 29% |
 | Procedural e biblioteca | 10 | 1 | 5 | 4 | 10% |
-| Baking | 12 | 8 | 2 | 2 | 67% |
-| Viewport, render e shading | 12 | 2 | 5 | 5 | 17% |
+| Baking | 12 | 10 | 1 | 1 | 83% |
+| Viewport, render e shading | 12 | 3 | 4 | 5 | 25% |
 | Import e export | 13 | 1 | 10 | 2 | 8% |
 | Interface, UX e scripting | 11 | 3 | 6 | 2 | 27% |
-| **Total** | **129** | **39 (30%)** | **54** | **36** | meta: 117 ✅ |
+| **Total** | **129** | **42 (33%)** | **52** | **35** | meta: 117 ✅ |
 
-Fora de escopo nas tabelas: 2. Faltam 78 itens ✅ para a meta.
+Fora de escopo nas tabelas: 2. Faltam 75 itens ✅ para a meta.
 
 <!-- placar:fim -->
 
@@ -156,8 +156,8 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 | BAKE-03 | High-poly list, match by name (sufixos `_low/_high`), cage/offset global, distâncias frontal/rear, average normals, ignore backface, AA 2x2/4x4/8x8, dilation | ✅ feito | high-poly simples, dilate | Estender `render_path_paint.c` bake de high poly: raycast com cage e distâncias; supersample na resolução + downsample; parser de nomes | P2 | L | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): high polys marcados ou casados pelo nome (`_low`/`_high`), raios da cage (Max Frontal Distance) até a Max Rear Distance numa BVH na CPU, normais médias, ignore backface, AA 2x2/4x4/8x8, dilatação; todos os nove mapas vêm do high poly. Normal map em convenção OpenGL. `mesh_maps.md` |
 | BAKE-04 | Auto cage (11.0) | ✅ feito | — | Cage = low-poly extrudido por normal com offset suavizado (`util_geom.c`) | P2 | M | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): Cage "Auto" na seção High Poly: por amostra, o raio sai logo depois do high poly acima quando a amostra está dentro dele (orientação das faces), senão do low poly; a Max Frontal Distance limita a busca. Por amostra em vez de por vértice para seguir o high poly dentro de triângulos grandes. `mesh_maps.md` |
 | BAKE-05 | Auto rebake incremental e quick rebake (12.1) | 🟡 parcial | — | Marcar região suja (bbox UV) ao mudar parâmetro; rebake só da região; botão "rebake visível" | P2 | M | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): mapas desatualizados (assinatura dos ajustes e da cena) marcados na aba, Rebake Outdated, Auto Rebake (espera 0.5 s sem mudanças, recomeça se mudar de novo, sem passos de histórico) e Quick Rebake (prévia em ¼ da resolução antes do mapa completo). Falta o rebake só da região alterada: o mapa inteiro é refeito. `mesh_maps.md` |
-| BAKE-06 | Skew map painting (12.1): brush/eraser/polygon fill, preview shader, vetores de direção, edge protection, base normal mesh/per-triangle | 🟡 parcial | — | Skew map = textura RGBA por set; ferramenta de pintura reaproveita brush; bake de normal usa direção do raio = normal interpolada do skew; shader de preview | P2 | L | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): camada "Skew Map" (fora do material) pintada com pincel, borracha e Fill (Face = polígono) no cinza de Value, prévia no modo máscara, Fill/Clear, Base Normal Mesh/Per Triangle, Edge Protection; o raio vira da normal suavizada para a do triângulo. Falta a visualização dos vetores de direção. `mesh_maps.md` |
-| BAKE-07 | Cage painting (12.2): offset de cage por pixel sobre o global, visualização, select/fill, blend, HDR slider, reset | ❌ falta | — | Textura de offset (float) por set; bake lê offset por texel; visualização do cage em wireframe translúcido | P2 | M |  |
+| BAKE-06 | Skew map painting (12.1): brush/eraser/polygon fill, preview shader, vetores de direção, edge protection, base normal mesh/per-triangle | ✅ feito | — | Skew map = textura RGBA por set; ferramenta de pintura reaproveita brush; bake de normal usa direção do raio = normal interpolada do skew; shader de preview | P2 | L | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): camada "Skew Map" (fora do material) pintada com pincel, borracha e Fill (Face = polígono) no cinza de Value, prévia no modo máscara, Fill/Clear, Base Normal Mesh/Per Triangle, Edge Protection; o raio vira da normal suavizada para a do triângulo. Os vetores de direção aparecem como cores no modo de viewport Ray Directions (VIEW-10). `mesh_maps.md` |
+| BAKE-07 | Cage painting (12.2): offset de cage por pixel sobre o global, visualização, select/fill, blend, HDR slider, reset | ✅ feito | — | Textura de offset (float) por set; bake lê offset por texel; visualização do cage em wireframe translúcido | P2 | M | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): camada "Cage Map" (fora do material) somada à cage Fixed ou Auto texel a texel: cinza médio = 0, branco/preto = ±Range (aceita valores acima de 1); pincel com modos de mistura, Fill (Face/UV island como seleção), Clear como reset; vista no modo máscara. Sem a malha translúcida da cage no viewport. `mesh_maps.md` |
 | BAKE-08 | Opacity bake, UV island ID bake | ✅ feito | — | `BAKE_TYPE_OPACITY`, `BAKE_TYPE_UV_ISLAND` em `make_bake.c` | P2 | S | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): tipos Opacity e UV Island no nó Bake Texture (a lista guarda o tipo, não a posição); mesh map ID com Color Source "UV Island"; o slot Opacity vem da BAKE-01. `mesh_maps.md` |
 | BAKE-09 | Curvature por geometria (não screen-space) | ✅ feito | — | Curvatura por vértice via adjacência (`util_geom.c`) rasterizada; opção "Mesh" vs "Normal map" | P2 | M | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): Curvature com Source "Mesh": curvatura por vértice pelas arestas (vértices no mesmo lugar soldados), interpolada no texel; enxerga quinas sobre costuras de UV. "Normals" continua o padrão. `mesh_maps.md` |
 | BAKE-10 | Export preset "Mesh maps" grayscale (11.1) | ❌ falta | — | Preset JSON lendo slots de mesh map | P8 | S |  |
@@ -177,7 +177,7 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 | VIEW-07 | Tessellation/displacement no viewport com unidade física (11.1) | 🟡 parcial | Apply Displacement destrutivo | Displacement no vertex shader (`make_mesh.c`) para meshes densos; slider em unidades físicas | P7 | M |  |
 | VIEW-08 | Câmeras salvas / bookmarks | ❌ falta | — | Lista em `project_t`; menu Camera | P7 | S |  |
 | VIEW-09 | Solo por texture set / UV tile, highlight | ❌ falta | — | Depende de PRJ-05 | P5 | S |  |
-| VIEW-10 | Modos por canal e mesh maps | 🟡 parcial | canais sim, mesh maps não | Adicionar modos de mesh map ao `viewport_mode_t` | P2 | S |  |
+| VIEW-10 | Modos por canal e mesh maps | ✅ feito | canais sim, mesh maps não | Adicionar modos de mesh map ao `viewport_mode_t` | P2 | S | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): seção Mesh Maps no menu de modos do viewport com os nove mapas e Ray Directions (direção dos raios ao high poly com skew). `mesh_maps.md` |
 | VIEW-11 | Path tracer | ✅ feito | (próprio) | OpenPBR na P7 | P7 | — |  |
 | VIEW-12 | Wireframe, texels, grid, compass, envmap, split view | ✅ feito | — | — | — | — |  |
 | VIEW-13 | Sparse virtual textures (texturas enormes) | ⛔ fora de escopo | (16K já suportado) | — | — | — |  |
