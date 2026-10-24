@@ -53,6 +53,7 @@
 #include "nodes_material/color_balance_node.c"
 #include "nodes_material/color_mask_node.c"
 #include "nodes_material/color_ramp_node.c"
+#include "nodes_material/color_selection_node.c"
 #include "nodes_material/combine_color_node.c"
 #include "nodes_material/combine_xyz_node.c"
 #include "nodes_material/compare_mask_node.c"

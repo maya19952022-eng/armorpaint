@@ -45,6 +45,7 @@ void nodes_material_init() {
 	color_balance_node_init();
 	color_mask_node_init();
 	color_ramp_node_init();
+	color_selection_node_init();
 	combine_color_node_init();
 	gamma_node_init();
 	hue_saturation_value_node_init();

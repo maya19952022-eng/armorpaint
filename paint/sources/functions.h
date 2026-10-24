@@ -1385,6 +1385,7 @@ void              noise_texture_node_init();
 void              brightness_contrast_node_init();
 void              color_mask_node_init();
 void              color_balance_node_init();
+void              color_selection_node_init();
 void              compare_mask_node_init();
 void              levels_node_init();
 void              sharpen_node_init();
