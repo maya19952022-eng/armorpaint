@@ -460,6 +460,9 @@ gpu_texture_t *uniforms_ext_tex_link(object_t *object, shader_data_t *mat, char 
 		}
 		return t;
 	}
+	if (starts_with(link, "_texmeshmap")) { // Mesh Map node, the slot follows the prefix
+		return util_bake_texture(parse_int(link + string_length("_texmeshmap")));
+	}
 	if (starts_with(link, "_texpaint_pack_vert")) {
 		render_target_t *rt = any_map_get(render_path_render_targets, string_tmp("texpaint_pack%c", link[string_length(link) - 1]));
 		return rt->_image;

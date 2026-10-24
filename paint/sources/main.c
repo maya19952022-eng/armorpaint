@@ -76,6 +76,7 @@
 #include "nodes_material/material_node.c"
 #include "nodes_material/material_output_node.c"
 #include "nodes_material/math2_node.c"
+#include "nodes_material/mesh_map_node.c"
 #include "nodes_material/mix_color_node.c"
 #include "nodes_material/mix_normal_map_node.c"
 #include "nodes_material/noise_texture_node.c"
