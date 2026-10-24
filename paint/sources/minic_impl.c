@@ -1488,6 +1488,21 @@ void script_bake_node(ui_node_t *node) {
 	}
 }
 
+// The slot holds a map baked from other settings or another scene, or only a quick preview
+bool script_bake_outdated(i32 slot) {
+	return util_bake_outdated(slot);
+}
+
+// Queues the outdated maps, returns how many
+i32 script_bake_rebake_outdated(void) {
+	return util_bake_run_outdated();
+}
+
+// Steps that undo can take back
+i32 script_history_undos(void) {
+	return history_undos;
+}
+
 gpu_texture_t *script_bake_node_texture(ui_node_t *node) {
 	return node != NULL && string_equals(node->type, "TEX_BAKE") ? bake_texture_node_texture(node) : NULL;
 }

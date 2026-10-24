@@ -59,7 +59,11 @@ struct bake_job {
 	void (*done)(void *data);
 	void *done_data;
 	void *data;
-	void *owner; // Custom job, the node or tool that started it
+	void *owner;         // Custom job, the node or tool that started it
+	bool  automatic;     // Queued by auto rebake, leaves no history step
+	bool  quick;         // Preview at a quarter of the resolution
+	u32   settings_hash; // util_bake_settings_hash of the settings it was queued with
+	u32   sig;           // Settings and scene it bakes, set when it starts
 };
 
 // clang-format off
@@ -80,7 +84,9 @@ struct bake_job {
 	.ignore_backface    = true,         \
 	.match_by_name      = false,        \
 	.high_polys         = "",           \
-	.curvature_mode     = MESH_MAP_CURVATURE_NORMALS \
+	.curvature_mode     = MESH_MAP_CURVATURE_NORMALS, \
+	.auto_rebake        = false,        \
+	.quick_rebake       = true          \
 }
 // clang-format on
 
@@ -92,8 +98,18 @@ static bake_job_t   **util_bake_jobs       = NULL;
 static i32            util_bake_jobs_count = 0;
 static bake_job_t    *util_bake_job        = NULL;
 
+// What each slot was baked from: 0 unknown (an older project), even for a full bake, odd for a quick preview
+static u32 util_bake_sigs[MESH_MAP_COUNT];
+static u32 util_bake_skip_sigs[MESH_MAP_COUNT]; // A cancelled bake is not started again by auto rebake for the same signature
+static u32 util_bake_seen_sigs[MESH_MAP_COUNT]; // Auto rebake waits until the signature stops changing
+static f64 util_bake_seen_time[MESH_MAP_COUNT];
+static f64 util_bake_auto_last = 0.0;
+
 #define UTIL_BAKE_THREADS      16
 #define UTIL_BAKE_FRAME_BUDGET 0.03 // Seconds of work per frame
+#define UTIL_BAKE_HASH_SAMPLES 1024 // Values hashed per vertex array, the signature of a mesh
+#define UTIL_BAKE_AUTO_DELAY   0.5  // Seconds without changes before auto rebake starts
+#define UTIL_BAKE_QUICK_MIN    512  // Resolutions below this skip the quick preview
 
 char *util_bake_slot_name(i32 slot) {
 	switch (slot) {
@@ -1166,11 +1182,141 @@ void util_bake_maps_changed() {
 	}
 }
 
+static u32 util_bake_fnv(u32 h, void *data, i32 size) {
+	u8 *b = data;
+	for (i32 i = 0; i < size; ++i) {
+		h = (h ^ b[i]) * 16777619u;
+	}
+	return h;
+}
+
+static u32 util_bake_fnv_i32(u32 h, i32 v) {
+	return util_bake_fnv(h, &v, sizeof(v));
+}
+
+static u32 util_bake_fnv_f32(u32 h, f32 v) {
+	return util_bake_fnv(h, &v, sizeof(v));
+}
+
+static u32 util_bake_fnv_string(u32 h, char *s) {
+	s = s != NULL ? s : "";
+	return util_bake_fnv(h, s, string_length(s) + 1);
+}
+
+// The settings that change what a slot bakes
+static u32 util_bake_settings_hash(i32 slot, bake_settings_t *s) {
+	u32 h = util_bake_fnv_i32(2166136261u, slot);
+	h     = util_bake_fnv_i32(h, s->res);
+	h     = util_bake_fnv_i32(h, s->dilation);
+	if (!(slot == MESH_MAP_CURVATURE && s->curvature_mode == MESH_MAP_CURVATURE_NORMALS)) { // Curvature from the normals has no antialiasing
+		h = util_bake_fnv_i32(h, s->aa);
+	}
+	h = util_bake_fnv_f32(h, s->front_distance);
+	h = util_bake_fnv_f32(h, s->rear_distance);
+	h = util_bake_fnv_i32(h, s->average_normals);
+	h = util_bake_fnv_i32(h, s->ignore_backface);
+	h = util_bake_fnv_i32(h, s->match_by_name);
+	h = util_bake_fnv_string(h, s->high_polys);
+	if (slot == MESH_MAP_OCCLUSION || slot == MESH_MAP_BENT_NORMAL) {
+		h = util_bake_fnv_i32(h, s->occlusion_samples);
+		h = util_bake_fnv_f32(h, s->occlusion_distance);
+	}
+	else if (slot == MESH_MAP_THICKNESS) {
+		h = util_bake_fnv_i32(h, s->thickness_samples);
+		h = util_bake_fnv_f32(h, s->thickness_distance);
+	}
+	else if (slot == MESH_MAP_CURVATURE) {
+		h = util_bake_fnv_f32(h, s->curvature_strength);
+		h = util_bake_fnv_i32(h, s->curvature_mode);
+	}
+	else if (slot == MESH_MAP_ID) {
+		h = util_bake_fnv_i32(h, s->id_source);
+	}
+	return h;
+}
+
+static bool util_bake_uses_colors(i32 slot, bake_settings_t *s) {
+	return slot == MESH_MAP_ID && s->id_source == MESH_MAP_ID_VERTEX_COLOR;
+}
+
+// The objects as the bakers see them: names, transforms and a sample of each vertex array
+static u32 util_bake_scene_hash(bool colors) {
+	mesh_object_t_array_t *objects = g_project->_->paint_objects;
+	u32                    h       = util_bake_fnv_i32(2166136261u, objects != NULL ? objects->length : 0);
+	for (i32 oi = 0; objects != NULL && oi < objects->length; ++oi) {
+		mesh_object_t *o  = objects->buffer[oi];
+		mesh_data_t   *md = o->data;
+		h                 = util_bake_fnv_string(h, o->base->name);
+		h                 = util_bake_fnv(h, &o->base->transform->world_unpack, sizeof(mat4_t));
+		h                 = util_bake_fnv_f32(h, md->scale_tex);
+		u32_array_t *ind  = md->index_array;
+		i32          step = ind->length / UTIL_BAKE_HASH_SAMPLES > 1 ? ind->length / UTIL_BAKE_HASH_SAMPLES : 1;
+		h                 = util_bake_fnv_i32(h, ind->length);
+		for (i32 i = 0; i < ind->length; i += step) {
+			h = util_bake_fnv_i32(h, ind->buffer[i]);
+		}
+		char *arrays[] = {"pos", "nor", "tex", "col"};
+		for (i32 a = 0; a < (colors ? 4 : 3); ++a) {
+			vertex_array_t *va = mesh_data_get_vertex_array(md, arrays[a]);
+			if (va == NULL) {
+				h = util_bake_fnv_i32(h, -1);
+				continue;
+			}
+			i16_array_t *v = va->values;
+			step           = v->length / UTIL_BAKE_HASH_SAMPLES > 1 ? v->length / UTIL_BAKE_HASH_SAMPLES : 1;
+			h              = util_bake_fnv_i32(h, v->length);
+			for (i32 i = 0; i < v->length; i += step) {
+				h = util_bake_fnv(h, &v->buffer[i], sizeof(i16));
+			}
+		}
+	}
+	return h;
+}
+
+// Even and never 0, a quick preview stores it with the lowest bit set
+static u32 util_bake_combine(u32 settings, u32 scene) {
+	u32 h = util_bake_fnv_i32(util_bake_fnv_i32(2166136261u, settings), scene) & ~1u;
+	return h != 0 ? h : 2;
+}
+
+// What a bake of the slot with the current settings and scene would be made from
+u32 util_bake_signature(i32 slot) {
+	bake_settings_t *s = &util_bake_settings;
+	return util_bake_combine(util_bake_settings_hash(slot, s), util_bake_scene_hash(util_bake_uses_colors(slot, s)));
+}
+
+// Bit per slot holding a map baked from other settings or another scene, or only a quick preview
+i32 util_bake_outdated_mask() {
+	bake_settings_t *s    = &util_bake_settings;
+	i32              mask = 0;
+	u32              scene[2];
+	bool             hashed[2] = {false, false}; // The scene without and with vertex colors, hashed once
+	for (i32 slot = 0; slot < MESH_MAP_COUNT; ++slot) {
+		if (util_bake_maps[slot] == NULL || util_bake_sigs[slot] == 0) {
+			continue;
+		}
+		i32 colors = util_bake_uses_colors(slot, s) ? 1 : 0;
+		if (!hashed[colors]) {
+			scene[colors]  = util_bake_scene_hash(colors);
+			hashed[colors] = true;
+		}
+		if (util_bake_combine(util_bake_settings_hash(slot, s), scene[colors]) != util_bake_sigs[slot]) {
+			mask |= 1 << slot;
+		}
+	}
+	return mask;
+}
+
+bool util_bake_outdated(i32 slot) {
+	return slot >= 0 && slot < MESH_MAP_COUNT && ((util_bake_outdated_mask() >> slot) & 1);
+}
+
 static void util_bake_set_map(i32 slot, gpu_texture_t *tex, bool history) {
 	if (history) {
 		history_step_t *step = history_push(HISTORY_ACTION_BAKE_MESH_MAP);
 		step->mesh_map_slot  = slot;
 		step->mesh_map_tex   = util_bake_maps[slot]; // Kept for undo
+		step->mesh_map_sig   = util_bake_sigs[slot];
 		if (tex == NULL) {
 			step->name = tr("Clear Mesh Map");
 		}
@@ -1188,8 +1334,11 @@ void util_bake_swap_history(history_step_t *step) {
 		return;
 	}
 	gpu_texture_t *tex   = util_bake_maps[slot];
+	u32            sig   = util_bake_sigs[slot];
 	util_bake_maps[slot] = step->mesh_map_tex;
+	util_bake_sigs[slot] = step->mesh_map_sig;
 	step->mesh_map_tex   = tex;
+	step->mesh_map_sig   = sig;
 	util_bake_maps_changed();
 }
 
@@ -1198,6 +1347,7 @@ void util_bake_clear(i32 slot) {
 		return;
 	}
 	util_bake_set_map(slot, NULL, true);
+	util_bake_sigs[slot] = 0;
 	util_bake_maps_changed();
 }
 
@@ -1290,6 +1440,15 @@ void util_bake_update(void *_) {
 		}
 	}
 	else if (job->raster == NULL) {
+		job->sig = util_bake_combine(job->settings_hash, util_bake_scene_hash(util_bake_uses_colors(job->slot, &job->settings)));
+		if (job->quick) { // A fast preview, the full bake follows
+			bake_settings_t *s   = &job->settings;
+			s->res               = s->res / 4 > 128 ? s->res / 4 : 128;
+			s->dilation          = (s->dilation + 3) / 4;
+			s->aa                = 1;
+			s->occlusion_samples = s->occlusion_samples / 4 > 1 ? s->occlusion_samples / 4 : 1;
+			s->thickness_samples = s->thickness_samples / 4 > 1 ? s->thickness_samples / 4 : 1;
+		}
 		i32  res            = job->settings.res > 0 ? job->settings.res : 1;
 		bool colors         = job->slot == MESH_MAP_ID && job->settings.id_source == MESH_MAP_ID_VERTEX_COLOR;
 		bool vertex_curv    = job->slot == MESH_MAP_CURVATURE && job->settings.curvature_mode == MESH_MAP_CURVATURE_MESH;
@@ -1303,7 +1462,8 @@ void util_bake_update(void *_) {
 	else {
 		util_bake_dilate(job->out, job->raster->tri, job->raster->res, job->settings.dilation, job->slot);
 		gpu_texture_t *tex = util_bake_upload(job->slot, job->out, job->raster->res);
-		util_bake_set_map(job->slot, tex, true);
+		util_bake_set_map(job->slot, tex, !job->automatic); // Auto rebake would fill the history while a setting is dragged
+		util_bake_sigs[job->slot] = job->quick ? job->sig | 1 : job->sig;
 		util_bake_maps_changed();
 		util_bake_finish(job);
 	}
@@ -1330,13 +1490,96 @@ bool util_bake_run(i32 slot, void (*done)(void *), void *done_data) {
 	if (util_bake_state(slot, NULL) == BAKE_STATE_QUEUED && done == NULL) {
 		return true;
 	}
-	bake_job_t *job = calloc(1, sizeof(bake_job_t));
-	job->slot       = slot;
-	job->settings   = util_bake_settings;
-	job->done       = done;
-	job->done_data  = done_data;
+	bake_job_t *job    = calloc(1, sizeof(bake_job_t));
+	job->slot          = slot;
+	job->settings      = util_bake_settings;
+	job->settings_hash = util_bake_settings_hash(slot, &util_bake_settings);
+	job->done          = done;
+	job->done_data     = done_data;
 	util_bake_push(job);
 	return true;
+}
+
+// Queues the slots whose map is outdated, returns how many
+i32 util_bake_run_outdated() {
+	i32 mask  = util_bake_outdated_mask();
+	i32 count = 0;
+	for (i32 slot = 0; slot < MESH_MAP_COUNT; ++slot) {
+		if ((mask >> slot) & 1) {
+			util_bake_run(slot, NULL, NULL);
+			count++;
+		}
+	}
+	return count;
+}
+
+static void util_bake_run_auto(i32 slot, u32 settings_hash) {
+	bool quick = util_bake_settings.quick_rebake && util_bake_settings.res >= UTIL_BAKE_QUICK_MIN;
+	for (i32 pass = quick ? 0 : 1; pass < 2; ++pass) {
+		bake_job_t *job    = calloc(1, sizeof(bake_job_t));
+		job->slot          = slot;
+		job->settings      = util_bake_settings;
+		job->settings_hash = settings_hash;
+		job->automatic     = true;
+		job->quick         = pass == 0;
+		util_bake_push(job);
+	}
+}
+
+// Auto rebake jobs of a slot made for older settings or another scene start over
+static void util_bake_drop_stale(i32 slot, u32 settings_hash, u32 sig) {
+	i32 kept = 0;
+	for (i32 i = 0; i < util_bake_jobs_count; ++i) {
+		bake_job_t *job = util_bake_jobs[i];
+		if (job->slot == slot && job->automatic && job->settings_hash != settings_hash) {
+			util_bake_job_free(job);
+		}
+		else {
+			util_bake_jobs[kept++] = job;
+		}
+	}
+	util_bake_jobs_count = kept;
+	bake_job_t *job      = util_bake_job;
+	if (job != NULL && job->slot == slot && job->automatic && (job->raster != NULL ? job->sig != sig : job->settings_hash != settings_hash)) {
+		util_bake_job_free(job);
+		util_bake_job = NULL; // util_bake_update moves on to the next job
+	}
+}
+
+// Called every frame: bakes the outdated maps again once their signature stops changing
+void util_bake_auto_update() {
+	bake_settings_t *s   = &util_bake_settings;
+	f64              now = iron_time();
+	if (!s->auto_rebake || now - util_bake_auto_last < 0.1) {
+		return;
+	}
+	util_bake_auto_last = now;
+	u32  scene[2];
+	bool hashed[2] = {false, false};
+	for (i32 slot = 0; slot < MESH_MAP_COUNT; ++slot) {
+		if (util_bake_maps[slot] == NULL || util_bake_sigs[slot] == 0) {
+			continue;
+		}
+		i32 colors = util_bake_uses_colors(slot, s) ? 1 : 0;
+		if (!hashed[colors]) {
+			scene[colors]  = util_bake_scene_hash(colors);
+			hashed[colors] = true;
+		}
+		u32 settings_hash = util_bake_settings_hash(slot, s);
+		u32 sig           = util_bake_combine(settings_hash, scene[colors]);
+		util_bake_drop_stale(slot, settings_hash, sig);
+		if (util_bake_state(slot, NULL) != BAKE_STATE_IDLE || sig == util_bake_sigs[slot] || sig == util_bake_skip_sigs[slot]) {
+			continue;
+		}
+		if (sig != util_bake_seen_sigs[slot]) {
+			util_bake_seen_sigs[slot] = sig;
+			util_bake_seen_time[slot] = now;
+			continue;
+		}
+		if (now - util_bake_seen_time[slot] >= UTIL_BAKE_AUTO_DELAY) {
+			util_bake_run_auto(slot, settings_hash);
+		}
+	}
 }
 
 // Done is called after the last slot
@@ -1394,7 +1637,15 @@ i32 util_bake_state(i32 slot, void *owner) {
 }
 
 // Cancels the jobs of a slot, or of an owner when slot is -1, and leaves the rest of the queue
+// Auto rebake leaves a cancelled slot alone until its settings or the scene change again
+static void util_bake_skip(i32 slot) {
+	if (slot >= 0) {
+		util_bake_skip_sigs[slot] = util_bake_signature(slot);
+	}
+}
+
 void util_bake_cancel_job(i32 slot, void *owner) {
+	util_bake_skip(slot);
 	i32 kept = 0;
 	for (i32 i = 0; i < util_bake_jobs_count; ++i) {
 		if (util_bake_job_matches(util_bake_jobs[i], slot, owner)) {
@@ -1459,6 +1710,7 @@ bake_settings_t *util_bake_get_settings() {
 // Drops the queued jobs and the running mesh map, a running custom job is asked to stop and finishes on its own
 void util_bake_cancel() {
 	for (i32 i = 0; i < util_bake_jobs_count; ++i) {
+		util_bake_skip(util_bake_jobs[i]->slot);
 		util_bake_job_free(util_bake_jobs[i]);
 	}
 	util_bake_jobs_count = 0;
@@ -1470,6 +1722,7 @@ void util_bake_cancel() {
 			util_bake_job->cancelled = true;
 			return;
 		}
+		util_bake_skip(util_bake_job->slot);
 		util_bake_job_free(util_bake_job);
 		util_bake_job = NULL;
 	}
@@ -1489,6 +1742,9 @@ void util_bake_reset() {
 			gpu_delete_texture(util_bake_maps[i]);
 			util_bake_maps[i] = NULL;
 		}
+		util_bake_sigs[i]      = 0;
+		util_bake_skip_sigs[i] = 0;
+		util_bake_seen_sigs[i] = 0;
 	}
 }
 
@@ -1545,14 +1801,19 @@ static char *util_bake_json_string(char *s) {
 char *util_bake_settings_encode() {
 	bake_settings_t *s          = &util_bake_settings;
 	char            *high_polys = util_bake_json_string(s->high_polys);
-	char *json = string("{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,\"thickness_distance\":%f,"
-	                    "\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d,\"aa\":%d,\"front_distance\":%f,\"rear_distance\":%f,\"average_normals\":%d,"
-	                    "\"ignore_backface\":%d,\"match_by_name\":%d,\"high_polys\":%s,\"curvature_mode\":%d}",
-	                    s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength,
-	                    s->id_source, s->maps, s->aa, s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys,
-	                    s->curvature_mode);
+	char            *json =
+	    string("{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,\"thickness_distance\":%f,"
+	           "\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d,\"aa\":%d,\"front_distance\":%f,\"rear_distance\":%f,\"average_normals\":%d,"
+	           "\"ignore_backface\":%d,\"match_by_name\":%d,\"high_polys\":%s,\"curvature_mode\":%d,\"auto_rebake\":%d,\"quick_rebake\":%d,\"baked\":\"",
+	           s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength,
+	           s->id_source, s->maps, s->aa, s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys,
+	           s->curvature_mode, s->auto_rebake, s->quick_rebake);
 	free(high_polys);
-	return json;
+	// What each slot was baked from, so a reopened project still knows which maps are outdated
+	for (i32 slot = 0; slot < MESH_MAP_COUNT; ++slot) {
+		json = string("%s%s%x", json, slot > 0 ? " " : "", util_bake_sigs[slot]);
+	}
+	return string("%s\"}", json);
 }
 
 static void util_bake_settings_read_i32(any_map_t *m, char *key, i32 *v) {
@@ -1599,6 +1860,12 @@ void util_bake_settings_decode(char *json) {
 	util_bake_settings_read_bool(m, "ignore_backface", &s->ignore_backface);
 	util_bake_settings_read_bool(m, "match_by_name", &s->match_by_name);
 	util_bake_settings_read_i32(m, "curvature_mode", &s->curvature_mode);
+	util_bake_settings_read_bool(m, "auto_rebake", &s->auto_rebake);
+	util_bake_settings_read_bool(m, "quick_rebake", &s->quick_rebake);
+	char *baked = any_map_get(m, "baked");
+	for (i32 slot = 0; baked != NULL && slot < MESH_MAP_COUNT && *baked != '\0'; ++slot) {
+		util_bake_sigs[slot] = (u32)strtoul(baked, &baked, 16);
+	}
 	char *high_polys = any_map_get(m, "high_polys");
 	if (high_polys != NULL) {
 		s->high_polys = high_polys;

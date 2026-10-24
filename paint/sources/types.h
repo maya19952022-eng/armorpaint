@@ -591,6 +591,7 @@ typedef struct history_step {
 	geometry_mask_t              layer_geometry; // Geometry mask before the step, swapped on undo and redo of an edit
 	i32                          mesh_map_slot;
 	struct gpu_texture          *mesh_map_tex; // The other version of the mesh map, swapped on undo and redo
+	u32                          mesh_map_sig; // What mesh_map_tex was baked from, see util_bake_signature
 	i32                          swatch;
 	struct swatch_color         *swatch_color;
 	struct swatch_color_t_array *swatch_colors;
@@ -798,6 +799,8 @@ typedef struct bake_settings {
 	bool  match_by_name;   // name_low only finds name_high, and objects ending in _high are high poly
 	char *high_polys;      // Names of the high poly objects, one per line
 	i32   curvature_mode;  // mesh_map_curvature_t
+	bool  auto_rebake;     // Outdated maps are baked again once the settings and the scene stop changing
+	bool  quick_rebake;    // Auto rebake shows a preview at a quarter of the resolution first
 } bake_settings_t;
 
 typedef struct bake_job bake_job_t; // util_bake.c

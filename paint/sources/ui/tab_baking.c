@@ -63,6 +63,15 @@ static void tab_baking_common(bake_settings_t *s) {
 	if (ui_item_changed()) {
 		s->aa = 1 << aa;
 	}
+
+	ui_check(&s->auto_rebake, tr("Auto Rebake"), "");
+	if (g_ui->is_hovered) {
+		ui_tooltip(tr("Bake the outdated maps again once the settings and the scene stop changing"));
+	}
+	ui_check(&s->quick_rebake, tr("Quick Rebake"), "");
+	if (g_ui->is_hovered) {
+		ui_tooltip(tr("Auto Rebake shows a preview at a quarter of the resolution first"));
+	}
 }
 
 // Objects baked from, and the rays that look for them
@@ -146,10 +155,10 @@ static bool tab_baking_map_settings(bake_settings_t *s, i32 slot) {
 	return false;
 }
 
-static void tab_baking_map(bake_settings_t *s, i32 slot) {
+static void tab_baking_map(bake_settings_t *s, i32 slot, bool outdated) {
 	gpu_texture_t *tex  = util_bake_mesh_map(slot);
 	bool           on   = (s->maps >> slot) & 1;
-	char          *name = util_bake_slot_name(slot);
+	char          *name = outdated ? string_tmp("%s (%s)", util_bake_slot_name(slot), tr("outdated")) : util_bake_slot_name(slot);
 
 	ui_row2();
 	ui_check(&on, name, "");
@@ -186,7 +195,12 @@ void tab_baking_draw(i32 *htab) {
 	if (!ui_tab(htab, tr("Baking"), false, -1, false) || g_ui->_window_h <= ui_statusbar_default_h * UI_SCALE()) {
 		return;
 	}
-	bake_settings_t *s = util_bake_get_settings();
+	bake_settings_t *s        = util_bake_get_settings();
+	i32              outdated = util_bake_outdated_mask();
+	i32              count    = 0;
+	for (i32 slot = 0; slot < MESH_MAP_COUNT; ++slot) {
+		count += (outdated >> slot) & 1;
+	}
 
 	ui_begin_sticky();
 	if (util_bake_busy()) {
@@ -199,6 +213,9 @@ void tab_baking_draw(i32 *htab) {
 		}
 		if (ui_icon_button(tr("Bake All"), ICON_BAKE, UI_ALIGN_CENTER)) {
 			util_bake_run_all(NULL, NULL);
+		}
+		if (count > 0 && ui_icon_button(string_tmp("%s (%d)", tr("Rebake Outdated"), count), ICON_BAKE, UI_ALIGN_CENTER)) {
+			util_bake_run_outdated();
 		}
 	}
 	ui_end_sticky();
@@ -213,6 +230,6 @@ void tab_baking_draw(i32 *htab) {
 	ui_separator(4, true);
 	ui_text(tr("Mesh Maps"), UI_ALIGN_LEFT, 0);
 	for (i32 slot = 0; slot < MESH_MAP_COUNT; ++slot) {
-		tab_baking_map(s, slot);
+		tab_baking_map(s, slot, (outdated >> slot) & 1);
 	}
 }

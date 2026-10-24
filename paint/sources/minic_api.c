@@ -962,6 +962,8 @@ void minic_register_builtins() {
 	MINIC_B(match_by_name);
 	MINIC_S(high_polys);
 	MINIC_I(curvature_mode);
+	MINIC_B(auto_rebake);
+	MINIC_B(quick_rebake);
 	MINIC_END();
 
 	MINIC_STRUCT(project_t);
