@@ -13,7 +13,7 @@ Menu de contexto da camada (clique direito) → **Copy**, **Paste** e **Paste as
 | Controle | O que faz |
 |---|---|
 | Copy | Guarda a camada, o grupo ou a máscara clicada |
-| Paste | Cria uma cópia do que foi guardado logo acima da camada clicada (com as máscaras e, num grupo, as camadas dele) |
+| Paste | Cria uma cópia do que foi guardado logo acima da camada clicada (com as máscaras, os efeitos e, num grupo, as camadas dele). Com um efeito guardado, a cópia do efeito vai para o topo da pilha de efeitos da camada ou máscara clicada |
 | Paste as Mask | Com uma máscara guardada: cria uma máscara nova na camada clicada com os pixels e a opacidade da máscara copiada |
 
 O que foi copiado é uma referência: se a camada original for apagada, Paste fica desabilitado. Paste fica desabilitado sobre uma máscara; Paste as Mask só aparece habilitado quando o que foi copiado é uma máscara e a camada clicada aceita máscara (não é máscara nem filtro).
@@ -41,4 +41,3 @@ slot_layer_t *m = script_layer_paste_mask(mascara, alvo); // NULL se não deu
 ## Limitações
 
 - A área de transferência vive só dentro do projeto aberto; não copia entre projetos nem para outros programas.
-- Efeitos (LAY-05) ainda não existem, então não há copiar e colar de efeitos.
