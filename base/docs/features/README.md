@@ -56,6 +56,7 @@ IDs da matriz: LAY-01, ... · Fase: P1 · Desde: <PR>
 |---|---|---|
 | [per_channel_blending.md](per_channel_blending.md) | LAY-01 | P1 |
 | [group_flatten.md](group_flatten.md) | LAY-14 | P1 |
+| [group_pass_through.md](group_pass_through.md) | LAY-02 | P1 |
 | [layer_multi_selection.md](layer_multi_selection.md) | LAY-03 | P1 |
 | [layer_lock.md](layer_lock.md) | LAY-04 | P1 |
 | [layer_clipboard.md](layer_clipboard.md) | LAY-15 | P1 |
