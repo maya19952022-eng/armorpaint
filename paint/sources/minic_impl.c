@@ -1548,6 +1548,11 @@ bool script_export_set_preset(char *name) {
 	return true;
 }
 
+// Texels computed by the last mesh map bake: all of the uv islands, or those of the objects that changed
+i32 script_bake_texels_baked(void) {
+	return util_bake_texels_baked();
+}
+
 // Steps that undo can take back
 i32 script_history_undos(void) {
 	return history_undos;

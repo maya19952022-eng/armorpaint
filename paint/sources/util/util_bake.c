@@ -70,6 +70,9 @@ struct bake_job {
 	u32   settings_hash; // util_bake_settings_hash of the settings it was queued with
 	u32   sig;           // Settings and scene it bakes, set when it starts
 	u32   queued_sig;    // Auto rebake: the signature it was queued for
+	u32  *obj_hashes;    // util_bake_object_hash per paint object when it starts
+	i32   obj_count;
+	u8   *region; // Per low poly triangle, 1 when its object changed: only those texels are baked again. NULL bakes all.
 };
 
 // clang-format off
@@ -115,6 +118,13 @@ static u32 util_bake_skip_sigs[MESH_MAP_COUNT]; // A cancelled bake is not start
 static u32 util_bake_seen_sigs[MESH_MAP_COUNT]; // Auto rebake waits until the signature stops changing
 static f64 util_bake_seen_time[MESH_MAP_COUNT];
 static f64 util_bake_auto_last = 0.0;
+
+// What the map of each slot was baked from, object by object, for rebaking only the texels of the objects that changed
+static u32 *util_bake_map_objects[MESH_MAP_COUNT]; // NULL when unknown
+static i32  util_bake_map_object_count[MESH_MAP_COUNT];
+static u32  util_bake_map_settings[MESH_MAP_COUNT];
+static f32  util_bake_map_bounds[MESH_MAP_COUNT][6];
+static i32  util_bake_last_texels = 0; // Texels computed by the last mesh map bake
 
 #define UTIL_BAKE_THREADS      16
 #define UTIL_BAKE_FRAME_BUDGET 0.03 // Seconds of work per frame
@@ -1276,8 +1286,9 @@ static void util_bake_rows_thread(void *param) {
 			break;
 		}
 		for (i32 x = 0; x < res; ++x) {
-			i32 ti = y * res + x;
-			if (job->raster->tri[ti] >= 0) {
+			i32 ti  = y * res + x;
+			i32 tri = job->raster->tri[ti];
+			if (tri >= 0 && (job->region == NULL || job->region[tri])) {
 				util_bake_texel(job, x, y, job->out + ti * 4);
 			}
 		}
@@ -1397,7 +1408,6 @@ void util_bake_make_uv_islands(i32 res) {
 gpu_texture_t *util_bake_uv_islands_texture() {
 	return util_bake_uv_islands;
 }
-
 
 // Layers, material icons and the selected node preview that read a mesh map, whichever material is selected
 void util_bake_maps_changed() {
@@ -1558,8 +1568,53 @@ static bool util_bake_uses_colors(i32 slot, bake_settings_t *s) {
 	return slot == MESH_MAP_ID && s->id_source == MESH_MAP_ID_VERTEX_COLOR;
 }
 
-// The objects as the bakers see them: names, transforms and a sample of each vertex array, and the skew and cage maps
-// when there is a high poly
+// What the bakers see of one object: name, transform and a sample of each vertex array
+static u32 util_bake_object_hash(mesh_object_t *o, bool colors) {
+	mesh_data_t *md = o->data;
+	u32          h  = util_bake_fnv_string(2166136261u, o->base->name);
+	f32         *w  = (f32 *)&o->base->transform->world_unpack;
+	for (i32 i = 0; i < 16; ++i) { // Rounded: a loaded transform is rebuilt from its parts and can differ in the last bits
+		h = util_bake_fnv_f32(h, roundf(w[i] * 1e4f) / 1e4f);
+	}
+	h                 = util_bake_fnv_f32(h, md->scale_tex);
+	u32_array_t *ind  = md->index_array;
+	i32          step = ind->length / UTIL_BAKE_HASH_SAMPLES > 1 ? ind->length / UTIL_BAKE_HASH_SAMPLES : 1;
+	h                 = util_bake_fnv_i32(h, ind->length);
+	for (i32 i = 0; i < ind->length; i += step) {
+		h = util_bake_fnv_i32(h, ind->buffer[i]);
+	}
+	char *arrays[]     = {"pos", "nor", "tex", "col"};
+	i32   components[] = {4, 2, 2, 4}; // Values per vertex
+	for (i32 a = 0; a < (colors ? 4 : 3); ++a) {
+		vertex_array_t *va = mesh_data_get_vertex_array(md, arrays[a]);
+		if (va == NULL) {
+			h = util_bake_fnv_i32(h, -1);
+			continue;
+		}
+		i16_array_t *v     = va->values;
+		i32          c     = components[a];
+		i32          verts = v->length / c;
+		step               = verts / UTIL_BAKE_HASH_SAMPLES > 1 ? verts / UTIL_BAKE_HASH_SAMPLES : 1;
+		h                  = util_bake_fnv_i32(h, v->length);
+		for (i32 i = 0; i < verts; i += step) { // Whole vertices, a step in values could skip the same component every time
+			h = util_bake_fnv(h, &v->buffer[i * c], sizeof(i16) * c);
+		}
+	}
+	return h;
+}
+
+// util_bake_object_hash of each paint object, free() it
+static u32 *util_bake_object_hashes(bool colors, i32 *count) {
+	mesh_object_t_array_t *objects = g_project->_->paint_objects;
+	*count                         = objects != NULL ? objects->length : 0;
+	u32 *hashes                    = malloc(sizeof(u32) * (*count > 0 ? *count : 1));
+	for (i32 oi = 0; oi < *count; ++oi) {
+		hashes[oi] = util_bake_object_hash(objects->buffer[oi], colors);
+	}
+	return hashes;
+}
+
+// The objects as the bakers see them, and the skew and cage maps when there is a high poly
 static u32 util_bake_scene_hash(bake_settings_t *s, bool colors) {
 	mesh_object_t_array_t *objects = g_project->_->paint_objects;
 	u32                    h       = util_bake_fnv_i32(2166136261u, objects != NULL ? objects->length : 0);
@@ -1570,37 +1625,7 @@ static u32 util_bake_scene_hash(bake_settings_t *s, bool colors) {
 		}
 	}
 	for (i32 oi = 0; objects != NULL && oi < objects->length; ++oi) {
-		mesh_object_t *o  = objects->buffer[oi];
-		mesh_data_t   *md = o->data;
-		h                 = util_bake_fnv_string(h, o->base->name);
-		f32 *w            = (f32 *)&o->base->transform->world_unpack;
-		for (i32 i = 0; i < 16; ++i) { // Rounded: a loaded transform is rebuilt from its parts and can differ in the last bits
-			h = util_bake_fnv_f32(h, roundf(w[i] * 1e4f) / 1e4f);
-		}
-		h                 = util_bake_fnv_f32(h, md->scale_tex);
-		u32_array_t *ind  = md->index_array;
-		i32          step = ind->length / UTIL_BAKE_HASH_SAMPLES > 1 ? ind->length / UTIL_BAKE_HASH_SAMPLES : 1;
-		h                 = util_bake_fnv_i32(h, ind->length);
-		for (i32 i = 0; i < ind->length; i += step) {
-			h = util_bake_fnv_i32(h, ind->buffer[i]);
-		}
-		char *arrays[]     = {"pos", "nor", "tex", "col"};
-		i32   components[] = {4, 2, 2, 4}; // Values per vertex
-		for (i32 a = 0; a < (colors ? 4 : 3); ++a) {
-			vertex_array_t *va = mesh_data_get_vertex_array(md, arrays[a]);
-			if (va == NULL) {
-				h = util_bake_fnv_i32(h, -1);
-				continue;
-			}
-			i16_array_t *v     = va->values;
-			i32          c     = components[a];
-			i32          verts = v->length / c;
-			step               = verts / UTIL_BAKE_HASH_SAMPLES > 1 ? verts / UTIL_BAKE_HASH_SAMPLES : 1;
-			h                  = util_bake_fnv_i32(h, v->length);
-			for (i32 i = 0; i < verts; i += step) { // Whole vertices, a step in values could skip the same component every time
-				h = util_bake_fnv(h, &v->buffer[i * c], sizeof(i16) * c);
-			}
-		}
+		h = util_bake_fnv_i32(h, util_bake_object_hash(objects->buffer[oi], colors));
 	}
 	return h;
 }
@@ -1724,6 +1749,12 @@ static void util_bake_ray_directions_update(f64 now) {
 	g_context->ddirty = 2;
 }
 
+// The map of the slot was replaced by another one: the next bake is a full one
+static void util_bake_forget_objects(i32 slot) {
+	free(util_bake_map_objects[slot]);
+	util_bake_map_objects[slot] = NULL;
+}
+
 static void util_bake_set_map(i32 slot, gpu_texture_t *tex, bool history) {
 	if (history) {
 		history_step_t *step = history_push(HISTORY_ACTION_BAKE_MESH_MAP);
@@ -1746,6 +1777,7 @@ void util_bake_swap_history(history_step_t *step) {
 	if (slot < 0 || slot >= MESH_MAP_COUNT) {
 		return;
 	}
+	util_bake_forget_objects(slot);
 	gpu_texture_t *tex   = util_bake_maps[slot];
 	u32            sig   = util_bake_sigs[slot];
 	util_bake_maps[slot] = step->mesh_map_tex;
@@ -1761,14 +1793,79 @@ void util_bake_clear(i32 slot) {
 	}
 	util_bake_set_map(slot, NULL, true);
 	util_bake_sigs[slot] = 0;
+	util_bake_forget_objects(slot);
 	util_bake_maps_changed();
 }
 
 static void util_bake_job_free(bake_job_t *job) {
 	util_bake_raster_free(job->raster);
+	free(job->obj_hashes);
+	free(job->region);
 	free(job->out);
 	free(job->data);
 	free(job);
+}
+
+// Bakes again only the texels of the objects that changed since the map of the slot was made, when nothing else that
+// the map depends on changed: same settings, resolution and bounds, no rays to other objects and no high poly
+static void util_bake_partial(bake_job_t *job) {
+	i32                 slot = job->slot;
+	util_bake_raster_t *r    = job->raster;
+	gpu_texture_t      *prev = util_bake_maps[slot];
+	u32                *old  = util_bake_map_objects[slot];
+	if (prev == NULL || old == NULL || (util_bake_sigs[slot] & 1) || prev->width != r->res || util_bake_map_settings[slot] != job->settings_hash ||
+	    util_bake_map_object_count[slot] != job->obj_count || util_bake_slot_casts_rays(slot) || r->high.count > 0) {
+		return;
+	}
+	for (i32 a = 0; a < 3; ++a) {
+		if (r->min[a] != util_bake_map_bounds[slot][a] || r->max[a] != util_bake_map_bounds[slot][3 + a]) {
+			return; // Position and curvature are relative to the bounds
+		}
+	}
+	i32 changed = 0;
+	for (i32 i = 0; i < job->obj_count; ++i) {
+		changed += job->obj_hashes[i] != old[i];
+	}
+	if (changed == 0 || changed == job->obj_count) {
+		return;
+	}
+	f32_array_t *px = util_bake_texture_pixels(prev);
+	if (px == NULL) {
+		return;
+	}
+	memcpy(job->out, px->buffer, sizeof(f32) * 4 * r->res * r->res);
+	job->region = malloc(r->low.count > 0 ? r->low.count : 1);
+	for (i32 t = 0; t < r->low.count; ++t) {
+		i32 o          = r->low.object[t];
+		job->region[t] = job->obj_hashes[o] != old[o];
+	}
+}
+
+// Remembers what the new map of the slot was baked from, for the next partial bake
+static void util_bake_keep_objects(bake_job_t *job) {
+	i32                 slot = job->slot;
+	util_bake_raster_t *r    = job->raster;
+	free(util_bake_map_objects[slot]);
+	util_bake_map_objects[slot] = NULL;
+	if (!job->quick) {
+		util_bake_map_objects[slot]      = job->obj_hashes;
+		util_bake_map_object_count[slot] = job->obj_count;
+		util_bake_map_settings[slot]     = job->settings_hash;
+		job->obj_hashes                  = NULL;
+		for (i32 a = 0; a < 3; ++a) {
+			util_bake_map_bounds[slot][a]     = r->min[a];
+			util_bake_map_bounds[slot][3 + a] = r->max[a];
+		}
+	}
+	util_bake_last_texels = 0;
+	for (i32 i = 0; i < r->res * r->res; ++i) {
+		i32 t = r->tri[i];
+		util_bake_last_texels += t >= 0 && (job->region == NULL || job->region[t]);
+	}
+}
+
+i32 util_bake_texels_baked() {
+	return util_bake_last_texels;
 }
 
 static void util_bake_next_job() {
@@ -1868,6 +1965,10 @@ void util_bake_update(void *_) {
 		job->raster         = util_bake_raster_create(&job->settings, res, colors, util_bake_slot_casts_rays(job->slot), vertex_curv);
 		job->out            = calloc((size_t)res * res * 4, sizeof(f32));
 		job->rows_per_frame = util_bake_slot_casts_rays(job->slot) || job->raster->high.count > 0 ? 1 : res;
+		job->obj_hashes     = util_bake_object_hashes(colors, &job->obj_count);
+		if (!job->quick) {
+			util_bake_partial(job);
+		}
 	}
 	else if (job->rows_done < job->raster->res) {
 		util_bake_step_rows(job);
@@ -1884,6 +1985,7 @@ void util_bake_update(void *_) {
 		gpu_texture_t *tex = util_bake_upload(job->slot, job->out, job->raster->res);
 		util_bake_set_map(job->slot, tex, !job->automatic); // Auto rebake would fill the history while a setting is dragged
 		util_bake_sigs[job->slot] = job->quick ? job->sig | 1 : job->sig;
+		util_bake_keep_objects(job);
 		util_bake_maps_changed();
 		util_bake_finish(job);
 	}
@@ -2172,6 +2274,7 @@ void util_bake_reset() {
 		util_bake_sigs[i]      = 0;
 		util_bake_skip_sigs[i] = 0;
 		util_bake_seen_sigs[i] = 0;
+		util_bake_forget_objects(i);
 	}
 	util_bake_roles_dirty = true;
 }

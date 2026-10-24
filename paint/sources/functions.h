@@ -136,6 +136,7 @@ bool                  util_bake_run(i32 slot, void (*done)(void *), void *done_d
 void                  util_bake_run_all(void (*done)(void *), void *done_data);
 void                  util_bake_run_selected(void (*done)(void *), void *done_data);
 i32                   util_bake_run_outdated();
+i32                   util_bake_texels_baked();
 f32_array_t          *util_bake_texture_pixels(gpu_texture_t *tex);
 gpu_texture_t        *util_bake_ray_directions_texture();
 f32_array_t          *util_bake_ray_directions_pixels();
@@ -785,6 +786,7 @@ bool                   script_bake_outdated(i32 slot);
 i32                    script_bake_rebake_outdated(void);
 i32                    script_history_undos(void);
 bool                   script_export_set_preset(char *name);
+i32                    script_bake_texels_baked(void);
 slot_layer_t          *script_bake_paint_role(i32 role);
 void                   script_bake_role_fill(i32 role, f32 value);
 void                   script_set_viewport_mesh_map(i32 slot);
