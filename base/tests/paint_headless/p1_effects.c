@@ -252,6 +252,74 @@ void step_paste_effect_check() {
 	expect(223, 127, "the pasted effect inverts the other layer");
 }
 
+// Fixes from review: refill after a delete or a move, hidden group, duplicate and delete of a group, no orphan
+// effects after undo, Merge Down and Apply refused on stacks
+slot_layer_t *fx_setup() {
+	script_project_new();
+	slot_layer_t *base = script_layer_new_color(0xff808080, 1.0, 0.5, 0.0);
+	slot_layer_t *l    = script_layer_new_color(0xff3366cc, 1.0, 0.5, 0.0);
+	script_layer_set_name(base, "fx_base");
+	script_layer_set_name(l, "fx_l");
+	return l;
+}
+
+slot_layer_t *add_invert(slot_layer_t *l, char *name) {
+	slot_layer_t *e = script_layer_add_effect(l, EFFECT_TYPE_LEVELS);
+	script_layer_set_name(e, name);
+	set_invert(e);
+	return e;
+}
+
+void step_fix_delete_move() {
+	slot_layer_t *l = fx_setup();
+	add_invert(l, "inv1");
+	add_invert(l, "inv2");
+	expect(51, 204, "two inverts");
+	script_layer_delete(layer_by_name("inv1"));
+	expect(204, 51, "deleting the lower effect refills the upper one");
+	slot_layer_t *white = script_layer_add_effect(layer_by_name("fx_l"), EFFECT_TYPE_FILL);
+	script_layer_set_name(white, "white");
+	expect(255, 255, "fill white on top");
+	check(script_layer_move(white, script_layer_index(layer_by_name("inv2"))), "move the fill below the invert");
+	expect(0, 0, "after the move the invert reads the fill");
+}
+
+void step_fix_group() {
+	slot_layer_t *l = fx_setup();
+	add_invert(l, "inv");
+	slot_layer_t *g = script_layer_new_group(l);
+	script_layer_set_name(g, "fx_g");
+	expect(204, 51, "inverted layer in a group");
+	script_layer_set_visible(g, false);
+	expect(128, 128, "a hidden group hides the effects of its layers");
+	script_layer_set_visible(g, true);
+	int count = script_layer_count();
+	slot_layer_t *copy = script_layer_duplicate(g);
+	check(copy != NULL && script_layer_count() == count + 3, string("duplicating the group copies the effect (%d to %d layers)", count, script_layer_count()));
+	script_undo();
+	script_layer_delete(layer_by_name("fx_g"));
+	check(layer_by_name("inv") == NULL && layer_by_name("fx_l") == NULL, "deleting the group deletes the effects of its layers");
+}
+
+void step_fix_undo_orphan() {
+	slot_layer_t *l = fx_setup();
+	add_invert(l, "inv");
+	int count = script_layer_count();
+	script_layer_duplicate(l);
+	check(script_layer_count() == count + 2, "duplicate a layer with an effect");
+	script_undo();
+	check(script_layer_count() == count, string("undo removes the copy and its effect (%d layers)", script_layer_count()));
+}
+
+void step_fix_orphan_check() {
+	expect(204, 51, "no effect left without its layer after the undo");
+	slot_layer_t *u = script_layer_new_color(0xffff0000, 1.0, 0.5, 0.0);
+	check(script_layer_merge_down(u) == NULL, "no Merge Down onto a layer with effects");
+	slot_layer_t *m = script_layer_new_mask(layer_by_name("fx_l"), 0);
+	script_layer_add_effect(m, EFFECT_TYPE_FILL);
+	check(script_layer_apply_mask(m) == NULL, "no Apply on a mask with effects");
+}
+
 void next_frame() {
 	if (step == 0) {
 		step_build();
@@ -300,6 +368,18 @@ void next_frame() {
 	}
 	else if (step == 15) {
 		step_paste_effect_check();
+	}
+	else if (step == 16) {
+		step_fix_delete_move();
+	}
+	else if (step == 17) {
+		step_fix_group();
+	}
+	else if (step == 18) {
+		step_fix_undo_orphan();
+	}
+	else if (step == 19) {
+		step_fix_orphan_check();
 	}
 	else {
 		printf("[smoke] %d checks, %d failures", checks, failures);
