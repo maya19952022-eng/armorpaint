@@ -18,3 +18,9 @@ jobs:
       run: |
         cd paint
         ../base/make --compile
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: ArmorPaint-windows
+        path: paint/build/out
+        if-no-files-found: error
