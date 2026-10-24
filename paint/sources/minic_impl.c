@@ -905,6 +905,73 @@ slot_layer_t *script_layer_add_effect(slot_layer_t *l, i32 type) {
 	return e;
 }
 
+// Geometry mask: masks and filters edit the one of their layer, each change is an undo step
+
+static mesh_object_t *script_paint_object(object_t *object) {
+	for (i32 i = 0; object != NULL && i < g_project->_->paint_objects->length; ++i) {
+		if (g_project->_->paint_objects->buffer[i]->base == object) {
+			return g_project->_->paint_objects->buffer[i];
+		}
+	}
+	return NULL;
+}
+
+void script_layer_set_geometry_mode(slot_layer_t *l, i32 mode) {
+	if (!script_layer_valid(l) || (mode != GEOMETRY_MASK_INCLUDE && mode != GEOMETRY_MASK_EXCLUDE)) {
+		return;
+	}
+	util_geometry_mask_set_mode(l, mode);
+}
+
+void script_layer_set_geometry_object(slot_layer_t *l, object_t *object, bool selected) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL) {
+		return;
+	}
+	util_geometry_mask_set_object(l, o->base->name, selected);
+}
+
+void script_layer_set_geometry_tile(slot_layer_t *l, i32 tile, bool selected) {
+	if (!script_layer_valid(l) || tile < 1001) {
+		return;
+	}
+	util_geometry_mask_set_tile(l, tile, selected);
+}
+
+void script_layer_clear_geometry_mask(slot_layer_t *l) {
+	if (!script_layer_valid(l)) {
+		return;
+	}
+	util_geometry_mask_clear(l);
+}
+
+i32 script_layer_get_geometry_mode(slot_layer_t *l) {
+	return script_layer_valid(l) ? slot_layer_geometry_owner(l)->geometry_mask.mode : -1;
+}
+
+bool script_layer_get_geometry_object(slot_layer_t *l, object_t *object) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL) {
+		return false;
+	}
+	string_array_t *objects = slot_layer_geometry_owner(l)->geometry_mask.objects;
+	return objects != NULL && string_array_index_of(objects, o->base->name) >= 0;
+}
+
+bool script_layer_get_geometry_tile(slot_layer_t *l, i32 tile) {
+	if (!script_layer_valid(l)) {
+		return false;
+	}
+	i32_array_t *tiles = slot_layer_geometry_owner(l)->geometry_mask.tiles;
+	return tiles != NULL && i32_array_index_of(tiles, tile) >= 0;
+}
+
+// The layer contributes on the object with its geometry mask and the one of its group
+bool script_layer_geometry_applies(slot_layer_t *l, object_t *object) {
+	mesh_object_t *o = script_paint_object(object);
+	return script_layer_valid(l) && o != NULL && slot_layer_geometry_mask_object(l, o);
+}
+
 // Selection like ctrl+click (toggle) and shift+click (range) in the layers tab, both false selects only l
 void script_layer_select(slot_layer_t *l, bool toggle, bool range) {
 	if (!script_layer_valid(l)) {

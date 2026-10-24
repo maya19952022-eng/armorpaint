@@ -721,6 +721,22 @@ static void import_arm_layer_channels(slot_layer_t *l, layer_data_t *ld) {
 	l->blending[LAYER_CH_HEIGHT] = ld->paint_height_blend ? BLEND_TYPE_ADD : BLEND_TYPE_MIX;
 }
 
+// Version 22 files are decoded by position and fields appended to layer_data_t after a file was saved are
+// missing from it, a layer map with fewer keys ends before them. Files of older versions go through
+// import_legacy.c, which fills in every field.
+#define IMPORT_ARM_LAYER_KEYS_EFFECT        41 // Keys up to effect
+#define IMPORT_ARM_LAYER_KEYS_GEOMETRY_MASK 44 // Keys up to geometry_mask_objects
+static i32 import_arm_layer_keys = -1;         // Keys of each layer map, -1 when every field was filled in
+
+static void import_arm_layer_geometry_mask(slot_layer_t *l, layer_data_t *ld) {
+	slot_layer_geometry_mask_free(&l->geometry_mask);
+	if (import_arm_layer_keys >= 0 && import_arm_layer_keys < IMPORT_ARM_LAYER_KEYS_GEOMETRY_MASK) {
+		return; // Saved before the geometry mask
+	}
+	geometry_mask_t g = {.mode = ld->geometry_mask_mode, .tiles = ld->geometry_mask_tiles, .objects = ld->geometry_mask_objects};
+	l->geometry_mask  = slot_layer_geometry_mask_copy(&g); // Own arrays, the decoded ones live in the file blob
+}
+
 void import_arm_run_project(char *path) {
 	bool keep_script_trust       = import_arm_keep_script_trust;
 	bool was_trusted             = project_scripts_trusted;
@@ -733,6 +749,7 @@ void import_arm_run_project(char *path) {
 	}
 	project_t *project;
 	bool       import_as_mesh = false;
+	import_arm_layer_keys     = -1;
 	if (!import_arm_has_version(b)) {
 		import_as_mesh     = true;
 		scene_t *scene_raw = armpack_decode(b);
@@ -742,7 +759,11 @@ void import_arm_run_project(char *path) {
 		project = import_arm_from_old(b);
 	}
 	else {
-		project = armpack_decode(b);
+		project               = armpack_decode(b);
+		import_arm_layer_keys = armpack_array_map_key_count(b, "layer_datas");
+		if (import_arm_layer_keys < 0) {
+			import_arm_layer_keys = 0; // No layers, or none of the optional fields can be trusted
+		}
 	}
 
 	if (project->version != NULL && project->layer_datas == NULL) {
@@ -1002,8 +1023,9 @@ void import_arm_run_project(char *path) {
 		}
 		l->visible      = ld->visible;
 		l->locked       = ld->locked;
-		l->effect       = ld->effect;
+		l->effect       = (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_EFFECT) && ld->effect; // Saved after effects
 		l->mask_opacity = ld->opacity_mask; // Groups have an opacity too
+		import_arm_layer_geometry_mask(l, ld);
 		any_array_push(g_project->_->layers, l);
 		if (!is_group) {
 			gpu_texture_t *_texpaint      = NULL;

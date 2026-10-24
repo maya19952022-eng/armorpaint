@@ -181,6 +181,12 @@ typedef enum {
 	LAYER_CH_COUNT  = 6,
 } layer_channel_t;
 
+// Geometry mask of a layer, the selected tiles and objects keep the layer or remove it
+typedef enum {
+	GEOMETRY_MASK_INCLUDE = 0,
+	GEOMETRY_MASK_EXCLUDE = 1,
+} geometry_mask_mode_t;
+
 typedef enum {
 	CAMERA_CONTROLS_NONE   = -1,
 	CAMERA_CONTROLS_ORBIT  = 0,
@@ -609,6 +615,7 @@ typedef enum {
 	HISTORY_ACTION_OBJECT_TRANSFORM,
 	HISTORY_ACTION_FLATTEN_GROUP,
 	HISTORY_ACTION_LAYER_LOCK,
+	HISTORY_ACTION_LAYER_GEOMETRY_MASK,
 } history_action_t;
 
 typedef enum {

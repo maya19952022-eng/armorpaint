@@ -3086,6 +3086,7 @@ char *util_mesh_unique_name(mesh_object_t *self, char *name) {
 void util_mesh_rename(mesh_object_t *o, char *name) {
 	name = string_copy(name);
 	tab_stages_rename_object(o->base->name, name);
+	util_geometry_mask_rename_object(o->base->name, name);
 	o->base->name = name;
 	// Mesh data shared by linked duplicates is named after the object holding it
 	if (o->data != NULL && util_mesh_data_owner(o->data) == array_index_of(g_project->_->paint_objects, o)) {

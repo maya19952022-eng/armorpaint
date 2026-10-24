@@ -225,6 +225,9 @@ project_t *import_arm_from_map_to_arm(any_map_t *old) {
 			ld->opacity_ch         = any_map_get(old, "opacity_ch");
 			ld->locked             = armpack_map_get_i32(old, "locked") > 0;
 			ld->effect             = armpack_map_get_i32(old, "effect") > 0;
+			ld->geometry_mask_mode    = armpack_map_get_i32(old, "geometry_mask_mode"); // Missing means no geometry mask
+			ld->geometry_mask_tiles   = any_map_get(old, "geometry_mask_tiles");
+			ld->geometry_mask_objects = any_map_get(old, "geometry_mask_objects");
 			any_array_push(project->layer_datas, ld);
 		}
 	}

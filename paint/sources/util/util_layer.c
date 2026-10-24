@@ -1143,6 +1143,7 @@ void layers_duplicate_layer(slot_layer_t *l) {
 	}
 	else {
 		slot_layer_t *new_group = layers_new_group();
+		new_group->geometry_mask = slot_layer_geometry_mask_copy(&l->geometry_mask);
 		array_remove(g_project->_->layers, new_group);
 		array_insert(g_project->_->layers, array_index_of(g_project->_->layers, l) + 1, new_group);
 		// group.show_panel = true;
@@ -1259,6 +1260,10 @@ void layers_merge_down() {
 		context_set_layer(l0);
 	}
 
+	// Geometry masks go into the opacity of both layers, the merged layer has none
+	util_geometry_mask_bake(l1);
+	util_geometry_mask_bake(l0);
+
 	layers_merge_layer(l0, l1, false);
 	slot_layer_delete(l1);
 	context_set_layer(l0);
@@ -1301,6 +1306,11 @@ slot_layer_t *layers_merge_group_history(slot_layer_t *l, bool history) {
 			slot_layer_delete(masks->buffer[i]);
 		}
 		layers_apply_mask(children->buffer[0], masks->buffer[masks->length - 1]);
+	}
+
+	// With more children the merges above already baked the geometry mask of the group
+	if (children->length == 1) {
+		util_geometry_mask_bake(children->buffer[0]);
 	}
 
 	children->buffer[0]->parent = NULL;
@@ -1873,13 +1883,14 @@ slot_layer_t *layers_flatten(bool height_to_normal, slot_layer_t_array_t *layers
 			}
 			mask = pipes_temp_mask_image;
 		}
+		mask = util_geometry_mask_apply(l1, mask);
 
 		l1 = layers_move_preview(l1);
 
 		// Flattened layers are in shared atlas space
 		i32 tile_slot = layers_udim_tile_slot(l1);
 		if (tile_slot >= 0) {
-			l1 = layers_udim_remap(l1, l1masks != NULL ? &mask : NULL, tile_slot, false);
+			l1 = layers_udim_remap(l1, mask != empty ? &mask : NULL, tile_slot, false);
 		}
 
 		if (l1->paint_base) {

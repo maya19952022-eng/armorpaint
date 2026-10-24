@@ -184,6 +184,11 @@ void slot_layer_delete(slot_layer_t *raw) {
 }
 
 void slot_layer_unload(slot_layer_t *raw) {
+	if (raw->texpaint_geometry != NULL) {
+		gpu_delete_texture(raw->texpaint_geometry);
+		raw->texpaint_geometry = NULL;
+	}
+
 	if (slot_layer_is_group(raw)) {
 		if (raw->texpaint_preview != NULL) {
 			gpu_delete_texture(raw->texpaint_preview);
@@ -415,6 +420,7 @@ slot_layer_t *slot_layer_duplicate(slot_layer_t *raw) {
 	l->paint_height = raw->paint_height;
 	l->paint_emis   = raw->paint_emis;
 	l->paint_subs   = raw->paint_subs;
+	l->geometry_mask = slot_layer_geometry_mask_copy(&raw->geometry_mask);
 
 	if (raw->path_points != NULL) {
 		l->path_points        = f32_array_create_from_raw(raw->path_points->buffer, raw->path_points->length);
@@ -843,6 +849,108 @@ f32 slot_layer_get_opacity(slot_layer_t *raw) {
 
 i32 slot_layer_get_object_mask(slot_layer_t *raw) {
 	return (slot_layer_is_mask(raw) || slot_layer_is_filter(raw)) ? raw->parent->object_mask : raw->object_mask;
+}
+
+// Geometry mask (LAY-11)
+
+bool slot_layer_geometry_mask_is_empty(geometry_mask_t *g) {
+	return (g->tiles == NULL || g->tiles->length == 0) && (g->objects == NULL || g->objects->length == 0);
+}
+
+// Copy with its own arrays, empty lists become NULL
+geometry_mask_t slot_layer_geometry_mask_copy(geometry_mask_t *g) {
+	geometry_mask_t c = {.mode = g->mode == GEOMETRY_MASK_EXCLUDE ? GEOMETRY_MASK_EXCLUDE : GEOMETRY_MASK_INCLUDE, .tiles = NULL, .objects = NULL};
+	if (g->tiles != NULL && g->tiles->length > 0) {
+		c.tiles = i32_array_create(0);
+		for (i32 i = 0; i < g->tiles->length; ++i) {
+			i32_array_push(c.tiles, g->tiles->buffer[i]);
+		}
+	}
+	if (g->objects != NULL && g->objects->length > 0) {
+		c.objects = string_array_create(0);
+		for (i32 i = 0; i < g->objects->length; ++i) {
+			string_array_push(c.objects, string_copy(g->objects->buffer[i]));
+		}
+	}
+	return c;
+}
+
+void slot_layer_geometry_mask_free(geometry_mask_t *g) {
+	if (g->tiles != NULL) {
+		array_delete(g->tiles);
+		g->tiles = NULL;
+	}
+	if (g->objects != NULL) {
+		for (i32 i = 0; i < g->objects->length; ++i) {
+			free(g->objects->buffer[i]);
+		}
+		array_delete(g->objects);
+		g->objects = NULL;
+	}
+}
+
+// UDIM tile of a paint object, objects without a tile suffix are in tile 1001
+i32 slot_layer_geometry_tile(mesh_object_t *o) {
+	i32 tile = util_mesh_udim_tile(o->base->name);
+	return tile < 0 ? 1001 : tile;
+}
+
+// Geometry of the object matches every list of the mask that is not empty
+static bool slot_layer_geometry_mask_selects(geometry_mask_t *g, mesh_object_t *o) {
+	if (g->tiles != NULL && g->tiles->length > 0 && i32_array_index_of(g->tiles, slot_layer_geometry_tile(o)) < 0) {
+		return false;
+	}
+	if (g->objects != NULL && g->objects->length > 0 && string_array_index_of(g->objects, o->base->name) < 0) {
+		return false;
+	}
+	return true;
+}
+
+// Layer or group whose geometry mask applies, masks and filters follow their layer
+slot_layer_t *slot_layer_geometry_owner(slot_layer_t *raw) {
+	if ((slot_layer_is_mask(raw) || slot_layer_is_filter(raw)) && raw->parent != NULL) {
+		return raw->parent;
+	}
+	return raw;
+}
+
+static slot_layer_t *slot_layer_geometry_group(slot_layer_t *owner) {
+	return owner->parent != NULL && slot_layer_is_group(owner->parent) ? owner->parent : NULL;
+}
+
+// The layer or its group has a geometry mask
+bool slot_layer_has_geometry_mask(slot_layer_t *raw) {
+	slot_layer_t *owner = slot_layer_geometry_owner(raw);
+	slot_layer_t *group = slot_layer_geometry_group(owner);
+	return !slot_layer_geometry_mask_is_empty(&owner->geometry_mask) || (group != NULL && !slot_layer_geometry_mask_is_empty(&group->geometry_mask));
+}
+
+// The layer contributes on the paint object, with the geometry masks of the layer and of its group
+bool slot_layer_geometry_mask_object(slot_layer_t *raw, mesh_object_t *o) {
+	slot_layer_t *owner   = slot_layer_geometry_owner(raw);
+	slot_layer_t *slots[] = {owner, slot_layer_geometry_group(owner)};
+	for (i32 i = 0; i < 2; ++i) {
+		if (slots[i] == NULL || slot_layer_geometry_mask_is_empty(&slots[i]->geometry_mask)) {
+			continue;
+		}
+		geometry_mask_t *g = &slots[i]->geometry_mask;
+		if (slot_layer_geometry_mask_selects(g, o) != (g->mode == GEOMETRY_MASK_INCLUDE)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// Texels outside of every uv island keep the layer when all of its geometry masks exclude
+bool slot_layer_geometry_mask_keeps_empty(slot_layer_t *raw) {
+	slot_layer_t *owner   = slot_layer_geometry_owner(raw);
+	slot_layer_t *slots[] = {owner, slot_layer_geometry_group(owner)};
+	for (i32 i = 0; i < 2; ++i) {
+		if (slots[i] != NULL && !slot_layer_geometry_mask_is_empty(&slots[i]->geometry_mask) && slots[i]->geometry_mask.mode == GEOMETRY_MASK_INCLUDE) {
+			return false;
+		}
+	}
+	return true;
 }
 
 i32 slot_layer_get_blending(slot_layer_t *raw, layer_channel_t ch) {

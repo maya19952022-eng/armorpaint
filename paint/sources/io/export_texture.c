@@ -235,6 +235,20 @@ static void export_texture_set_channel(f32 value, buffer_t *to, i32 to_channel, 
 	}
 }
 
+// Texture of one object: a layer whose geometry mask leaves the object out does not contribute
+static bool export_texture_geometry_skips(slot_layer_t *l, char *object_name) {
+	if (string_equals(object_name, "") || !slot_layer_has_geometry_mask(l)) {
+		return false;
+	}
+	for (i32 i = 0; i < g_project->_->paint_objects->length; ++i) {
+		mesh_object_t *o = g_project->_->paint_objects->buffer[i];
+		if (string_equals(o->base->name, object_name)) {
+			return !slot_layer_geometry_mask_object(l, o);
+		}
+	}
+	return false;
+}
+
 static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, char *object_name, bool bake_material) {
 	i32 texture_size_x = config_get_texture_res_x();
 	i32 texture_size_y = config_get_texture_res_y();
@@ -318,6 +332,9 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 				continue;
 			}
 		}
+		if (!bake_material && g_context->layers_export == EXPORT_MODE_PER_OBJECT && export_texture_geometry_skips(l1, object_name)) {
+			continue;
+		}
 
 		gpu_texture_t        *mask    = empty;
 		slot_layer_t_array_t *l1masks = slot_layer_get_composite_masks(l1);
@@ -331,13 +348,16 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 			}
 			mask = pipes_temp_mask_image;
 		}
+		if (!bake_material) {
+			mask = util_geometry_mask_apply(l1, mask);
+		}
 
 		// Shared layers of udim tiles are cropped out of the atlas, tile layers go into the atlas when exporting it whole
 		if (!bake_material && udim_slot >= 0 && util_mesh_udim_layer(l1)) {
-			l1 = layers_udim_remap(l1, l1masks != NULL ? &mask : NULL, udim_slot, true);
+			l1 = layers_udim_remap(l1, mask != empty ? &mask : NULL, udim_slot, true);
 		}
 		else if (!bake_material && udim_slot < 0 && layers_udim_tile_slot(l1) >= 0) {
-			l1 = layers_udim_remap(l1, l1masks != NULL ? &mask : NULL, layers_udim_tile_slot(l1), false);
+			l1 = layers_udim_remap(l1, mask != empty ? &mask : NULL, layers_udim_tile_slot(l1), false);
 		}
 
 		if (l1->paint_base) {

@@ -87,6 +87,8 @@ char *history_action_to_string(history_action_t action) {
 		return tr("Flatten Group");
 	case HISTORY_ACTION_LAYER_LOCK:
 		return tr("Lock Layer");
+	case HISTORY_ACTION_LAYER_GEOMETRY_MASK:
+		return tr("Geometry Mask");
 	}
 	return tr("Paint");
 }
@@ -152,6 +154,15 @@ void history_swap_layer_props(history_step_t *step) {
 	if (step->action == HISTORY_ACTION_LAYER_LOCK) {
 		context_set_layer(l);
 		l->locked = !l->locked;
+	}
+	else if (step->action == HISTORY_ACTION_LAYER_GEOMETRY_MASK) {
+		geometry_mask_t t    = l->geometry_mask;
+		l->geometry_mask     = step->layer_geometry;
+		step->layer_geometry = t;
+		context_set_layer(l);
+		make_material_parse_mesh_material();
+		make_material_parse_paint_material(false);
+		g_context->layers_preview_dirty = true;
 	}
 	else if (step->action == HISTORY_ACTION_LAYER_VISIBLE) {
 		context_set_layer(l);
@@ -440,6 +451,7 @@ void history_undo() {
 			g_context->layer->mask_opacity  = step->layer_opacity;
 			history_set_channels(step, g_context->layer);
 			g_context->layer->object_mask   = step->layer_object;
+			g_context->layer->geometry_mask = slot_layer_geometry_mask_copy(&step->layer_geometry);
 			if (step->layer_name != NULL) {
 				g_context->layer->name = string_copy(step->layer_name);
 			}
@@ -527,7 +539,7 @@ void history_undo() {
 		}
 		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_LOCK || step->action == HISTORY_ACTION_LAYER_NAME ||
 		         step->action == HISTORY_ACTION_LAYER_OBJECT || step->action == HISTORY_ACTION_LAYER_SCALE || step->action == HISTORY_ACTION_LAYER_ANGLE ||
-		         step->action == HISTORY_ACTION_LAYER_UV_TYPE) {
+		         step->action == HISTORY_ACTION_LAYER_UV_TYPE || step->action == HISTORY_ACTION_LAYER_GEOMETRY_MASK) {
 			history_swap_layer_props(step);
 		}
 		else if (step->action == HISTORY_ACTION_NEW_BRUSH || step->action == HISTORY_ACTION_DUPLICATE_BRUSH) {
@@ -861,7 +873,7 @@ void history_redo() {
 		}
 		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_LOCK || step->action == HISTORY_ACTION_LAYER_NAME ||
 		         step->action == HISTORY_ACTION_LAYER_OBJECT || step->action == HISTORY_ACTION_LAYER_SCALE || step->action == HISTORY_ACTION_LAYER_ANGLE ||
-		         step->action == HISTORY_ACTION_LAYER_UV_TYPE) {
+		         step->action == HISTORY_ACTION_LAYER_UV_TYPE || step->action == HISTORY_ACTION_LAYER_GEOMETRY_MASK) {
 			history_swap_layer_props(step);
 		}
 		else if (step->action == HISTORY_ACTION_NEW_BRUSH || step->action == HISTORY_ACTION_DUPLICATE_BRUSH) {
@@ -1009,6 +1021,7 @@ history_step_t *history_push(history_action_t action) {
 		step->layer_blending[i]   = g_context->layer->blending[i];
 		step->layer_opacity_ch[i] = g_context->layer->opacity[i];
 	}
+	step->layer_geometry = slot_layer_geometry_mask_copy(&g_context->layer->geometry_mask);
 
 	any_array_push(history_steps, step);
 
@@ -1190,6 +1203,7 @@ history_layer_props_t *history_layer_props(slot_layer_t *l) {
 	memcpy(p->opacity, l->opacity, sizeof(p->opacity));
 	p->fill_material = l->fill_material != NULL ? array_index_of(g_project->_->materials, l->fill_material) + 1 : 0;
 	p->effect        = l->effect;
+	p->geometry_mask = slot_layer_geometry_mask_copy(&l->geometry_mask);
 	return p;
 }
 
@@ -1208,6 +1222,8 @@ void history_set_layer_props(history_layer_props_t *p, slot_layer_t *l) {
 		l->fill_material = g_project->_->materials->buffer[p->fill_material - 1];
 	}
 	l->effect = p->effect;
+	slot_layer_geometry_mask_free(&l->geometry_mask);
+	l->geometry_mask = slot_layer_geometry_mask_copy(&p->geometry_mask);
 }
 
 void history_merge_layers() {
@@ -1356,6 +1372,14 @@ void history_layer_lock(slot_layer_t *l) {
 	slot_layer_t *prev = g_context->layer;
 	g_context->layer   = l;
 	history_push(HISTORY_ACTION_LAYER_LOCK);
+	g_context->layer = prev;
+}
+
+// Geometry mask of l before an edit
+void history_layer_geometry_mask(slot_layer_t *l) {
+	slot_layer_t *prev = g_context->layer;
+	g_context->layer   = l;
+	history_push(HISTORY_ACTION_LAYER_GEOMETRY_MASK);
 	g_context->layer = prev;
 }
 

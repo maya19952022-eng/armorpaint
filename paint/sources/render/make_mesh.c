@@ -105,6 +105,42 @@ static char *make_mesh_blend_channel(slot_layer_t *l, layer_channel_t ch, char *
 	return blending == BLEND_TYPE_MIX ? res : string_tmp("clamp(%s, 0.0, 1.0)", res);
 }
 
+// Opens a test of the object uid for a layer with a geometry mask, false when it applies on every object
+static bool make_mesh_geometry_mask_begin(node_shader_t *kong, slot_layer_t *l) {
+	if (!slot_layer_has_geometry_mask(l)) {
+		return false;
+	}
+	mesh_object_t_array_t *objects = g_project->_->paint_objects;
+	bool                   all     = true;
+	for (i32 i = 0; i < objects->length; ++i) {
+		if (!slot_layer_geometry_mask_object(l, objects->buffer[i])) {
+			all = false;
+			break;
+		}
+	}
+	if (all) {
+		return false;
+	}
+	node_shader_add_constant(kong, "int uid", "_uid");
+	node_shader_write_frag(kong, "if (");
+	bool first = true;
+	for (i32 i = 0; i < objects->length; ++i) {
+		if (!slot_layer_geometry_mask_object(l, objects->buffer[i])) {
+			continue;
+		}
+		if (!first) {
+			node_shader_write_frag(kong, " || ");
+		}
+		first = false;
+		node_shader_write_frag(kong, string_tmp("%s == constants.uid", i32_to_string(objects->buffer[i]->base->uid)));
+	}
+	if (first) {
+		node_shader_write_frag(kong, "false");
+	}
+	node_shader_write_frag(kong, ") {");
+	return true;
+}
+
 node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 	char                  *context_id = make_mesh_context_id(layer_pass);
 	shader_context_t      *props      = ALLOC_INIT(shader_context_t, {.name            = context_id,
@@ -290,6 +326,9 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 			if (slot_layer_is_covered(l)) { // A visible effect above shows instead
 				continue;
 			}
+			if (slot_layer_has_geometry_mask(l) && !util_geometry_mask_any_object(l)) {
+				continue; // The geometry mask leaves no object
+			}
 
 			i32 count = 3;
 
@@ -332,6 +371,7 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 					node_shader_write_frag(kong, string_tmp("if (%s == constants.uid) {", i32_to_string(uid)));
 				}
 			}
+			bool geometry_mask = make_mesh_geometry_mask_begin(kong, l);
 
 			char *tex_coord = l->uv_map == 1 ? "tex_coord1" : util_mesh_udim_layer(l) ? "tex_coord_atlas" : "tex_coord";
 			node_shader_add_texture(kong, string_tmp("texpaint%s", i32_to_string(l->id)), NULL);
@@ -468,6 +508,9 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 				}
 			}
 
+			if (geometry_mask) {
+				node_shader_write_frag(kong, "}");
+			}
 			if (slot_layer_get_object_mask(l) > 0) {
 				node_shader_write_frag(kong, "}");
 			}

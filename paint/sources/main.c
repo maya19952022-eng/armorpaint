@@ -211,6 +211,7 @@
 #include "util/util_encode.c"
 #include "util/util_env.c"
 #include "util/util_geom.c"
+#include "util/util_geometry_mask.c"
 #include "util/util_layer.c"
 #include "util/util_mesh.c"
 #include "util/util_nodes.c"

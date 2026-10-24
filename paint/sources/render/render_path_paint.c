@@ -576,9 +576,14 @@ void render_path_paint_commands_paint(bool dilation) {
 			render_path_base_draw_gbuffer();
 		}
 
+		bool geometry_mask = util_geometry_mask_paints(g_context->layer);
+		if (geometry_mask) {
+			util_geometry_mask_texture(g_context->layer); // Read by the paint shader
+		}
+
 		char *texpaint = string_tmp("texpaint%d", tid);
-		if (g_context->tool == TOOL_TYPE_BAKE && g_context->brush_time == sys_delta()) {
-			// Clear to black on bake start
+		if (g_context->tool == TOOL_TYPE_BAKE && g_context->brush_time == sys_delta() && !geometry_mask) {
+			// Clear to black on bake start, with a geometry mask the texels outside of it keep their value
 			render_path_set_target(texpaint, NULL, NULL, GPU_CLEAR_COLOR, 0xff000000, 0.0);
 		}
 

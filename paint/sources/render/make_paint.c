@@ -526,6 +526,13 @@ node_shader_context_t *make_paint_run_context(material_t *data, char *context_id
 	node_shader_write_frag(kong,
 	                       "float2 sample_tc = float2(input.wvpposition.x / input.wvpposition.w, input.wvpposition.y / input.wvpposition.w) * 0.5 + 0.5;");
 	node_shader_write_frag(kong, "sample_tc.y = 1.0 - sample_tc.y;");
+	if (util_geometry_mask_paints(g_context->layer)) {
+		// Outside of the geometry mask the texel keeps its value
+		node_shader_add_texture(kong, "texgeometrymask", "_texgeometrymask");
+		node_shader_write_frag(kong, "float geometry_mask = sample_lod(texgeometrymask, sampler_linear, sample_tc, 0.0).r;");
+		node_shader_write_frag(kong, "if (geometry_mask <= 0.0) { discard; }");
+		node_shader_write_frag(kong, "str *= geometry_mask;");
+	}
 	node_shader_add_texture(kong, "paintmask", NULL);
 	node_shader_write_frag(kong, "float sample_mask = sample_lod(paintmask, sampler_linear, sample_tc, 0.0).r;");
 	if (accum) {

@@ -44,6 +44,14 @@ typedef struct mesh_geo_image {
 	f32 *pixels; // Float rgba, rows from v 0
 } mesh_geo_image_t;
 
+// Restricts a layer to parts of the geometry (LAY-11). Geometry is selected when it matches every
+// list that is not empty, both lists empty means no mask.
+typedef struct geometry_mask {
+	geometry_mask_mode_t mode;    // Include keeps the layer on the selection only, exclude removes it there
+	struct i32_array    *tiles;   // UDIM tiles, 1001 for objects without a tile suffix
+	struct string_array *objects; // Paint object names
+} geometry_mask_t;
+
 typedef struct slot_layer {
 	i32                   id;
 	char                 *name;
@@ -85,6 +93,9 @@ typedef struct slot_layer {
 	bool                  path_curved;
 	bool                  path_text;
 	struct slot_material *path_material;
+	geometry_mask_t       geometry_mask;          // Layers and groups, masks and filters follow their layer
+	struct gpu_texture   *texpaint_geometry;      // Geometry mask in the uv space of the layer, built on demand
+	u32                   texpaint_geometry_hash; // Inputs texpaint_geometry was built from
 } slot_layer_t;
 
 typedef struct slot_font {
@@ -539,15 +550,16 @@ typedef struct node_shader_context {
 
 // Properties of a layer that a merge rebuilds from its textures
 typedef struct history_layer_props {
-	char *name;
-	bool  visible;
-	bool  locked;
-	f32   mask_opacity;
-	i32   object_mask;
-	i32   blending[LAYER_CH_COUNT];
-	f32   opacity[LAYER_CH_COUNT];
-	i32   fill_material; // Index + 1, 0 for a paint layer
-	bool  effect;
+	char           *name;
+	bool            visible;
+	bool            locked;
+	f32             mask_opacity;
+	i32             object_mask;
+	i32             blending[LAYER_CH_COUNT];
+	f32             opacity[LAYER_CH_COUNT];
+	i32             fill_material; // Index + 1, 0 for a paint layer
+	bool            effect;
+	geometry_mask_t geometry_mask;
 } history_layer_props_t;
 
 typedef struct history_step {
@@ -576,6 +588,7 @@ typedef struct history_step {
 	f32                          layer_scale;
 	f32                          layer_angle;
 	i32                          layer_uv_type;
+	geometry_mask_t              layer_geometry; // Geometry mask before the step, swapped on undo and redo of an edit
 	i32                          swatch;
 	struct swatch_color         *swatch_color;
 	struct swatch_color_t_array *swatch_colors;
@@ -750,6 +763,9 @@ typedef struct layer_data {
 	f32_array_t      *opacity_ch;
 	bool              locked;
 	bool              effect;
+	i32               geometry_mask_mode;    // geometry_mask_mode_t, the three geometry_mask fields are optional
+	i32_array_t      *geometry_mask_tiles;   // NULL when empty
+	string_array_t   *geometry_mask_objects; // Paint object names, NULL when empty
 } layer_data_t;
 
 typedef struct timeline_layer_keyframe_data {

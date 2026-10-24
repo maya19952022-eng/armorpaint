@@ -282,6 +282,10 @@ buffer_t *export_arm_encode_project(char *path) {
 			d->blending_ch->buffer[j] = l->blending[j];
 			d->opacity_ch->buffer[j]  = l->opacity[j];
 		}
+		geometry_mask_t *g       = &l->geometry_mask; // Empty lists are written as null
+		d->geometry_mask_mode    = g->mode;
+		d->geometry_mask_tiles   = g->tiles != NULL && g->tiles->length > 0 ? g->tiles : NULL;
+		d->geometry_mask_objects = g->objects != NULL && g->objects->length > 0 ? g->objects : NULL;
 		any_array_push(ld, d);
 	}
 

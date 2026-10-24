@@ -451,6 +451,15 @@ gpu_texture_t *uniforms_ext_tex_link(object_t *object, shader_data_t *mat, char 
 	else if (string_equals(link, "_texdilatemap")) {
 		return util_uv_dilatemap;
 	}
+	else if (string_equals(link, "_texgeometrymask")) {
+		// Built before the paint pass by render_path_paint_commands_paint
+		gpu_texture_t *t = util_geometry_mask_cached(g_context->layer);
+		if (t == NULL) {
+			render_target_t *rt = any_map_get(render_path_render_targets, "empty_white");
+			return rt->_image;
+		}
+		return t;
+	}
 	if (starts_with(link, "_texpaint_pack_vert")) {
 		render_target_t *rt = any_map_get(render_path_render_targets, string_tmp("texpaint_pack%c", link[string_length(link) - 1]));
 		return rt->_image;

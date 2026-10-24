@@ -897,6 +897,69 @@ static bool tab_layers_channel_check(bool *value, char *text) {
 	return ui_item_changed();
 }
 
+// Geometry mask (LAY-11): the layer or group applies only on the checked objects and tiles, or everywhere but there
+static void tab_layers_draw_geometry_mask(slot_layer_t *l) {
+	geometry_mask_t *g = &l->geometry_mask;
+	ui_menu_separator();
+	ui_menu_align();
+	ui_menu_label(tr("Geometry Mask"), NULL);
+
+	ui_menu_align();
+	string_array_t *modes = any_array_create_from_raw_tmp(
+	    (void *[]){
+	        tr("Include"),
+	        tr("Exclude"),
+	    },
+	    2);
+	i32 mode = g->mode;
+	ui_inline_radio(&mode, modes, UI_ALIGN_LEFT);
+	if (ui_item_changed()) {
+		util_geometry_mask_set_mode(l, mode);
+		ui_menu_keep_open = true;
+	}
+
+	ui_menu_align();
+	ui_menu_label(tr("Objects"), NULL);
+	ui_menu_align(); // Once, the rows below keep its offset
+	mesh_object_t_array_t *objects = g_project->_->paint_objects;
+	for (i32 i = 0; i < objects->length; ++i) {
+		mesh_object_t *o = objects->buffer[i];
+		if (o->data->index_array->length == 0) {
+			continue;
+		}
+		bool checked = g->objects != NULL && string_array_index_of(g->objects, o->base->name) >= 0;
+		ui_check(&checked, o->base->name, "");
+		if (ui_item_changed()) {
+			util_geometry_mask_set_object(l, o->base->name, checked);
+			ui_menu_keep_open = true;
+		}
+	}
+
+	// Projects imported with the UDIM split have one object per tile
+	i32_array_t *tiles = util_geometry_mask_project_tiles();
+	if (tiles->length > 0) {
+		ui_menu_align();
+		ui_menu_label(tr("UV Tiles"), NULL);
+		ui_menu_align();
+		for (i32 i = 0; i < tiles->length; ++i) {
+			i32  tile    = tiles->buffer[i];
+			bool checked = g->tiles != NULL && i32_array_index_of(g->tiles, tile) >= 0;
+			ui_check(&checked, i32_to_string(tile), "");
+			if (ui_item_changed()) {
+				util_geometry_mask_set_tile(l, tile, checked);
+				ui_menu_keep_open = true;
+			}
+		}
+	}
+	array_delete(tiles);
+
+	g_ui->enabled = !slot_layer_geometry_mask_is_empty(g) || g->mode != GEOMETRY_MASK_INCLUDE;
+	if (ui_menu_button(tr("Clear Geometry Mask"), "", ICON_ERASE)) {
+		util_geometry_mask_clear(l);
+	}
+	g_ui->enabled = true;
+}
+
 void tab_layers_draw_layer_context_menu_draw() {
 	slot_layer_t *l    = tab_layers_l;
 	bool          mini = tab_layers_mini;
@@ -1189,6 +1252,11 @@ void tab_layers_draw_layer_context_menu_draw() {
 			make_material_parse_mesh_material();
 			ui_menu_keep_open = true;
 		}
+	}
+
+	// Masks and filters follow the geometry mask of their layer, sculpt layers move vertices
+	if ((slot_layer_is_layer(l) && !slot_layer_is_filter(l) && l->texpaint_sculpt == NULL) || slot_layer_is_group(l)) {
+		tab_layers_draw_geometry_mask(l);
 	}
 }
 
