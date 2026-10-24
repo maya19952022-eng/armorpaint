@@ -911,7 +911,11 @@ void slot_layer_move(slot_layer_t *raw, i32 to) {
 	}
 
 	context_set_layer(raw);
-	history_order_layers(to);
+	bool record = !history_order_batch;
+	if (record) {
+		history_order_layers_begin();
+		history_order_layers(to);
+	}
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 
 	array_remove(g_project->_->layers, raw);
@@ -1003,4 +1007,7 @@ void slot_layer_move(slot_layer_t *raw, i32 to) {
 	}
 
 	tab_layers_remap_all_layer_pointers(pointers);
+	if (record) {
+		history_order_layers_end();
+	}
 }

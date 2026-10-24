@@ -178,6 +178,7 @@ i32                     history_undos       = 0;     // Undos available
 i32                     history_redos       = 0;     // Redos available
 bool                    history_push_undo   = false; // Store undo on next paint
 slot_layer_t_array_t   *history_undo_layers = NULL;
+bool                    history_order_batch = false; // Layer moves are recorded by the caller as one step
 
 slot_layer_t         *tab_layers_clipboard = NULL; // Copied layer, group or mask
 

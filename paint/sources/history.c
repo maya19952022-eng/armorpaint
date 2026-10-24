@@ -401,9 +401,14 @@ void history_undo() {
 			slot_layer_delete(g_context->layer);
 		}
 		else if (step->action == HISTORY_ACTION_ORDER_LAYERS) {
-			slot_layer_t *target                           = g_project->_->layers->buffer[step->prev_order];
-			g_project->_->layers->buffer[step->prev_order] = g_project->_->layers->buffer[step->layer];
-			g_project->_->layers->buffer[step->layer]      = target;
+			if (step->layer_order != NULL) {
+				history_apply_layer_order(step, true);
+			}
+			else {
+				slot_layer_t *target                           = g_project->_->layers->buffer[step->prev_order];
+				g_project->_->layers->buffer[step->prev_order] = g_project->_->layers->buffer[step->layer];
+				g_project->_->layers->buffer[step->layer]      = target;
+			}
 		}
 		else if (step->action == HISTORY_ACTION_MERGE_LAYERS) {
 			g_context->layer = g_project->_->layers->buffer[step->layer];
@@ -769,9 +774,14 @@ void history_redo() {
 			sys_notify_on_next_frame(&history_redo_duplicate_layer, NULL);
 		}
 		else if (step->action == HISTORY_ACTION_ORDER_LAYERS) {
-			slot_layer_t *target                           = g_project->_->layers->buffer[step->prev_order];
-			g_project->_->layers->buffer[step->prev_order] = g_project->_->layers->buffer[step->layer];
-			g_project->_->layers->buffer[step->layer]      = target;
+			if (step->layer_order != NULL) {
+				history_apply_layer_order(step, false);
+			}
+			else {
+				slot_layer_t *target                           = g_project->_->layers->buffer[step->prev_order];
+				g_project->_->layers->buffer[step->prev_order] = g_project->_->layers->buffer[step->layer];
+				g_project->_->layers->buffer[step->layer]      = target;
+			}
 		}
 		else if (step->action == HISTORY_ACTION_MERGE_LAYERS) {
 			g_context->layer = g_project->_->layers->buffer[step->layer + 1];
@@ -1043,6 +1053,71 @@ void history_clear_layer() {
 void history_order_layers(i32 prev_order) {
 	history_step_t *step = history_push(HISTORY_ACTION_ORDER_LAYERS);
 	step->prev_order     = prev_order;
+}
+
+static slot_layer_t_array_t *history_order_layers_before  = NULL;
+static slot_layer_t_array_t *history_order_parents_before = NULL;
+
+// Layers and parents before a move, history_order_layers_end stores them in the last step
+void history_order_layers_begin() {
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	history_order_layers_before  = any_array_create_from_raw((void *[]){}, 0);
+	history_order_parents_before = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < layers->length; ++i) {
+		any_array_push(history_order_layers_before, layers->buffer[i]);
+		any_array_push(history_order_parents_before, layers->buffer[i]->parent);
+	}
+}
+
+// A move can skip several layers and change the parent, the step keeps the whole order to undo it exactly
+void history_order_layers_end() {
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	slot_layer_t_array_t *before = history_order_layers_before;
+	history_order_layers_before  = NULL;
+	if (before == NULL || history_steps->length == 0 || before->length != layers->length) {
+		return; // A group left empty by the move was deleted, the step keeps the old swap
+	}
+	history_step_t *step = history_steps->buffer[history_steps->length - 1];
+	if (step->action != HISTORY_ACTION_ORDER_LAYERS) {
+		return;
+	}
+	i32          n       = layers->length;
+	i32_array_t *order   = i32_array_create(n);
+	i32_array_t *parents = i32_array_create(n * 2);
+	for (i32 j = 0; j < n; ++j) {
+		order->buffer[j] = array_index_of(before, layers->buffer[j]);
+		if (order->buffer[j] < 0) {
+			return;
+		}
+		slot_layer_t *p        = history_order_parents_before->buffer[j];
+		parents->buffer[j]     = p == NULL ? 0 : array_index_of(before, p) + 1;
+		parents->buffer[n + j] = layers->buffer[j]->parent == NULL ? 0 : array_index_of(layers, layers->buffer[j]->parent) + 1;
+	}
+	step->layer_order   = order;
+	step->layer_parents = parents;
+}
+
+void history_apply_layer_order(history_step_t *step, bool undo) {
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	i32                   n      = step->layer_order->length;
+	if (layers->length != n) {
+		return;
+	}
+	slot_layer_t_array_t *old = tab_layers_init_layer_map();
+	for (i32 j = 0; j < n; ++j) {
+		if (undo) {
+			layers->buffer[step->layer_order->buffer[j]] = old->buffer[j];
+		}
+		else {
+			layers->buffer[j] = old->buffer[step->layer_order->buffer[j]];
+		}
+	}
+	i32 *parents = step->layer_parents->buffer + (undo ? 0 : n);
+	for (i32 i = 0; i < n; ++i) {
+		layers->buffer[i]->parent = parents[i] > 0 ? layers->buffer[parents[i] - 1] : NULL;
+	}
+	tab_layers_remap_all_layer_pointers(old);
+	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 
 void history_merge_layers() {
