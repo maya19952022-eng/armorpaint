@@ -51,6 +51,8 @@ Atlas
 Atlases
 Attribute
 Auto
+Auto Rebake
+Auto Rebake shows a preview at a quarter of the resolution first
 Auto Run Scripts
 Average
 Average Normals
@@ -64,6 +66,7 @@ Bake Mesh Map
 Bake Mesh Maps...
 Bake Selected
 Bake Texture
+Bake the outdated maps again once the settings and the scene stop changing
 Bake to Textures
 Baking
 Baking...
@@ -645,6 +648,7 @@ Prompt
 Quality
 Quantize
 Queued
+Quick Rebake
 R
 RGB
 RGB Curves
@@ -657,6 +661,7 @@ Randomness
 Range
 Ratio
 Rebake
+Rebake Outdated
 Recent
 Redo {step}
 Reflect
@@ -943,6 +948,7 @@ gradient_type
 name_low is baked only from name_high, and objects ending in _high are high poly
 nodes
 operation
+outdated
 packed
 player
 plugin enabled

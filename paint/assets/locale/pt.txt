@@ -51,6 +51,8 @@ Atlas
 Atlas
 Atributo
 Automático
+Rebake Automático
+O Rebake Automático mostra antes uma prévia em um quarto da resolução
 Executar Scripts Automaticamente
 Média
 Média das Normais
@@ -64,6 +66,7 @@ Cozinhar Mapa da Malha
 Cozinhar Mapas da Malha...
 Cozinhar Selecionados
 Cozinhar Textura
+Assa de novo os mapas desatualizados quando os ajustes e a cena param de mudar
 Cozinhar para Texturas
 Cozimento
 Cozinhando...
@@ -645,6 +648,7 @@ Prompt
 Qualidade
 Quantizar
 Na fila
+Rebake Rápido
 R
 RGB
 Curvas RGB
@@ -657,6 +661,7 @@ Aleatoriedade
 Intervalo
 Proporção
 Cozinhar de Novo
+Refazer Desatualizados
 Recente
 Refazer {step}
 Refletir
@@ -943,6 +948,7 @@ Tipo de Gradiente
 nome_low só é cozido a partir de nome_high, e objetos terminados em _high são high poly
 nós
 Operação
+desatualizado
 empacotado
 player
 extensão ativada

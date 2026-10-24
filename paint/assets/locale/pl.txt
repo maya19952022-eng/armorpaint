@@ -52,6 +52,8 @@ Atlasy
 Atrybut
 Automatyczny
 
+
+
 Średnia
 
 Oś
@@ -64,6 +66,7 @@ Wypalanie materiału...
 
 
 Wypalanie tekstury
+
 Wypal do tekstur
 
 
@@ -645,6 +648,7 @@ Prompt
 Jakość
 Kwantyzuj
 
+
 R
 
 Krzywe RGB
@@ -656,6 +660,7 @@ Losowy
 Losowość
 Zakres
 Współczynnik
+
 
 Ostatnie
 Powtórz {step}
@@ -943,6 +948,7 @@ Typ gradientu
 
 węzły
 Operacja
+
 spakowane
 player
 Plugin włączony

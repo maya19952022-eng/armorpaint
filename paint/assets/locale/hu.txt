@@ -52,6 +52,8 @@ Atlaszok
 Attribútum
 Auto
 
+
+
 Átlag
 
 Tengely
@@ -64,6 +66,7 @@ Anyag sütése...
 
 
 Textúra sütése
+
 Sütés textúrákra
 
 
@@ -645,6 +648,7 @@ Prompt
 Minőség
 Kvantálás
 
+
 R
 
 RGB görbék
@@ -656,6 +660,7 @@ Véletlenszerű
 Véletlenszerűség
 Tartomány
 Arány
+
 
 Legutóbbi
 Mégsem von vissza: {step}
@@ -943,6 +948,7 @@ Színátmenet típusa
 
 Csomópontok
 Művelet
+
 csomagolt
 player
 Bővítmény engedélyezve

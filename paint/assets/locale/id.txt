@@ -52,6 +52,8 @@ Atlas
 Atribut
 Otomatis
 
+
+
 Rata-rata
 
 Sumbu
@@ -64,6 +66,7 @@ Bake Material...
 
 
 Bake Tekstur
+
 Bake ke Tekstur
 
 
@@ -645,6 +648,7 @@ Prompt
 Kualitas
 Kuantisasi
 
+
 R
 
 Kurva RGB
@@ -656,6 +660,7 @@ Acak
 Keacakan
 Rentang
 Rasio
+
 
 Terbaru
 Ulangi {step}
@@ -943,6 +948,7 @@ jenis_gradasi
 
 node
 operasi
+
 terkemas
 player
 plugin diaktifkan

@@ -52,6 +52,8 @@ Atlasy
 Atribut
 Automaticky
 
+
+
 Průměr
 
 Osa
@@ -64,6 +66,7 @@ Zapékat materiál...
 
 
 Zapékání textury
+
 Zapékat do textur
 
 
@@ -645,6 +648,7 @@ Prompt
 Kvalita
 Kvantizovat
 
+
 R
 
 Křivky RGB
@@ -656,6 +660,7 @@ Náhodný
 Náhodnost
 Rozsah
 Poměr
+
 
 Nedávné
 Znovu {step}
@@ -943,6 +948,7 @@ typ_přechodu
 
 uzly
 operace
+
 zabalené
 player
 plugin povolen

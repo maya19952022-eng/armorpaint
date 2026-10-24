@@ -52,6 +52,8 @@ Atlas
 Atributo
 Automático
 
+
+
 Promedio
 
 Ejes
@@ -64,6 +66,7 @@ Hornear material...
 
 
 Hornear textura
+
 Hornear a texturas
 
 
@@ -645,6 +648,7 @@ Prompt
 Calidad
 Cuantificar
 
+
 R
 
 Curvas RGB
@@ -656,6 +660,7 @@ Aleatorio
 Aleatoriedad
 Rango
 Proporción
+
 
 Reciente
 Rehacer {step}
@@ -943,6 +948,7 @@ Tipo de gradiente
 
 nodos
 Operación
+
 empaquetado
 player
 plugin habilitado

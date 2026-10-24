@@ -52,6 +52,8 @@ Atlanten
 Attribut
 Automatisch
 
+
+
 Mittelwert
 
 Achse
@@ -64,6 +66,7 @@ Material baken...
 
 
 Textur baken
+
 Auf Textur backen
 
 
@@ -645,6 +648,7 @@ Prompt
 Qualität
 Quantisieren
 
+
 R
 
 RGB Kurven
@@ -656,6 +660,7 @@ Zufall
 Zufälligkeit
 Bereich
 Verhältnis
+
 
 Neuste
 Wiederherstellen {step}
@@ -943,6 +948,7 @@ Farbverlauf Art
 
 Nodes
 Operation
+
 gepackt
 player
 Plugin aktiviert

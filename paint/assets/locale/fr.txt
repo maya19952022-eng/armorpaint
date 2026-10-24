@@ -52,6 +52,8 @@ Atlas
 Attributs
 Auto
 
+
+
 Moyenne
 
 Axe
@@ -64,6 +66,7 @@ Exporter le matériau...
 
 
 Rendu de texture
+
 Rendu des textures
 
 
@@ -645,6 +648,7 @@ Prompt
 Qualité
 Quantifier
 
+
 R
 
 Courbes RGB
@@ -656,6 +660,7 @@ Aléatoire
 Caractère aléatoire
 Plage
 Ratio
+
 
 Récent
 Refaire {step}
@@ -943,6 +948,7 @@ type_de_dégradé
 
 nœuds
 opération
+
 empaqueté
 player
 plugin activé
