@@ -286,6 +286,7 @@ buffer_t *export_arm_encode_project(char *path) {
 		d->geometry_mask_mode    = g->mode;
 		d->geometry_mask_tiles   = g->tiles != NULL && g->tiles->length > 0 ? g->tiles : NULL;
 		d->geometry_mask_objects = g->objects != NULL && g->objects->length > 0 ? g->objects : NULL;
+		d->bake_role             = l->bake_role;
 		any_array_push(ld, d);
 	}
 

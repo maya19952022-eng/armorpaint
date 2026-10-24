@@ -88,6 +88,17 @@ typedef enum {
 } bake_cage_t;
 
 typedef enum {
+	BAKE_ROLE_NONE = 0,
+	BAKE_ROLE_SKEW = 1, // Paint layer read by the baker: ray directions from the smooth normals toward the triangle normals
+	BAKE_ROLE_CAGE = 2, // Paint layer read by the baker: cage offset per texel
+} bake_role_t;
+
+typedef enum {
+	BAKE_SKEW_BASE_MESH     = 0, // Unpainted rays follow the smooth normals, the skew map turns them toward the triangle normals
+	BAKE_SKEW_BASE_TRIANGLE = 1, // Unpainted rays follow the triangle normals, the skew map turns them toward the smooth normals
+} bake_skew_base_t;
+
+typedef enum {
 	BAKE_STATE_IDLE    = 0,
 	BAKE_STATE_QUEUED  = 1,
 	BAKE_STATE_RUNNING = 2,

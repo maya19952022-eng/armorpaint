@@ -385,7 +385,7 @@ buffer_t *util_encode_project(project_t *raw) {
 	if (raw->layer_datas != NULL) {
 		armpack_encode_array(raw->layer_datas->length);
 		for (i32 i = 0; i < raw->layer_datas->length; ++i) {
-			armpack_encode_map(44); // Same order as layer_data_t, the current version is decoded by position
+			armpack_encode_map(45); // Same order as layer_data_t, the current version is decoded by position
 			armpack_encode_string("name");
 			armpack_encode_string(raw->layer_datas->buffer[i]->name);
 			armpack_encode_string("res");
@@ -474,6 +474,8 @@ buffer_t *util_encode_project(project_t *raw) {
 			armpack_encode_array_i32(raw->layer_datas->buffer[i]->geometry_mask_tiles);
 			armpack_encode_string("geometry_mask_objects");
 			armpack_encode_array_string(raw->layer_datas->buffer[i]->geometry_mask_objects);
+			armpack_encode_string("bake_role");
+			armpack_encode_i32(raw->layer_datas->buffer[i]->bake_role);
 		}
 	}
 	else {

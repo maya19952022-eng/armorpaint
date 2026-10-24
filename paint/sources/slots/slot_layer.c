@@ -581,6 +581,9 @@ bool slot_layer_is_paint_locked(slot_layer_t *raw) {
 }
 
 bool slot_layer_is_visible(slot_layer_t *raw) {
+	if (raw->bake_role != BAKE_ROLE_NONE) { // Read by the baker only
+		return false;
+	}
 	if (slot_layer_is_mask(raw) && raw->effect) { // Hiding a mask hides its effects
 		slot_layer_t *base = slot_layer_effect_base(raw);
 		if (base != NULL && !base->visible) {

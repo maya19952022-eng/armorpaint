@@ -388,6 +388,11 @@ node_shader_context_t *make_paint_run_context(material_t *data, char *context_id
 		node_shader_write_frag(kong, string_tmp("float3 nortan = %s;", nortan));
 		node_shader_write_frag(kong, string_tmp("float height = %s;", height));
 		node_shader_write_frag(kong, string_tmp("float mat_opacity = %s;", opac));
+		if (g_context->layer->bake_role != BAKE_ROLE_NONE) { // Skew and cage maps take the gray of the Baking tab, not the material
+			char *v = f32_to_string(util_bake_get_settings()->paint_value);
+			node_shader_write_frag(kong, string_tmp("basecol = float3(%s, %s, %s);", v, v, v));
+			node_shader_write_frag(kong, "mat_opacity = 1.0;");
+		}
 		if (g_context->material->paint_opac_mode == OPACITY_MODE_TRANSLUC) {
 			make_material_transluc_used = true;
 			node_shader_write_frag(kong, "float opacity = 1.0;");

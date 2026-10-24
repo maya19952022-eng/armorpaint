@@ -726,6 +726,7 @@ static void import_arm_layer_channels(slot_layer_t *l, layer_data_t *ld) {
 // import_legacy.c, which fills in every field.
 #define IMPORT_ARM_LAYER_KEYS_EFFECT        41 // Keys up to effect
 #define IMPORT_ARM_LAYER_KEYS_GEOMETRY_MASK 44 // Keys up to geometry_mask_objects
+#define IMPORT_ARM_LAYER_KEYS_BAKE_ROLE     45 // Keys up to bake_role
 static i32 import_arm_layer_keys = -1;         // Keys of each layer map, -1 when every field was filled in
 
 static void import_arm_layer_geometry_mask(slot_layer_t *l, layer_data_t *ld) {
@@ -1024,6 +1025,7 @@ void import_arm_run_project(char *path) {
 		l->visible      = ld->visible;
 		l->locked       = ld->locked;
 		l->effect       = (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_EFFECT) && ld->effect; // Saved after effects
+		l->bake_role    = (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_BAKE_ROLE) ? ld->bake_role : BAKE_ROLE_NONE;
 		l->mask_opacity = ld->opacity_mask; // Groups have an opacity too
 		import_arm_layer_geometry_mask(l, ld);
 		any_array_push(g_project->_->layers, l);

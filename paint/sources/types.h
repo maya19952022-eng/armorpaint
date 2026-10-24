@@ -59,6 +59,7 @@ typedef struct slot_layer {
 	bool                  visible;
 	bool                  locked;   // Painting is blocked, masks and filters follow their layer
 	bool                  effect;   // Mask computed from the mask below it, see slot_layer_effect_base
+	i32                   bake_role; // bake_role_t, a skew or cage map read by the baker and left out of the material
 	struct slot_layer    *parent;   // Group (for layers) or layer (for masks and filters)
 	struct gpu_texture   *texpaint; // Base or mask
 	struct gpu_texture   *texpaint_nor;
@@ -771,6 +772,7 @@ typedef struct layer_data {
 	i32               geometry_mask_mode;    // geometry_mask_mode_t, the three geometry_mask fields are optional
 	i32_array_t      *geometry_mask_tiles;   // NULL when empty
 	string_array_t   *geometry_mask_objects; // Paint object names, NULL when empty
+	i32               bake_role;             // bake_role_t, optional
 } layer_data_t;
 
 typedef struct mesh_map_data {
@@ -802,6 +804,9 @@ typedef struct bake_settings {
 	bool  auto_rebake;     // Outdated maps are baked again once the settings and the scene stop changing
 	bool  quick_rebake;    // Auto rebake shows a preview at a quarter of the resolution first
 	i32   cage;            // bake_cage_t
+	i32   skew_base;       // bake_skew_base_t
+	bool  edge_protection; // Rays keep the smooth normals near hard edges, where turning them would open gaps
+	f32   paint_value;     // Value painted into the skew and cage maps
 } bake_settings_t;
 
 typedef struct bake_job bake_job_t; // util_bake.c

@@ -114,6 +114,50 @@ static void tab_baking_high_poly(bake_settings_t *s) {
 	ui_check(&s->ignore_backface, tr("Ignore Backface"), "");
 }
 
+static bool tab_baking_skew_open = false;
+
+// The gray painted into the skew and cage maps, and the buttons that select, fill and clear one
+static void tab_baking_role(bake_settings_t *s, i32 role) {
+	slot_layer_t *l = util_bake_role_layer(role);
+	ui_row3();
+	if (ui_icon_button(tr("Paint"), ICON_BRUSH, UI_ALIGN_CENTER)) {
+		util_bake_paint_role(role);
+	}
+	g_ui->enabled = l != NULL;
+	if (ui_icon_button(tr("Fill"), ICON_BAKE, UI_ALIGN_CENTER)) {
+		util_bake_role_fill(role, s->paint_value);
+	}
+	if (ui_icon_button(tr("Clear"), ICON_ERASE, UI_ALIGN_CENTER)) {
+		util_bake_role_fill(role, -1.0);
+	}
+	g_ui->enabled = true;
+	ui_slider(&s->paint_value, tr("Value"), 0.0, 1.0, true, 100, true, UI_ALIGN_RIGHT, true);
+	if (ui_item_changed() && g_context->layer->bake_role != BAKE_ROLE_NONE) {
+		make_material_parse_paint_material(true);
+	}
+	if (g_ui->is_hovered) {
+		ui_tooltip(tr("Gray painted and filled into the skew and cage maps, whatever the material"));
+	}
+}
+
+static void tab_baking_skew(bake_settings_t *s) {
+	tab_baking_role(s, BAKE_ROLE_SKEW);
+	string_array_t *bases = any_array_create_from_raw_tmp(
+	    (void *[]){
+	        tr("Mesh"),
+	        tr("Per Triangle"),
+	    },
+	    2);
+	ui_combo(&s->skew_base, bases, tr("Base Normal"), true, UI_ALIGN_LEFT, true);
+	if (g_ui->is_hovered) {
+		ui_tooltip(tr("Where nothing is painted, rays follow the smooth normals of the mesh or the normal of each triangle"));
+	}
+	ui_check(&s->edge_protection, tr("Edge Protection"), "");
+	if (g_ui->is_hovered) {
+		ui_tooltip(tr("Near hard edges rays keep the smooth normals, turning them there would open gaps"));
+	}
+}
+
 // Settings that change only this map, false when it has none
 static bool tab_baking_map_settings(bake_settings_t *s, i32 slot) {
 	if (slot == MESH_MAP_OCCLUSION || slot == MESH_MAP_BENT_NORMAL) {
@@ -235,6 +279,9 @@ void tab_baking_draw(i32 *htab) {
 	}
 	if (ui_panel(&tab_baking_high_poly_open, tr("High Poly"), false, false, false)) {
 		tab_baking_high_poly(s);
+	}
+	if (ui_panel(&tab_baking_skew_open, tr("Skew Map"), false, false, false)) {
+		tab_baking_skew(s);
 	}
 
 	ui_separator(4, true);

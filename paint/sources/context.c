@@ -266,6 +266,8 @@ void context_select_layer(i32 i) {
 	context_set_layer(g_project->_->layers->buffer[i]);
 }
 
+static viewport_mode_t context_role_viewport_mode = VIEWPORT_MODE_NONE; // Mode to go back to after a skew or cage map
+
 void context_set_layer(slot_layer_t *l) {
 	if (l == g_context->layer) {
 		return;
@@ -290,6 +292,24 @@ void context_set_layer(slot_layer_t *l) {
 
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 	ui_view2d_hwnd->redraws = 2;
+	context_update_role_view();
+}
+
+// Skew and cage maps are left out of the material, the mask view shows them while they are selected
+void context_update_role_view() {
+	slot_layer_t *l = g_context->layer;
+	if (l != NULL && l->bake_role != BAKE_ROLE_NONE) {
+		if (g_context->viewport_mode != VIEWPORT_MODE_MASK) {
+			context_role_viewport_mode = g_context->viewport_mode;
+			context_set_viewport_mode(VIEWPORT_MODE_MASK);
+		}
+	}
+	else if (context_role_viewport_mode != VIEWPORT_MODE_NONE) {
+		if (g_context->viewport_mode == VIEWPORT_MODE_MASK) {
+			context_set_viewport_mode(context_role_viewport_mode);
+		}
+		context_role_viewport_mode = VIEWPORT_MODE_NONE;
+	}
 }
 
 void context_select_tool(i32 i) {

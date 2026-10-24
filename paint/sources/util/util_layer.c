@@ -1737,7 +1737,7 @@ slot_layer_t *layers_flatten_group(slot_layer_t *group) {
 }
 
 void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
-	if (!l1->visible || slot_layer_is_group(l1) || (l1->effect && !slot_layer_is_visible(l1))) {
+	if (!l1->visible || slot_layer_is_group(l1) || (l1->effect && !slot_layer_is_visible(l1)) || l1->bake_role != BAKE_ROLE_NONE) {
 		return;
 	}
 

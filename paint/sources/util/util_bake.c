@@ -27,6 +27,11 @@ typedef struct util_bake_raster {
 	f32              max[3];
 	f32              size; // Diagonal of the bounds
 	bvh_t            bvh;  // The high poly, or the low poly for the slots that cast rays without one
+	f32             *skew; // Skew map per texel of its layer, NULL without one or without high poly
+	f32             *cage; // Cage map per texel of its layer, -1 to 1
+	i32              role_w;
+	i32              role_h;
+	u8              *hard; // Per low poly triangle, bit k: the edge from corner k to k + 1 is hard, NULL without edge protection
 } util_bake_raster_t;
 
 // What one sample of a map sees
@@ -87,7 +92,10 @@ struct bake_job {
 	.curvature_mode     = MESH_MAP_CURVATURE_NORMALS, \
 	.auto_rebake        = false,        \
 	.quick_rebake       = true,         \
-	.cage               = BAKE_CAGE_DISTANCE \
+	.cage               = BAKE_CAGE_DISTANCE, \
+	.skew_base          = BAKE_SKEW_BASE_MESH, \
+	.edge_protection    = true,         \
+	.paint_value        = 1.0           \
 }
 // clang-format on
 
@@ -254,6 +262,9 @@ static void util_bake_raster_free(util_bake_raster_t *r) {
 	util_bake_mesh_free(&r->low);
 	util_bake_mesh_free(&r->high);
 	util_bvh_free(&r->bvh);
+	free(r->skew);
+	free(r->cage);
+	free(r->hard);
 	free(r);
 }
 
@@ -587,6 +598,140 @@ static void util_bake_mesh_build(util_bake_mesh_t *m, bool high, i32 res, bool c
 	}
 }
 
+// Skew and cage maps: paint layers with a bake role, left out of the material and read by the baker
+
+static bool util_bake_roles_dirty = true;
+static u32  util_bake_roles_hash  = 0;
+
+slot_layer_t *util_bake_role_layer(i32 role) {
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	for (i32 i = 0; layers != NULL && i < layers->length; ++i) {
+		if (layers->buffer[i]->bake_role == role) {
+			return layers->buffer[i];
+		}
+	}
+	return NULL;
+}
+
+// A role layer was painted, filled, made or removed, or a history step may have done so
+void util_bake_roles_changed() {
+	util_bake_roles_dirty = true;
+}
+
+// Rgba floats of a texel of pixels read back from a texture
+static void util_bake_texel_rgba(buffer_t *b, gpu_texture_t *t, i32 i, f32 *c) {
+	if (t->format == GPU_TEXTURE_FORMAT_RGBA128) {
+		memcpy(c, (f32 *)b->buffer + i * 4, sizeof(f32) * 4);
+	}
+	else if (t->format == GPU_TEXTURE_FORMAT_RGBA64) {
+		u16 *h = (u16 *)b->buffer + i * 4;
+		for (i32 k = 0; k < 4; ++k) {
+			c[k] = render_path_raytrace_half_to_float(h[k]);
+		}
+	}
+	else {
+		for (i32 k = 0; k < 4; ++k) {
+			c[k] = b->buffer[i * 4 + k] / 255.0f;
+		}
+	}
+}
+
+// Value of a role layer per texel: the gray painted times its alpha for a skew map, from -1 to 1 around a middle gray for a cage map
+static f32 *util_bake_role_values(i32 role, i32 *w, i32 *h) {
+	slot_layer_t *l = util_bake_role_layer(role);
+	if (l == NULL || l->texpaint == NULL) {
+		return NULL;
+	}
+	gpu_texture_t *t = l->texpaint;
+	buffer_t      *b = gpu_get_texture_pixels(t);
+	i32            n = t->width * t->height;
+	f32           *v = malloc(sizeof(f32) * (n > 0 ? n : 1));
+	for (i32 i = 0; i < n; ++i) {
+		f32 c[4];
+		util_bake_texel_rgba(b, t, i, c);
+		f32 gray = (c[0] + c[1] + c[2]) / 3.0f; // Any channel order
+		v[i]     = role == BAKE_ROLE_SKEW ? gray * c[3] : c[3] * (gray * 2.0f - 1.0f);
+	}
+	*w = t->width;
+	*h = t->height;
+	return v;
+}
+
+static f32 util_bake_role_sample(util_bake_raster_t *r, f32 *values, f32 px, f32 py) {
+	i32 x = (i32)(px / r->res * r->role_w);
+	i32 y = (i32)(py / r->res * r->role_h);
+	x     = x < 0 ? 0 : x >= r->role_w ? r->role_w - 1 : x;
+	y     = y < 0 ? 0 : y >= r->role_h ? r->role_h - 1 : y;
+	return values[y * r->role_w + x];
+}
+
+typedef struct util_bake_edge {
+	i32 a; // Weld ids of the corners, a < b
+	i32 b;
+	i32 tri;
+	i32 k; // Edge from corner k to corner k + 1
+} util_bake_edge_t;
+
+static int util_bake_edge_compare(const void *x, const void *y) {
+	const util_bake_edge_t *e = x;
+	const util_bake_edge_t *f = y;
+	return e->a != f->a ? (e->a < f->a ? -1 : 1) : e->b != f->b ? (e->b < f->b ? -1 : 1) : 0;
+}
+
+static void util_bake_face_normal(f32 *t, f32 *n) {
+	f32 e1[3] = {t[3] - t[0], t[4] - t[1], t[5] - t[2]};
+	f32 e2[3] = {t[6] - t[0], t[7] - t[1], t[8] - t[2]};
+	n[0]      = e1[1] * e2[2] - e1[2] * e2[1];
+	n[1]      = e1[2] * e2[0] - e1[0] * e2[2];
+	n[2]      = e1[0] * e2[1] - e1[1] * e2[0];
+	f32 len   = sqrtf(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+	if (len > 1e-20f) {
+		n[0] /= len;
+		n[1] /= len;
+		n[2] /= len;
+	}
+}
+
+// Bit k per triangle when its edge from corner k to k + 1 is a border, or joins a face bent by more than 30 degrees
+static u8 *util_bake_hard_edges(util_bake_mesh_t *m, f32 size) {
+	i32               welds;
+	i32              *ids   = util_bake_weld(m, false, size * 1e-5f, &welds);
+	util_bake_edge_t *edges = malloc(sizeof(util_bake_edge_t) * (m->count > 0 ? m->count * 3 : 1));
+	u8               *hard  = calloc(m->count > 0 ? m->count : 1, 1);
+	i32               n     = 0;
+	for (i32 t = 0; t < m->count; ++t) {
+		for (i32 k = 0; k < 3; ++k) {
+			i32 a = ids[t * 3 + k];
+			i32 b = ids[t * 3 + (k + 1) % 3];
+			if (a != b) {
+				edges[n++] = (util_bake_edge_t){.a = a < b ? a : b, .b = a < b ? b : a, .tri = t, .k = k};
+			}
+		}
+	}
+	qsort(edges, n, sizeof(util_bake_edge_t), util_bake_edge_compare);
+	for (i32 i = 0; i < n;) {
+		i32 j = i + 1;
+		while (j < n && util_bake_edge_compare(&edges[i], &edges[j]) == 0) {
+			j++;
+		}
+		bool smooth = false;
+		if (j - i == 2) {
+			f32 n0[3];
+			f32 n1[3];
+			util_bake_face_normal(m->pos + edges[i].tri * 9, n0);
+			util_bake_face_normal(m->pos + edges[i + 1].tri * 9, n1);
+			smooth = n0[0] * n1[0] + n0[1] * n1[1] + n0[2] * n1[2] > 0.866f;
+		}
+		for (i32 e = i; e < j && !smooth; ++e) {
+			hard[edges[e].tri] |= 1 << edges[e].k;
+		}
+		i = j;
+	}
+	free(edges);
+	free(ids);
+	return hard;
+}
+
 // One sample of the low poly per texel center: the triangle that covers it
 static void util_bake_raster_low(util_bake_raster_t *r) {
 	i32               res = r->res;
@@ -677,6 +822,14 @@ static util_bake_raster_t *util_bake_raster_create(bake_settings_t *s, i32 res, 
 	}
 	util_bake_raster_low(r);
 
+	if (r->high.count > 0) { // Skew and cage maps only change the rays to the high poly
+		r->skew = util_bake_role_values(BAKE_ROLE_SKEW, &r->role_w, &r->role_h);
+		r->cage = util_bake_role_values(BAKE_ROLE_CAGE, &r->role_w, &r->role_h);
+		if (s->edge_protection && (r->skew != NULL || s->skew_base == BAKE_SKEW_BASE_TRIANGLE)) {
+			r->hard = util_bake_hard_edges(&r->low, r->size);
+		}
+	}
+
 	// The high poly is cast at for every slot, the low poly only for occlusion, bent normals and thickness
 	util_bake_mesh_t *traced = r->high.count > 0 ? &r->high : rays ? &r->low : NULL;
 	if (traced != NULL) {
@@ -710,6 +863,44 @@ static void util_bake_interpolate(f32 *v, f32 *b, f32 *out, bool normalize) {
 			out[1] /= len;
 			out[2] /= len;
 		}
+	}
+}
+
+// Turns the ray direction from the smooth normals toward the triangle normal by the skew map
+static void util_bake_skew(bake_job_t *job, i32 tri, f32 *b, f32 px, f32 py, f32 *ln, f32 *rd) {
+	util_bake_raster_t *r = job->raster;
+	f32                 fn[3];
+	util_bake_face_normal(r->low.pos + tri * 9, fn);
+	if (fn[0] * ln[0] + fn[1] * ln[1] + fn[2] * ln[2] < 0.0f) {
+		fn[0] = -fn[0];
+		fn[1] = -fn[1];
+		fn[2] = -fn[2];
+	}
+	f32 k = r->skew != NULL ? util_bake_role_sample(r, r->skew, px, py) : 0.0f;
+	k     = k < 0.0f ? 0.0f : k > 1.0f ? 1.0f : k;
+	k     = job->settings.skew_base == BAKE_SKEW_BASE_TRIANGLE ? 1.0f - k : k; // Weight of the triangle normal
+	if (r->hard != NULL) { // Back to the smooth normals over the quarter of the triangle next to a hard edge
+		for (i32 e = 0; e < 3; ++e) {
+			if ((r->hard[tri] >> e) & 1) {
+				f32 d = b[(e + 2) % 3] / 0.25f; // 0 on the edge
+				d     = d < 0.0f ? 0.0f : d > 1.0f ? 1.0f : d;
+				k *= d * d * (3.0f - 2.0f * d);
+			}
+		}
+	}
+	f32 len = 0.0f;
+	for (i32 c = 0; c < 3; ++c) {
+		rd[c] = rd[c] * (1.0f - k) + fn[c] * k;
+		len += rd[c] * rd[c];
+	}
+	len = sqrtf(len);
+	if (len > 1e-12f) {
+		rd[0] /= len;
+		rd[1] /= len;
+		rd[2] /= len;
+	}
+	else {
+		memcpy(rd, fn, sizeof(f32) * 3);
 	}
 }
 
@@ -765,6 +956,9 @@ static void util_bake_surface(bake_job_t *job, i32 tri, f32 px, f32 py, util_bak
 	// From the cage above the low poly down to the rear distance below it
 	f32 rd[3];
 	util_bake_interpolate(low->ray + tri * 9, b, rd, true);
+	if (r->skew != NULL || job->settings.skew_base == BAKE_SKEW_BASE_TRIANGLE) {
+		util_bake_skew(job, tri, b, px, py, s->ln, rd);
+	}
 	f32       front = job->settings.front_distance * r->size;
 	f32       rear  = job->settings.rear_distance * r->size;
 	f32       d[3]  = {-rd[0], -rd[1], -rd[2]};
@@ -1212,6 +1406,79 @@ void util_bake_maps_changed() {
 	}
 }
 
+// Reads the role layers back when they changed, not while one is being painted. Called every frame.
+static void util_bake_roles_update() {
+	if (!util_bake_roles_dirty || (g_context->layer != NULL && g_context->layer->bake_role != BAKE_ROLE_NONE && g_context->pdirty > 0)) {
+		return;
+	}
+	util_bake_roles_dirty  = false;
+	gpu_texture_t *current = _draw_current;
+	bool           in_use  = gpu_in_use;
+	if (in_use) {
+		draw_end();
+	}
+	u32 h = 2166136261u;
+	for (i32 role = BAKE_ROLE_SKEW; role <= BAKE_ROLE_CAGE; ++role) {
+		slot_layer_t *l = util_bake_role_layer(role);
+		h               = (h ^ (u32)(l != NULL)) * 16777619u;
+		if (l == NULL || l->texpaint == NULL) {
+			continue;
+		}
+		buffer_t *b    = gpu_get_texture_pixels(l->texpaint);
+		i32       step = b->length / (UTIL_BAKE_HASH_SAMPLES * 64) > 1 ? b->length / (UTIL_BAKE_HASH_SAMPLES * 64) : 1;
+		for (i32 i = 0; i < b->length; i += step) {
+			h = (h ^ b->buffer[i]) * 16777619u;
+		}
+	}
+	util_bake_roles_hash = h;
+	if (in_use) {
+		draw_begin(current, false, 0);
+	}
+}
+
+// Selects the layer of a role to paint it, made on top of the stack the first time
+slot_layer_t *util_bake_paint_role(i32 role) {
+	if (role != BAKE_ROLE_SKEW && role != BAKE_ROLE_CAGE) {
+		return NULL;
+	}
+	slot_layer_t *l = util_bake_role_layer(role);
+	if (l == NULL) {
+		base_init_undo_layers();
+		l = layers_new_layer(false, g_project->_->layers->length, NULL);
+		if (l == NULL) {
+			return NULL;
+		}
+		history_new_layer();
+		l->bake_role = role;
+		l->name      = string_copy(role == BAKE_ROLE_SKEW ? tr("Skew Map") : tr("Cage Map"));
+		slot_layer_clear(l, 0x00000000, NULL, 1.0, layers_default_rough, 0.0);
+		util_bake_roles_changed();
+	}
+	context_set_layer(l);
+	context_update_role_view(); // A new layer was selected before it got its role
+	make_material_parse_paint_material(true);
+	ui_dock_redraw(TAB_AREA_SIDEBAR0);
+	return l;
+}
+
+// Fills a role layer with a gray value, or clears it to transparent (no skew, no cage offset) when value is below 0
+void util_bake_role_fill(i32 role, f32 value) {
+	slot_layer_t *l = util_bake_role_layer(role);
+	if (l == NULL) {
+		return;
+	}
+	slot_layer_t *_layer = g_context->layer;
+	g_context->layer     = l;
+	history_clear_layer();
+	g_context->layer = _layer;
+	i32 c            = value < 0.0f ? 0 : (i32)((value > 1.0f ? 1.0f : value) * 255.0f + 0.5f);
+	slot_layer_clear(l, value < 0.0f ? 0x00000000 : (i32)(0xff000000 | (c << 16) | (c << 8) | c), NULL, 1.0, layers_default_rough, 0.0);
+	g_context->layers_preview_dirty = true;
+	g_context->ddirty               = 2;
+	util_bake_roles_changed();
+	util_bake_roles_update();
+}
+
 static u32 util_bake_fnv(u32 h, void *data, i32 size) {
 	u8 *b = data;
 	for (i32 i = 0; i < size; ++i) {
@@ -1247,6 +1514,8 @@ static u32 util_bake_settings_hash(i32 slot, bake_settings_t *s) {
 	h = util_bake_fnv_i32(h, s->ignore_backface);
 	h = util_bake_fnv_i32(h, s->match_by_name);
 	h = util_bake_fnv_i32(h, s->cage);
+	h = util_bake_fnv_i32(h, s->skew_base);
+	h = util_bake_fnv_i32(h, s->edge_protection);
 	h = util_bake_fnv_string(h, s->high_polys);
 	if (slot == MESH_MAP_OCCLUSION || slot == MESH_MAP_BENT_NORMAL) {
 		h = util_bake_fnv_i32(h, s->occlusion_samples);
@@ -1270,10 +1539,17 @@ static bool util_bake_uses_colors(i32 slot, bake_settings_t *s) {
 	return slot == MESH_MAP_ID && s->id_source == MESH_MAP_ID_VERTEX_COLOR;
 }
 
-// The objects as the bakers see them: names, transforms and a sample of each vertex array
+// The objects as the bakers see them: names, transforms and a sample of each vertex array, and the skew and cage maps
+// when there is a high poly
 static u32 util_bake_scene_hash(bool colors) {
 	mesh_object_t_array_t *objects = g_project->_->paint_objects;
 	u32                    h       = util_bake_fnv_i32(2166136261u, objects != NULL ? objects->length : 0);
+	for (i32 oi = 0; objects != NULL && oi < objects->length; ++oi) {
+		if (util_bake_is_high_poly(objects->buffer[oi]->base->name)) {
+			h = util_bake_fnv_i32(h, util_bake_roles_hash);
+			break;
+		}
+	}
 	for (i32 oi = 0; objects != NULL && oi < objects->length; ++oi) {
 		mesh_object_t *o  = objects->buffer[oi];
 		mesh_data_t   *md = o->data;
@@ -1579,6 +1855,7 @@ static void util_bake_drop_stale(i32 slot, u32 settings_hash, u32 sig) {
 
 // Called every frame: bakes the outdated maps again once their signature stops changing
 void util_bake_auto_update() {
+	util_bake_roles_update();
 	bake_settings_t *s   = &util_bake_settings;
 	f64              now = iron_time();
 	if (!s->auto_rebake || now - util_bake_auto_last < 0.1) {
@@ -1777,6 +2054,7 @@ void util_bake_reset() {
 		util_bake_skip_sigs[i] = 0;
 		util_bake_seen_sigs[i] = 0;
 	}
+	util_bake_roles_dirty = true;
 }
 
 // Pixels of a baked slot as rgba floats in 0-1, NULL when the slot is empty
@@ -1832,13 +2110,15 @@ static char *util_bake_json_string(char *s) {
 char *util_bake_settings_encode() {
 	bake_settings_t *s          = &util_bake_settings;
 	char            *high_polys = util_bake_json_string(s->high_polys);
-	char            *json       = string(
-        "{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,\"thickness_distance\":%f,"
-	                     "\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d,\"aa\":%d,\"front_distance\":%f,\"rear_distance\":%f,\"average_normals\":%d,"
-	                     "\"ignore_backface\":%d,\"match_by_name\":%d,\"high_polys\":%s,\"curvature_mode\":%d,\"auto_rebake\":%d,\"quick_rebake\":%d,\"cage\":%d,\"baked\":\"",
-        s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength, s->id_source,
-        s->maps, s->aa, s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys, s->curvature_mode,
-        s->auto_rebake, s->quick_rebake, s->cage);
+	char            *json       = string("{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,"
+	                                                      "\"thickness_distance\":%f,\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d,\"aa\":%d,",
+	                                     s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength,
+	                                     s->id_source, s->maps, s->aa);
+	json = string("%s\"front_distance\":%f,\"rear_distance\":%f,\"average_normals\":%d,\"ignore_backface\":%d,\"match_by_name\":%d,\"high_polys\":%s,", json,
+	              s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys);
+	json = string("%s\"curvature_mode\":%d,\"auto_rebake\":%d,\"quick_rebake\":%d,\"cage\":%d,", json, s->curvature_mode, s->auto_rebake, s->quick_rebake,
+	              s->cage);
+	json = string("%s\"skew_base\":%d,\"edge_protection\":%d,\"paint_value\":%f,\"baked\":\"", json, s->skew_base, s->edge_protection, s->paint_value);
 	free(high_polys);
 	// What each slot was baked from, so a reopened project still knows which maps are outdated
 	for (i32 slot = 0; slot < MESH_MAP_COUNT; ++slot) {
@@ -1894,6 +2174,9 @@ void util_bake_settings_decode(char *json) {
 	util_bake_settings_read_bool(m, "auto_rebake", &s->auto_rebake);
 	util_bake_settings_read_bool(m, "quick_rebake", &s->quick_rebake);
 	util_bake_settings_read_i32(m, "cage", &s->cage);
+	util_bake_settings_read_i32(m, "skew_base", &s->skew_base);
+	util_bake_settings_read_bool(m, "edge_protection", &s->edge_protection);
+	util_bake_settings_read_f32(m, "paint_value", &s->paint_value);
 	char *baked = any_map_get(m, "baked");
 	for (i32 slot = 0; baked != NULL && slot < MESH_MAP_COUNT && *baked != '\0'; ++slot) {
 		util_bake_sigs[slot] = (u32)strtoul(baked, &baked, 16);
@@ -1907,6 +2190,8 @@ void util_bake_settings_decode(char *json) {
 	s->id_source      = s->id_source == MESH_MAP_ID_VERTEX_COLOR || s->id_source == MESH_MAP_ID_UV_ISLAND ? s->id_source : MESH_MAP_ID_OBJECT;
 	s->curvature_mode = s->curvature_mode == MESH_MAP_CURVATURE_MESH ? MESH_MAP_CURVATURE_MESH : MESH_MAP_CURVATURE_NORMALS;
 	s->cage           = s->cage == BAKE_CAGE_AUTO ? BAKE_CAGE_AUTO : BAKE_CAGE_DISTANCE;
+	s->skew_base      = s->skew_base == BAKE_SKEW_BASE_TRIANGLE ? BAKE_SKEW_BASE_TRIANGLE : BAKE_SKEW_BASE_MESH;
+	s->paint_value    = s->paint_value < 0.0f ? 0.0f : s->paint_value > 1.0f ? 1.0f : s->paint_value;
 	s->maps &= (1 << MESH_MAP_COUNT) - 1;
 	s->aa = s->aa >= 8 ? 8 : s->aa >= 4 ? 4 : s->aa >= 2 ? 2 : 1;
 }

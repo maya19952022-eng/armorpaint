@@ -1498,6 +1498,25 @@ i32 script_bake_rebake_outdated(void) {
 	return util_bake_run_outdated();
 }
 
+// Selects the skew or cage map layer to paint it, made on top of the stack the first time
+slot_layer_t *script_bake_paint_role(i32 role) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	slot_layer_t *l = util_bake_paint_role(role);
+	script_gpu_end(current, in_use);
+	return l;
+}
+
+// Fills the skew or cage map with a gray value, or clears it to transparent when value is below 0
+void script_bake_role_fill(i32 role, f32 value) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	util_bake_role_fill(role, value);
+	script_gpu_end(current, in_use);
+}
+
 // Steps that undo can take back
 i32 script_history_undos(void) {
 	return history_undos;
