@@ -64,6 +64,8 @@ Cada mapa guarda uma assinatura do que o produziu: os ajustes que valem para ele
 | **Auto Rebake** (rebake automático, desligado por padrão) | Quando os ajustes e a cena param de mudar por meio segundo, os mapas desatualizados entram na fila sozinhos. Mudar de novo durante o bake descarta o bake velho e recomeça. Só refaz slots que já têm mapa e não cria passos de histórico (arrastar um slider encheria o histórico) |
 | **Quick Rebake** (ligado por padrão, vale com o Auto Rebake) | Primeiro assa uma prévia em um quarto da resolução, com 1 amostra por texel e um quarto dos raios, e logo depois o mapa completo. Abaixo de 512 vai direto ao mapa completo |
 
+**Rebake incremental**: quando só alguns objetos mudaram (movidos, girados, reimportados) e o resto que o mapa usa ficou igual (ajustes, resolução, a caixa que envolve a cena, nenhum high poly), o bake refaz só os texels das ilhas desses objetos e mantém os outros do mapa anterior; a dilatação é refeita no mapa inteiro, então o resultado é o mesmo de um bake completo. Ambient Occlusion, Bent Normals e Thickness sempre refazem tudo, porque os raios veem os outros objetos. Depois de um undo, Clear, prévia rápida ou projeto reaberto, o próximo bake é completo.
+
 Cancelar um bake (no botão do mapa, na barra de progresso ou por script) faz o Auto Rebake deixar esse mapa como está até a próxima mudança. Uma prévia do Quick Rebake conta como desatualizada até o mapa completo chegar. Undo e redo trazem de volta o mapa com a assinatura dele; com o Auto Rebake ligado, um mapa antigo trazido pelo undo é assado de novo.
 
 ## High poly
@@ -218,6 +220,7 @@ if (!script_bake_busy()) {
 	gpu_texture_t *t = script_mesh_map_get(MESH_MAP_OCCLUSION);  // NULL sem bake
 }
 float progresso = script_bake_progress();
+int   texels    = script_bake_texels_baked(); // texels calculados no último bake (menos num bake incremental)
 int   estado   = script_bake_state(MESH_MAP_THICKNESS); // BAKE_STATE_IDLE, _QUEUED ou _RUNNING
 script_bake_cancel_slot(MESH_MAP_THICKNESS);           // tira um mapa da fila
 script_bake_cancel();                                   // esvazia a fila
@@ -247,7 +250,7 @@ Os enums `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_
 - A cage aparece como mapa (modo máscara), não como uma malha translúcida no viewport.
 - Ray Directions mostra as direções como cores por texel, não como setas.
 - Não há mapa de altura (Height) vindo do high poly.
-- O rebake refaz o mapa inteiro, mesmo quando só um objeto mudou; não há rebake só da região alterada.
+- O rebake incremental vai por objeto: mudar uma parte de um objeto refaz o objeto inteiro, e com high poly, ou quando a caixa da cena muda, o mapa inteiro é refeito.
 - A assinatura da cena olha uma amostra de até 1024 vértices inteiros por array (posição, normal, UV, cor) e as transformações arredondadas: uma edição que muda só vértices fora da amostra (raro: reimportar ou aplicar deslocamento muda muitos) não marca o mapa como desatualizado.
 - Um slot por projeto: todos os objetos compartilham o mesmo espaço UV, como as camadas. Texture sets separados são a PRJ-05.
 - UVs fora de 0 a 1 (tiles UDIM além do 1001) não entram nos mapas.
