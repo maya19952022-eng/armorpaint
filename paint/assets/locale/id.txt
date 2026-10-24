@@ -73,6 +73,7 @@ Bake ke Tekstur
 
 Pita
 Warna Dasar
+
 Normal Bengkok
 
 Bevel
@@ -107,6 +108,7 @@ Kuas...
 Kuas
 Tonjolan
 Bakar
+
 
 Hitung Normal
 Kamera
@@ -256,6 +258,7 @@ Duplikat Kuas
 Duplikat Lapisan
 Duplikat Material
 Duplikat Contoh Warna
+
 Sunting
 Sunting Gambar
 Sunting Node
@@ -360,6 +363,7 @@ Tekstur Gradasi
 Gravitasi X
 Gravitasi Y
 Gravitasi Z
+
 
 Lebih Besar Dari
 
@@ -521,6 +525,7 @@ Kehalusan Mortir
 
 Kalikan
 Nama
+
 Neural
 Baru
 Masker Hitam Baru
@@ -609,6 +614,7 @@ Jeda
 Pena
 Pensil
 Per Objek
+
 Per Tile UDIM
 Perspektif
 Fase
@@ -769,6 +775,7 @@ Masuk sebagai
 Sedang masuk...
 Sinus
 Ukuran
+
 Slot
 
 Haluskan
@@ -919,6 +926,7 @@ Profil Gelombang
 Tekstur Gelombang
 Jenis Gelombang
 Apa yang Baru
+
 Masker Putih
 Putih Total
 Lebar

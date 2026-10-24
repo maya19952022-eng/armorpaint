@@ -73,6 +73,7 @@ Zapékat do textur
 
 Pásy
 Základní barva
+
 Ohnutá normála
 
 Zkosení
@@ -107,6 +108,7 @@ Poloměr štětce
 Štětce
 Výstupky
 Spálit
+
 
 Vypočítat normály
 Kamera
@@ -256,6 +258,7 @@ Duplikovat štětec
 Duplikovat vrstvu
 Duplikovat materiál
 Duplikovat vzorek
+
 Upravit
 Upravit obrázek
 Upravit uzly
@@ -360,6 +363,7 @@ Přechodová textura
 Gravitace X
 Gravitace Y
 Gravitace Z
+
 
 Větší než
 
@@ -521,6 +525,7 @@ Vyhlazení malty
 
 Násobit
 Název
+
 Neuronový
 Nový
 Nová černá maska
@@ -609,6 +614,7 @@ Pozastavit
 Pero
 Tužka
 Na objekt
+
 Na UDIM dlaždici
 Perspektiva
 Fáze
@@ -769,6 +775,7 @@ Přihlášen jako
 Přihlašování...
 Sinus
 Velikost
+
 Slot
 
 Vyhladit
@@ -919,6 +926,7 @@ Profil vlny
 Vlnová textura
 Typ vlny
 Co je nového
+
 Bílá maska
 Vy bílení
 Šířka

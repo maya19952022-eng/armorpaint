@@ -73,6 +73,7 @@ Cozimento
 Cozinhando...
 Faixas
 Cor Base
+Normal Base
 Normal Dobrada
 Normais Dobradas
 Chanfro
@@ -108,6 +109,7 @@ Pincéis
 Relevo
 Queimar
 Gaiola
+Mapa da Gaiola
 Calcular Normais
 Câmera
 Velocidade de Pan da Câmera
@@ -256,6 +258,7 @@ Duplicar Pincel
 Duplicar Camada
 Duplicar Material
 Duplicar Amostra
+Proteção de Quinas
 Editar
 Editar Imagem
 Editar Nós
@@ -360,6 +363,7 @@ Textura de Gradiente
 Gravidade X
 Gravidade Y
 Gravidade Z
+Cinza pintado e preenchido nos mapas de skew e da gaiola, seja qual for o material
 Maior
 Maior Que
 Grade
@@ -521,6 +525,7 @@ Suavização da Argamassa
 Mover
 Multiplicar
 Nome
+Perto das quinas vivas os raios mantêm as normais suavizadas, virá-los ali abriria buracos
 Neural
 Novo
 Nova Máscara Preta
@@ -609,6 +614,7 @@ Pausar
 Caneta
 Lápis
 Por Objeto
+Por Triângulo
 Por Telha UDIM
 Perspectiva
 Fase
@@ -769,6 +775,7 @@ Conectado como
 Entrando...
 Seno
 Tamanho
+Mapa de Skew
 Slot
 Ícones Pequenos
 Suavizar
@@ -919,6 +926,7 @@ Perfil da Onda
 Textura de Ondas
 Tipo de Onda
 O que há de Novo
+Onde nada foi pintado, os raios seguem as normais suavizadas da malha ou a normal de cada triângulo
 Máscara Branca
 Branqueamento
 Largura

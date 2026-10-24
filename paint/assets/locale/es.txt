@@ -73,6 +73,7 @@ Hornear a texturas
 
 Bandas
 Color base
+
 Bent Normal
 
 Bisel
@@ -107,6 +108,7 @@ Pincel...
 Pinceles
 Relieve
 Quemar
+
 
 Calcular normales
 Cámara
@@ -256,6 +258,7 @@ Duplicar pincel
 Duplicar capa
 Duplicar material
 Duplicar muestra
+
 Editar
 Editar imagen
 Editar nodos
@@ -360,6 +363,7 @@ Gradiente
 Gravedad X
 Gravedad Y
 Gravedad Z
+
 
 Mayor que
 
@@ -521,6 +525,7 @@ Suavizado del mortero
 
 Multiplicar
 Nombre
+
 Neuronal
 Nuevo
 Nueva máscara negra
@@ -609,6 +614,7 @@ Pausar
 Stylus
 Lápiz
 Por objeto
+
 Por tile UDIM
 Perspectiva
 Fase
@@ -769,6 +775,7 @@ Sesión iniciada como
 Iniciando sesión...
 Seno
 Tamaño
+
 Ranura
 
 Suavizar
@@ -919,6 +926,7 @@ Perfil de onda
 Onda
 Tipo de onda
 Que hay de nuevo
+
 Mascara blanca
 Blanqueado
 Anchura

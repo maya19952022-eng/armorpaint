@@ -73,6 +73,7 @@ Baking
 Baking...
 Bands
 Base Color
+Base Normal
 Bent Normal
 Bent Normals
 Bevel
@@ -108,6 +109,7 @@ Brushes
 Bump
 Burn
 Cage
+Cage Map
 Calculate Normals
 Camera
 Camera Pan Speed
@@ -256,6 +258,7 @@ Duplicate Brush
 Duplicate Layer
 Duplicate Material
 Duplicate Swatch
+Edge Protection
 Edit
 Edit Image
 Edit Nodes
@@ -360,6 +363,7 @@ Gradient Texture
 Gravity X
 Gravity Y
 Gravity Z
+Gray painted and filled into the skew and cage maps, whatever the material
 Greater
 Greater Than
 Grid
@@ -521,6 +525,7 @@ Mortar Smooth
 Move
 Multiply
 Name
+Near hard edges rays keep the smooth normals, turning them there would open gaps
 Neural
 New
 New Black Mask
@@ -609,6 +614,7 @@ Pause
 Pen
 Pencil
 Per Object
+Per Triangle
 Per Udim Tile
 Perspective
 Phase
@@ -769,6 +775,7 @@ Signed in as
 Signing in...
 Sine
 Size
+Skew Map
 Slot
 Small Icons
 Smooth
@@ -919,6 +926,7 @@ Wave Profile
 Wave Texture
 Wave Type
 What's New
+Where nothing is painted, rays follow the smooth normals of the mesh or the normal of each triangle
 White Mask
 Whiteout
 Width

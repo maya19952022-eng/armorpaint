@@ -73,6 +73,7 @@ Auf Textur backen
 
 Bänder
 Base Color
+
 Gekrümmte Normalen
 
 Abschrägung
@@ -107,6 +108,7 @@ Pinsel...
 Pinsel
 Bump
 Nachbelichten
+
 
 Normalen berechnen
 Kamera
@@ -256,6 +258,7 @@ Pinsel duplizieren
 Ebene duplizieren
 Material duplizieren
 Farbfeld duplizieren
+
 Bearbeiten
 Bild bearbeiten
 Nodes bearbeiten
@@ -360,6 +363,7 @@ Farbverlauf Textur
 Gravitation X
 Gravitation Y
 Gravitation Z
+
 
 Größer als
 
@@ -521,6 +525,7 @@ Mörtel Glättung
 
 Multiplizieren
 Name
+
 Neural
 Neu
 Neue schwarze Maske
@@ -609,6 +614,7 @@ Pause
 Stift
 Bleistift
 Pro Objekt
+
 Pro Udim Tile
 Perspektivisch
 Phase
@@ -769,6 +775,7 @@ Angemeldet als
 Anmeldung läuft...
 Sinus
 Größe
+
 Slot
 
 Glatt
@@ -919,6 +926,7 @@ Wellenprofil
 Wellen Textur
 Wellentyp
 Neuigkeiten
+
 Weiße Maske
 Whiteout
 Breite

@@ -73,6 +73,7 @@ Sütés textúrákra
 
 Sávok
 Alapszín
+
 Hajlított normál
 
 Élletörés
@@ -107,6 +108,7 @@ Ecset...
 Ecsetek
 Bucka (Bump)
 Sötétítés (Burn)
+
 
 Normálok számítása
 Kamera
@@ -256,6 +258,7 @@ Ecset duplikálása
 Réteg duplikálása
 Anyag duplikálása
 Színminta duplikálása
+
 Szerkesztés
 Kép szerkesztése
 Csomópontok szerkesztése
@@ -360,6 +363,7 @@ Színátmenet textúra
 Gravitáció X
 Gravitáció Y
 Gravitáció Z
+
 
 Nagyobb mint
 
@@ -521,6 +525,7 @@ Habarcs simítása
 
 Szorzás
 Név
+
 Neurális
 Új
 Új fekete maszk
@@ -609,6 +614,7 @@ Szünet
 Toll
 Ceruza
 Objektumonként
+
 UDIM csempénként
 Perspektivikus
 Fázis
@@ -769,6 +775,7 @@ Bejelentkezve mint
 Bejelentkezés folyamatban...
 Szinusz
 Méret
+
 Hely
 
 Simítás
@@ -919,6 +926,7 @@ Hullám profil
 Hullám textúra
 Hullám típusa
 Újdonságok
+
 Fehér maszk
 Kifehérítés
 Szélesség

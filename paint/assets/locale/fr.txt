@@ -73,6 +73,7 @@ Rendu des textures
 
 Bandes
 Couleur de base
+
 Bent Normal
 
 Biseau
@@ -107,6 +108,7 @@ Pinceau...
 Brosses
 Relief
 Brûler
+
 
 Calculer les normales
 Caméra
@@ -256,6 +258,7 @@ Dupliquer la brosse
 Dupliquer le calque
 Dupliquer matériau
 Dupliquer l'échantillon
+
 Modifier
 Éditer image
 Modifier nœuds
@@ -360,6 +363,7 @@ Texture de dégradé
 Gravité X
 Gravité Y
 Gravité Z
+
 
 Plus grand que
 
@@ -521,6 +525,7 @@ Adoucissement du mortier
 
 Multiplier
 Nom
+
 Neuronal
 Nouveau
 Nouveau masque noir
@@ -609,6 +614,7 @@ Pause
 Stylo
 Crayon
 Par objet
+
 Par tuile UDIM
 Perspective
 Phase
@@ -769,6 +775,7 @@ Connecté en tant que
 Connexion en cours...
 Sinus
 Taille
+
 Emplacement
 
 Adoucir
@@ -919,6 +926,7 @@ Profil d'onde
 Texture d'onde
 Type d'onde
 Quoi de neuf ?
+
 Masque blanc
 Voile blanc
 Largeur

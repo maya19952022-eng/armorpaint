@@ -73,6 +73,7 @@ Wypal do tekstur
 
 Pasma
 Kolor bazowy
+
 Wygięta normalna
 
 Ścięcie
@@ -107,6 +108,7 @@ Pędzel...
 Pędzle
 Bump
 Wypalenie
+
 
 Przelicz normalne
 Kamera
@@ -256,6 +258,7 @@ Duplikuj pędzel
 Duplikuj warstwę
 Duplikuj materiał
 Duplikuj próbkę koloru
+
 Edytuj
 Edytuj obraz
 Edytuj węzły
@@ -360,6 +363,7 @@ Tekstura gradientowa
 Grawitacja X
 Grawitacja Y
 Grawitacja Z
+
 
 Więcej niż
 
@@ -521,6 +525,7 @@ Wygładzenie zaprawy
 
 Mnożenie
 Nazwa
+
 Neuronowy
 Nowy
 Nowa czarna maska
@@ -609,6 +614,7 @@ Pauza
 Pióro
 Ołówek
 Na obiekt
+
 Na kafel UDIM
 Perspektywiczny
 Faza
@@ -769,6 +775,7 @@ Zalogowano jako
 Logowanie...
 Sinus
 Rozmiar
+
 Slot
 
 Wygładzanie
@@ -919,6 +926,7 @@ Profil fali
 Tekstura fali
 Typ fali
 Co nowego
+
 Biała maska
 Bielenie
 Szerokość
