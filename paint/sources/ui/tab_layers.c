@@ -32,6 +32,21 @@ void tab_layers_set_drag_layer(slot_layer_t *layer, f32 off_x, f32 off_y) {
 	g_context->drag_dest = array_index_of(g_project->_->layers, layer);
 }
 
+// Ctrl+click adds to the selection, shift+click selects a range, a plain click on a selected layer keeps the selection to drag it
+void tab_layers_select_on_click(slot_layer_t *l, f32 uix, f32 uiy) {
+	bool ctrl  = keyboard_down("control");
+	bool shift = keyboard_down("shift");
+	if (ctrl || shift) {
+		layers_select(l, ctrl, shift);
+		return;
+	}
+	if (!layers_is_selected(l)) {
+		layers_select_clear();
+	}
+	context_set_layer(l);
+	tab_layers_set_drag_layer(g_context->layer, -(mouse_x - uix - g_ui->_window_x - 3), -(mouse_y - uiy - g_ui->_window_y + 1));
+}
+
 // Shows the mask alone in the viewport, again on the same mask goes back to the previous viewport mode
 void tab_layers_isolate_mask(slot_layer_t *m) {
 	static viewport_mode_t prev_mode = VIEWPORT_MODE_LIT;
@@ -72,13 +87,15 @@ void tab_layers_handle_layer_icon_state(slot_layer_t *l, i32 i, ui_state_t state
 
 	// Show context menu
 	if (g_ui->is_hovered && g_ui->input_released_r) {
+		if (!layers_is_selected(l)) {
+			layers_select_clear();
+		}
 		context_set_layer(l);
 		tab_layers_show_context_menu = true;
 	}
 
 	if (state == UI_STATE_STARTED) {
-		context_set_layer(l);
-		tab_layers_set_drag_layer(g_context->layer, -(mouse_x - uix - g_ui->_window_x - 3), -(mouse_y - uiy - g_ui->_window_y + 1));
+		tab_layers_select_on_click(l, uix, uiy);
 	}
 	else if (state == UI_STATE_RELEASED && slot_layer_is_mask(l) && keyboard_down("shift")) {
 		tab_layers_layer_toggle_visible(l); // Disable the mask for a moment
@@ -260,6 +277,18 @@ void tab_layers_delete_layer(slot_layer_t *l) {
 
 void tab_layers_draw_layer_slot_full_delete_layer(void *_) {
 	tab_layers_delete_layer(g_context->layer);
+}
+
+void tab_layers_delete_selected(void *_) {
+	layers_delete_selected();
+}
+
+void tab_layers_group_selected(void *_) {
+	layers_group_selected();
+}
+
+void tab_layers_flatten_selected(void *_) {
+	layers_flatten_selected();
 }
 
 void tab_layers_combo_object_layer_clear(slot_layer_t *l) {
@@ -537,10 +566,12 @@ void tab_layers_draw_layer_slot_full(slot_layer_t *l, i32 i) {
 		    g_ui->input_x < g_ui->_window_x + uiw && g_ui->input_y > g_ui->_window_y + g_ui->_y - center &&
 		    g_ui->input_y < g_ui->_window_y + g_ui->_y - center + (step * UI_SCALE()) * 2) {
 			if (g_ui->input_started) {
-				context_set_layer(l);
-				tab_layers_set_drag_layer(g_context->layer, -(mouse_x - uix - g_ui->_window_x - 3), -(mouse_y - uiy - g_ui->_window_y + 1));
+				tab_layers_select_on_click(l, uix, uiy);
 			}
 			else if (g_ui->input_released_r) {
+				if (!layers_is_selected(l)) {
+					layers_select_clear();
+				}
 				context_set_layer(l);
 				tab_layers_show_context_menu = true;
 			}
@@ -561,7 +592,7 @@ void tab_layers_draw_layer_slot_full(slot_layer_t *l, i32 i) {
 		                g_ui->input_y < g_ui->_window_y + g_ui->_window_h;
 		if (in_focus && !g_ui->is_typing && g_ui->is_delete_down && tab_layers_can_delete(g_context->layer)) {
 			g_ui->is_delete_down = false;
-			sys_notify_on_next_frame(&tab_layers_draw_layer_slot_full_delete_layer, NULL);
+			sys_notify_on_next_frame(layers_get_selected()->length > 1 ? &tab_layers_delete_selected : &tab_layers_draw_layer_slot_full_delete_layer, NULL);
 		}
 		if (in_focus && g_ui->is_ctrl_down && g_ui->is_key_pressed && g_ui->key_code == KEY_CODE_D) {
 			g_ui->is_key_pressed = false;
@@ -625,6 +656,17 @@ void tab_layers_draw_layer_highlight(slot_layer_t *l, bool mini) {
 
 	// Separator line
 	ui_fill(0, 0, (g_ui->_w / (float)UI_SCALE() - 2), 1 * UI_SCALE(), g_theme->SEPARATOR_COL);
+
+	// Highlight the other selected layers lighter
+	if (g_context->layer != l && layers_is_selected(l)) {
+		i32 col = (g_theme->HIGHLIGHT_COL & 0x00ffffff) | 0x66000000;
+		if (mini) {
+			ui_rect_round(1, -step * 2, g_ui->_w / (float)UI_SCALE() - 1, step * 2 - 1, col, 3);
+		}
+		else {
+			ui_rect_round(1, -step * 2 - 1, g_ui->_w / (float)UI_SCALE() - 2, step * 2 + 1, col, 2);
+		}
+	}
 
 	// Highlight selected
 	if (g_context->layer == l) {
@@ -817,6 +859,22 @@ void tab_layers_draw_layer_context_menu_draw() {
 				ui_menu_keep_open = true;
 			}
 		}
+	}
+
+	i32 selected = layers_get_selected()->length;
+	if (selected > 1 && layers_is_selected(l)) {
+		ui_menu_align();
+		ui_menu_label(string_tmp("%d %s", selected, tr("selected")), NULL);
+		if (ui_menu_button(tr("Delete Selected"), "delete", ICON_DELETE)) {
+			sys_notify_on_next_frame(&tab_layers_delete_selected, NULL);
+		}
+		if (ui_menu_button(tr("Group Selected"), "", ICON_FOLDER_FULL)) {
+			sys_notify_on_next_frame(&tab_layers_group_selected, NULL);
+		}
+		if (ui_menu_button(tr("Flatten Selected"), "", ICON_LAYERS)) {
+			sys_notify_on_next_frame(&tab_layers_flatten_selected, NULL);
+		}
+		ui_menu_separator();
 	}
 
 	if (ui_menu_button(tr("Export"), "", ICON_EXPORT)) {

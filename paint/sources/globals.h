@@ -181,6 +181,7 @@ slot_layer_t_array_t   *history_undo_layers = NULL;
 bool                    history_order_batch = false; // Layer moves are recorded by the caller as one step
 
 slot_layer_t         *tab_layers_clipboard = NULL; // Copied layer, group or mask
+slot_layer_t_array_t *layers_selected      = NULL; // Layers selected along with g_context->layer
 
 char                   *tab_scripts_text    = "";
 i32                     tab_scripts_line; // Active line of the script text area

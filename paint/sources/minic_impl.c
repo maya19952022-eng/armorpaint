@@ -878,6 +878,68 @@ void script_layer_set_locked(slot_layer_t *l, bool locked) {
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 
+// Selection like ctrl+click (toggle) and shift+click (range) in the layers tab, both false selects only l
+void script_layer_select(slot_layer_t *l, bool toggle, bool range) {
+	if (!script_layer_valid(l)) {
+		return;
+	}
+	layers_select(l, toggle, range);
+	ui_dock_redraw(TAB_AREA_SIDEBAR0);
+}
+
+i32 script_layer_selected_count(void) {
+	if (g_project == NULL || g_project->_ == NULL || g_context->layer == NULL) {
+		return 0;
+	}
+	return layers_get_selected()->length;
+}
+
+void script_layer_delete_selected(void) {
+	if (script_layer_selected_count() == 0) {
+		return;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	base_init_undo_layers();
+	layers_delete_selected();
+	script_layer_op_end(current, in_use);
+}
+
+slot_layer_t *script_layer_group_selected(void) {
+	if (script_layer_selected_count() == 0) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	slot_layer_t *group = layers_group_selected();
+	script_layer_op_end(current, in_use);
+	return group;
+}
+
+// Selected layers go into a new group which is flattened, returns the flattened layer
+slot_layer_t *script_layer_flatten_selected(void) {
+	if (script_layer_selected_count() == 0) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	slot_layer_t *flat = layers_flatten_selected();
+	script_layer_op_end(current, in_use);
+	return flat;
+}
+
+// Moves the selected layers to index to keeping their order, like dragging them in the layers tab
+void script_layer_move_selected(i32 to) {
+	if (to < 0 || to >= script_layer_count()) {
+		return;
+	}
+	layers_move_selected(to);
+	g_context->ddirty = 2;
+}
+
 // Saves the layer or group with its children and masks as a project file
 bool script_layer_export_arm(slot_layer_t *l, char *path) {
 	if (!script_layer_valid(l) || path == NULL) {

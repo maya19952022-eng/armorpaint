@@ -1012,6 +1012,181 @@ slot_layer_t *layers_merge_group_history(slot_layer_t *l, bool history) {
 	return children->buffer[0];
 }
 
+// Multi selection, g_context->layer is the active layer and always counts as selected, masks are never part of it
+
+static bool layers_selectable(slot_layer_t *l) {
+	return l != NULL && !slot_layer_is_mask(l) && array_index_of(g_project->_->layers, l) >= 0;
+}
+
+bool layers_is_selected(slot_layer_t *l) {
+	return l == g_context->layer || (layers_selected != NULL && array_index_of(layers_selected, l) >= 0);
+}
+
+void layers_select_clear() {
+	if (layers_selected != NULL) {
+		layers_selected->length = 0;
+	}
+}
+
+// toggle adds or removes l like ctrl+click, range selects from the active layer to l like shift+click
+void layers_select(slot_layer_t *l, bool toggle, bool range) {
+	if (layers_selected == NULL) {
+		layers_selected = any_array_create_from_raw((void *[]){}, 0);
+	}
+	slot_layer_t *active = g_context->layer;
+	if ((!toggle && !range) || !layers_selectable(l)) {
+		layers_select_clear();
+		context_set_layer(l);
+		return;
+	}
+	if (toggle) {
+		if (layers_is_selected(l) && l != active) {
+			array_remove(layers_selected, l);
+			return;
+		}
+		if (layers_selectable(active) && array_index_of(layers_selected, active) < 0) {
+			any_array_push(layers_selected, active);
+		}
+		if (array_index_of(layers_selected, l) < 0) {
+			any_array_push(layers_selected, l);
+		}
+		context_set_layer(l);
+		return;
+	}
+	i32 a  = array_index_of(g_project->_->layers, active);
+	i32 b  = array_index_of(g_project->_->layers, l);
+	i32 lo = a < b ? a : b;
+	i32 hi = a < b ? b : a;
+	layers_select_clear();
+	for (i32 i = lo < 0 ? 0 : lo; i <= hi; ++i) {
+		slot_layer_t *c = g_project->_->layers->buffer[i];
+		if (layers_selectable(c)) {
+			any_array_push(layers_selected, c);
+		}
+	}
+	context_set_layer(l);
+}
+
+// Selected layers and groups from the bottom up, the active layer included
+slot_layer_t_array_t *layers_get_selected() {
+	slot_layer_t_array_t *res = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		slot_layer_t *l = g_project->_->layers->buffer[i];
+		if (layers_selectable(l) && layers_is_selected(l)) {
+			any_array_push(res, l);
+		}
+	}
+	return res;
+}
+
+// Selected layers whose group is not selected too, those move and get deleted with the group
+static slot_layer_t_array_t *layers_get_selected_roots() {
+	slot_layer_t_array_t *sel = layers_get_selected();
+	slot_layer_t_array_t *res = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < sel->length; ++i) {
+		slot_layer_t *l = sel->buffer[i];
+		if (l->parent == NULL || !layers_is_selected(l->parent)) {
+			any_array_push(res, l);
+		}
+	}
+	return res;
+}
+
+void layers_delete_selected() {
+	slot_layer_t_array_t *sel = layers_get_selected_roots();
+	for (i32 i = sel->length - 1; i >= 0; --i) {
+		slot_layer_t *l = sel->buffer[i];
+		if (array_index_of(g_project->_->layers, l) >= 0 && tab_layers_can_delete(l)) {
+			tab_layers_delete_layer(l);
+		}
+	}
+	layers_select_clear();
+	make_material_parse_mesh_material();
+}
+
+// Moves a layer below the lowest child of the group, so the group keeps the order of the layers added to it
+static void layers_set_group_bottom(slot_layer_t *l, slot_layer_t *group) {
+	slot_layer_t_array_t *children = slot_layer_get_recursive_children(group);
+	i32                   lowest   = array_index_of(g_project->_->layers, group);
+	for (i32 i = 0; children != NULL && i < children->length; ++i) {
+		i32 j = array_index_of(g_project->_->layers, children->buffer[i]);
+		if (j < lowest) {
+			lowest = j;
+		}
+	}
+	i32 from = array_index_of(g_project->_->layers, l);
+	i32 to   = from < lowest ? lowest - 1 : lowest;
+	if (slot_layer_can_move(l, to)) {
+		slot_layer_move(l, to);
+	}
+}
+
+// New group holding the selected layers that are not in a group yet
+slot_layer_t *layers_group_selected() {
+	slot_layer_t_array_t *sel    = layers_get_selected();
+	slot_layer_t_array_t *layers = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < sel->length; ++i) {
+		slot_layer_t *l = sel->buffer[i];
+		if (slot_layer_is_layer(l) && !slot_layer_is_filter(l) && !slot_layer_is_in_group(l)) {
+			any_array_push(layers, l);
+		}
+	}
+	if (layers->length == 0) {
+		return NULL;
+	}
+	slot_layer_t *top = layers->buffer[layers->length - 1];
+	context_set_layer(top);
+	slot_layer_t_array_t *pointers = tab_layers_init_layer_map();
+	slot_layer_t         *group    = layers_new_group();
+	array_remove(g_project->_->layers, group);
+	array_insert(g_project->_->layers, array_index_of(g_project->_->layers, top) + 1, group);
+	top->parent = group;
+	tab_layers_remap_all_layer_pointers(pointers);
+	context_set_layer(group);
+	history_new_group();
+	for (i32 i = layers->length - 2; i >= 0; --i) {
+		layers_set_group_bottom(layers->buffer[i], group);
+	}
+	layers_select_clear();
+	context_set_layer(group);
+	make_material_parse_mesh_material();
+	return group;
+}
+
+// Non destructive flatten of the selected layers: they go into a new group, which is flattened
+slot_layer_t *layers_flatten_selected() {
+	slot_layer_t *group = layers_group_selected();
+	if (group == NULL) {
+		return NULL;
+	}
+	history_flatten_group();
+	return layers_flatten_group(group);
+}
+
+// Moves the selected layers to one position keeping their order, in one undo step
+void layers_move_selected(i32 to) {
+	slot_layer_t_array_t *sel = layers_get_selected_roots();
+	if (sel->length == 0) {
+		return;
+	}
+	slot_layer_t *active = g_context->layer;
+	bool          up     = to > array_index_of(g_project->_->layers, sel->buffer[sel->length - 1]);
+	history_order_layers_begin();
+	history_order_layers(to);
+	history_order_batch = true;
+	for (i32 k = 0; k < sel->length; ++k) {
+		// Up: the lowest layer goes first, each one lands on top of the previous. Down: the highest goes first.
+		slot_layer_t *l = up ? sel->buffer[k] : sel->buffer[sel->length - 1 - k];
+		if (slot_layer_can_move(l, to)) {
+			slot_layer_move(l, to);
+		}
+	}
+	history_order_batch = false;
+	history_order_layers_end();
+	context_set_layer(active);
+	make_material_parse_mesh_material();
+}
+
 // Copy of src placed above target, the copy and the move are separate undo steps
 bool layers_paste(slot_layer_t *src, slot_layer_t *target) {
 	if (src == NULL || target == NULL || array_index_of(g_project->_->layers, src) < 0 || slot_layer_is_mask(src) || slot_layer_is_mask(target)) {
