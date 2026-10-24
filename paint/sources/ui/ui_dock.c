@@ -335,6 +335,7 @@ void ui_dock_reset() {
 	dock_default_leaf(sidebar1, TAB_MATERIALS);
 	dock_default_leaf(sidebar1, TAB_BRUSHES);
 	dock_default_leaf(sidebar1, TAB_PLUGINS);
+	dock_default_leaf(sidebar1, TAB_BAKING);
 
 	f32 scale     = g_config->window_scale;
 	i32 sidebar_w = math_floor(ui_sidebar_default_w * scale);

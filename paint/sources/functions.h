@@ -128,6 +128,7 @@ void                  util_bake_clear(i32 slot);
 void                  util_bake_update(void *_);
 bool                  util_bake_run(i32 slot, void (*done)(void *), void *done_data);
 void                  util_bake_run_all(void (*done)(void *), void *done_data);
+void                  util_bake_run_selected(void (*done)(void *), void *done_data);
 void                  util_bake_run_custom(bool (*step)(bake_job_t *), void (*cancel)(bake_job_t *), void *data, void *owner, void (*done)(void *), void *done_data);
 i32                   util_bake_state(i32 slot, void *owner);
 void                  util_bake_cancel_job(i32 slot, void *owner);
@@ -256,6 +257,7 @@ void                   tab_timeline_clip_set_frame(mesh_object_t *mesh, i32 fram
 void                   tab_timeline_sync();
 void                   tab_timeline_on_mesh_deleted(char *mesh_name);
 void                   tab_console_draw(i32 *htab);
+void                   tab_baking_draw(i32 *htab);
 void                   tab_console_run_prompt(char *input);
 void                   tab_textures_draw(i32 *htab);
 void                   render_path_forward_init();
@@ -743,6 +745,8 @@ void                   script_bake_lightmap(object_t *o, i32 res, i32 samples, f
 bool                   script_bake_lightmap_busy(void);
 bool                   script_bake_mesh_map(i32 slot);
 void                   script_bake_mesh_maps(void);
+void                   script_bake_selected(void);
+void                   script_show_tab(i32 tab);
 bool                   script_bake_busy(void);
 void                   script_bake_cancel(void);
 i32                    script_bake_state(i32 slot);

@@ -1407,6 +1407,18 @@ void script_bake_mesh_maps(void) {
 	util_bake_run_all(NULL, NULL);
 }
 
+// The slots set in bake_settings_t.maps, checked in the Baking tab
+void script_bake_selected(void) {
+	util_bake_run_selected(NULL, NULL);
+}
+
+// Opens a dockable tab and brings it to front, see tab_id_t
+void script_show_tab(i32 tab) {
+	if (tab >= 0 && tab < TAB_COUNT) {
+		ui_base_show_tab(tab);
+	}
+}
+
 bool script_bake_busy(void) {
 	return util_bake_busy();
 }

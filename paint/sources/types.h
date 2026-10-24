@@ -789,6 +789,7 @@ typedef struct bake_settings {
 	f32 thickness_distance;
 	f32 curvature_strength;
 	i32 id_source; // mesh_map_id_source_t
+	i32 maps;      // Bit per mesh_map_slot_t, the slots Bake Selected bakes
 } bake_settings_t;
 
 typedef struct bake_job bake_job_t; // util_bake.c

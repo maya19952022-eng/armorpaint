@@ -178,6 +178,7 @@
 #include "ui/box_new_project.c"
 #include "ui/box_preferences.c"
 #include "ui/box_projects.c"
+#include "ui/tab_baking.c"
 #include "ui/tab_browser.c"
 #include "ui/tab_brushes.c"
 #include "ui/tab_console.c"

@@ -316,6 +316,9 @@ void ui_menubar_draw_category_items() {
 		if (ui_menu_button(tr("Bake Material..."), "", ICON_BAKE)) {
 			box_export_show_bake_material();
 		}
+		if (ui_menu_button(tr("Bake Mesh Maps..."), "", ICON_BAKE)) {
+			ui_base_show_tab(TAB_BAKING);
+		}
 		ui_menu_separator();
 		if (ui_menu_button(tr("Exit"), "", ICON_EXIT)) {
 			iron_stop();

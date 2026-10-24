@@ -43,7 +43,8 @@ struct bake_job {
 	.thickness_samples  = 32,           \
 	.thickness_distance = 0.5,          \
 	.curvature_strength = 1.0,          \
-	.id_source          = MESH_MAP_ID_OBJECT \
+	.id_source          = MESH_MAP_ID_OBJECT, \
+	.maps               = (1 << MESH_MAP_COUNT) - 1 \
 }
 // clang-format on
 
@@ -741,6 +742,7 @@ void util_bake_update(void *_) {
 		util_bake_next_job();
 	}
 	bake_job_t *job = util_bake_job;
+	ui_dock_redraw(TAB_AREA_SIDEBAR1); // Progress in the Baking tab
 	if (job == NULL) {
 		sys_remove_update(util_bake_update);
 	}
@@ -798,10 +800,28 @@ bool util_bake_run(i32 slot, void (*done)(void *), void *done_data) {
 	return true;
 }
 
-void util_bake_run_all(void (*done)(void *), void *done_data) {
+// Done is called after the last slot
+static void util_bake_run_mask(i32 maps, void (*done)(void *), void *done_data) {
+	i32 last = -1;
 	for (i32 i = 0; i < MESH_MAP_COUNT; ++i) {
-		util_bake_run(i, i == MESH_MAP_COUNT - 1 ? done : NULL, done_data);
+		if ((maps >> i) & 1) {
+			last = i;
+		}
 	}
+	for (i32 i = 0; i <= last; ++i) {
+		if ((maps >> i) & 1) {
+			util_bake_run(i, i == last ? done : NULL, done_data);
+		}
+	}
+}
+
+void util_bake_run_all(void (*done)(void *), void *done_data) {
+	util_bake_run_mask((1 << MESH_MAP_COUNT) - 1, done, done_data);
+}
+
+// The slots checked in the Baking tab
+void util_bake_run_selected(void (*done)(void *), void *done_data) {
+	util_bake_run_mask(util_bake_settings.maps, done, done_data);
 }
 
 // A job that drives another bake, like the Bake Texture node, queued with the mesh maps. The job frees data with free().
@@ -962,9 +982,9 @@ f32_array_t *util_bake_pixels(i32 slot) {
 char *util_bake_settings_encode() {
 	bake_settings_t *s = &util_bake_settings;
 	return string("{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,\"thickness_distance\":%f,"
-	              "\"curvature_strength\":%f,\"id_source\":%d}",
+	              "\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d}",
 	              s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength,
-	              s->id_source);
+	              s->id_source, s->maps);
 }
 
 static void util_bake_settings_read_i32(any_map_t *m, char *key, i32 *v) {
@@ -996,9 +1016,11 @@ void util_bake_settings_decode(char *json) {
 	util_bake_settings_read_f32(m, "thickness_distance", &s->thickness_distance);
 	util_bake_settings_read_f32(m, "curvature_strength", &s->curvature_strength);
 	util_bake_settings_read_i32(m, "id_source", &s->id_source);
+	util_bake_settings_read_i32(m, "maps", &s->maps);
 	s->res       = s->res < 1 ? 1 : s->res > 16384 ? 16384 : s->res;
 	s->dilation  = s->dilation < 0 ? 0 : s->dilation;
 	s->id_source = s->id_source == MESH_MAP_ID_VERTEX_COLOR ? MESH_MAP_ID_VERTEX_COLOR : MESH_MAP_ID_OBJECT;
+	s->maps &= (1 << MESH_MAP_COUNT) - 1;
 }
 
 // Fills the version 23 fields of the project before it is encoded
