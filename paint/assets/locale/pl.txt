@@ -103,6 +103,7 @@ Przechwyć wideo
 Zaokrąglij w górę
 Rozmiar komórki w pikselach
 Środek
+
 Kanały
 Sprawdź dostępność aktualizacji...
 Tekstura szachownicy
@@ -126,15 +127,20 @@ Projekty w chmurze
 Kolor
 Kolor 1
 Kolor 2
+
+
+
 ID koloru
 Mapa ID koloru
 Maska koloru
 Rampa koloru
+
 Przestrzeń kolorów
 IDKoloru
 Łączenie
 Połącz kolor
 Połącz XYZ
+
 Kompas
 Potwierdź
 Konsola
@@ -237,6 +243,7 @@ Kąt środowiska
 Envmapa
 Kule mapy otoczenia
 Envmapa...
+
 Gumka
 Błąd: oczekiwano pliku .arm
 Błąd: oczekiwano pliku .hdr
@@ -314,6 +321,7 @@ Tekstura gradientowa
 Grawitacja X
 Grawitacja Y
 Grawitacja Z
+
 Więcej niż
 Komórka siatki
 Przyciąganie do siatki
@@ -326,6 +334,7 @@ Mieszanie wysokości
 Pomoc
 Ukryj widok 3D
 Wysoki poly
+
 Historia
 Przytrzymaj {action_paint}, aby gumkować\nPrzytrzymaj {brush_ruler} i naciśnij {action_paint}, aby gumkować prostą linię (tryb linijki)
 Przytrzymaj {action_paint}, aby malować\nPrzytrzymaj {brush_ruler} i naciśnij {action_paint}, aby malować prostą linię (tryb linijki)
@@ -354,6 +363,8 @@ Importuj plik tekstury
 Importuj...
 Importowanie modelu
 Wejście
+
+
 Przychodzące
 Nadmuchaj
 Informacja: Zasób już zaimportowany
@@ -393,6 +404,7 @@ Promień leniwy
 Krok leniwy
 Lewy
 Długość
+
 Mniej niż
 Poziomy
 Czas życia
@@ -432,6 +444,7 @@ Wyjście modelu
 Model...
 Modele
 Metaliczność
+
 Min
 Min Maks
 Minimum
@@ -485,6 +498,7 @@ Mapa normalnych
 Mapa normalnych 1
 Mapa normalnych 2
 Normalizuj
+
 Niedostępne w kompilacji debugowania
 Nie zaimplementowano
 OK
@@ -515,6 +529,8 @@ Orientacja 3D
 Środek do geometrii
 Ortograficzny
 Wyjście
+
+
 Nakładka
 PBR
 Spakuj zasoby
@@ -560,6 +576,7 @@ Postprodukcja
 Potęga
 Preferencje
 Preferencje...
+
 Preset
 Preset zaimportowany:
 Presety
@@ -574,6 +591,7 @@ Prompt
 Jakość
 Kwantyzuj
 R
+
 Krzywe RGB
 RGB do BW
 RGBA
@@ -661,9 +679,11 @@ Ustaw jako maskę
 Ustawianie źródła
 Ustawienia
 Shader
+
 Kształt
 Udostępnij link do odtwarzacza
 Współdzielone
+
 Pokaż podgląd 2D
 Pokaż nazwy zasobów
 Pokaż siatkę
@@ -682,6 +702,7 @@ Sinus
 Rozmiar
 Slot
 Wygładzanie
+
 Rozmazanie
 Przyciągaj
 Fragmenty
@@ -737,6 +758,7 @@ Tekstury...
 Motyw
 Motyw zaimportowany:
 Grubość
+
 Kafelek
 Kafelek X
 Kafelek Y
@@ -759,6 +781,7 @@ Do maski malowania
 Do radianów
 Przełącz pełny ekran
 Przełącz nagłówek
+
 Narzędzia
 Góra
 Interfejs dotykowy

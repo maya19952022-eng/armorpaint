@@ -103,6 +103,7 @@ Videó rögzítése
 Plafon (Ceil)
 Cella mérete pixelben
 Középpont
+
 Csatornák
 Frissítések keresése...
 Sakktábla textúra
@@ -126,15 +127,20 @@ Felhőprojektek
 Szín
 Szín 1
 Szín 2
+
+
+
 Szín ID
 Szín ID térkép
 Szín maszk
 Színátmenet (Ramp)
+
 Színtér
 SzínID
 Kombinálás
 Szín egyesítése
 XYZ egyesítése
+
 Iránytű
 Megerősítés
 Konzol
@@ -237,6 +243,7 @@ Környezet szöge
 Környezeti térkép
 Környezeti térkép gömbök
 Környezeti térkép...
+
 Radír
 Hiba: .arm fájl szükséges
 Hiba: .hdr fájl szükséges
@@ -314,6 +321,7 @@ Színátmenet textúra
 Gravitáció X
 Gravitáció Y
 Gravitáció Z
+
 Nagyobb mint
 Rácscella
 Rácshoz igazítás
@@ -326,6 +334,7 @@ Magasság keverése
 Súgó
 3D Nézet elrejtése
 High Poly
+
 Előzmények
 Tartsa lenyomva a(z) {action_paint} gombot a törléshez\nTartsa lenyomva a(z) {brush_ruler} és {action_paint} gombokat egyenes vonal törléséhez (vonalzó mód)
 Tartsa lenyomva a(z) {action_paint} gombot a festéshez\nTartsa lenyomva a(z) {brush_ruler} és {action_paint} gombokat egyenes vonal festéséhez (vonalzó mód)
@@ -354,6 +363,8 @@ Textúra fájl importálása
 Importálás...
 Háló importálása...
 Bemenet
+
+
 Bejövő
 Felfújás
 Infó: Az asset már importálva van
@@ -393,6 +404,7 @@ Lusta sugár
 Lusta lépés
 Balra
 Hossz
+
 Kisebb mint
 Szintek
 Élettartam
@@ -432,6 +444,7 @@ Háló kimenet
 Háló...
 Hálók
 Fémes (Metallic)
+
 Min
 Min Max
 Minimum
@@ -485,6 +498,7 @@ Normal Map
 Normal Map 1
 Normal Map 2
 Normalizálás
+
 Nem elérhető hibakereső változatban
 Nincs megvalósítva
 OK
@@ -515,6 +529,8 @@ Rétegek sorrendje
 Origó a geometriához
 Ortografikus
 Kimenet
+
+
 Átfedés (Overlay)
 PBR
 Assetek becsomagolása
@@ -560,6 +576,7 @@ Utófeldolgozás
 Hatvány
 Beállítások
 Beállítások...
+
 Előbeállítás
 Előbeállítás importálva:
 Előbeállítások
@@ -574,6 +591,7 @@ Prompt
 Minőség
 Kvantálás
 R
+
 RGB görbék
 RGB -> Fekete-fehér
 RGBA
@@ -661,9 +679,11 @@ Beállítás maszkként
 Forrás beállítása...
 Beállítás
 Shader
+
 Alakzat
 Player hivatkozás megosztása
 Megosztott
+
 2D Nézet megjelenítése
 Asset nevek mutatása
 Rács megjelenítése
@@ -682,6 +702,7 @@ Szinusz
 Méret
 Hely
 Simítás
+
 Elkenés
 Illesztés
 Kódrészletek
@@ -737,6 +758,7 @@ Textúrák...
 Téma
 Téma importálva:
 Vastagság
+
 Mozaik
 Mozaik X
 Mozaik Y
@@ -759,6 +781,7 @@ Festő maszkká
 Radiánra
 Teljes képernyő ki/be
 Fejléc ki/be
+
 Eszközök
 Fent
 Érintőképernyős UI

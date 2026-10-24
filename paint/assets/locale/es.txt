@@ -103,6 +103,7 @@ Capturar vídeo
 Techo
 Tamaño de celda en píxeles
 Centro
+
 Canales
 Comprobar actualizaciones...
 Verificador
@@ -126,15 +127,20 @@ Proyectos en la nube
 Color
 Color 1
 Color 2
+
+
+
 ID de color
 Mapa de ID de colores
 Máscara de color
 Rampa de color
+
 Espacio de color
 Color ID
 Combinar
 Combinar color
 Combinar XYZ
+
 Gizmo orientación
 Confirmar
 Consola
@@ -237,6 +243,7 @@ Entorno
 Mapa de entorno
 Esferas del mapa de entorno
 Mapa de entorno...
+
 Borrador
 Error: archivo .arm esperado
 Error: se esperaba archivo .hdr
@@ -314,6 +321,7 @@ Gradiente
 Gravedad X
 Gravedad Y
 Gravedad Z
+
 Mayor que
 Celda de la rejilla
 Ajuste a rejilla
@@ -326,6 +334,7 @@ Mezcla de altura
 Ayuda
 Ocultar vista 3D
 High Poly
+
 Historial
 Mantener {action_paint} para borrar\nMantener {brush_ruler} y presionar {action_paint} para borrar línea recta (modo regla)
 Mantener {action_paint} para pintar\nMantener {brush_ruler} y presionar {action_paint} para pintar línea recta (modo regla)
@@ -354,6 +363,8 @@ Importar textura
 Importar...
 Importando malla
 Entrada
+
+
 Entrante
 Inflar
 Info: Recurso ya importado
@@ -393,6 +404,7 @@ Radio perezoso
 Paso perezoso
 Izquierda
 Longitud
+
 Menor que
 Niveles
 Tiempo de vida
@@ -432,6 +444,7 @@ Salida de malla
 Malla...
 Mallas
 Metálico
+
 Mín
 Mín Máx
 Mínimo
@@ -485,6 +498,7 @@ Mapa de normales
 Mapa de normales 1
 Mapa de normales 2
 Normalizar
+
 No disponible en la compilación de depuración
 No implementado
 OK
@@ -515,6 +529,8 @@ Orientación 3D
 Origen a la geometría
 Ortográfica
 Salida
+
+
 Superponer
 PBR
 Empaquetar recursos
@@ -560,6 +576,7 @@ Posprocesado
 Potencia
 Preferencias
 Preferencias...
+
 Preajuste
 Predefinición importada:
 Preajustes
@@ -574,6 +591,7 @@ Prompt
 Calidad
 Cuantificar
 R
+
 Curvas RGB
 RVA a grises
 RVAA
@@ -661,9 +679,11 @@ Establecer como máscara
 Estableciendo origen
 Configuración
 Sombreador
+
 Forma
 Compartir enlace del reproductor
 Compartido
+
 Mostrar vista 2D
 Mostrar nombres de recursos
 Mostrar rejilla
@@ -682,6 +702,7 @@ Seno
 Tamaño
 Ranura
 Suavizar
+
 Difuminar
 Adherir
 Fragmentos
@@ -737,6 +758,7 @@ Texturas...
 Tema
 Tema importado:
 Grosor
+
 Mosaico
 Mosaico X
 Mosaico Y
@@ -759,6 +781,7 @@ Pintar máscara
 A radianes
 Ventana a pantalla completa
 Alternar cabecera
+
 Herramientas
 Superior
 Interfaz táctil

@@ -103,6 +103,7 @@ Capture Video
 Ceil
 Cell size in pixels
 Center
+Channel
 Channels
 Check for Updates...
 Checker Texture
@@ -126,15 +127,20 @@ Cloud projects
 Color
 Color 1
 Color 2
+Color 3
+Color 4
+Color Balance
 Color ID
 Color ID Map
 Color Mask
 Color Ramp
+Color Selection
 Color Space
 ColorID
 Combine
 Combine Color
 Combine XYZ
+Compare Mask
 Compass
 Confirm
 Console
@@ -237,6 +243,7 @@ Environment Angle
 Envmap
 Envmap Spheres
 Envmap...
+Equal
 Eraser
 Error: .arm file expected
 Error: .hdr file expected
@@ -314,6 +321,7 @@ Gradient Texture
 Gravity X
 Gravity Y
 Gravity Z
+Greater
 Greater Than
 Grid Cell
 Grid Snap
@@ -326,6 +334,7 @@ Height Blend
 Help
 Hide 3D View
 High Poly
+Highlights
 History
 Hold {action_paint} to erase\nHold {brush_ruler} and press {action_paint} to erase a straight line (ruler mode)
 Hold {action_paint} to paint\nHold {brush_ruler} and press {action_paint} to paint a straight line (ruler mode)
@@ -354,6 +363,8 @@ Import texture file
 Import...
 Importing mesh
 In
+In Black
+In White
 Incoming
 Inflate
 Info: Asset already imported
@@ -393,6 +404,7 @@ Lazy Radius
 Lazy Step
 Left
 Length
+Less
 Less Than
 Levels
 Lifetime
@@ -432,6 +444,7 @@ Mesh Output
 Mesh...
 Meshes
 Metallic
+Midtones
 Min
 Min Max
 Minimum
@@ -485,6 +498,7 @@ Normal Map
 Normal Map 1
 Normal Map 2
 Normalize
+Not Equal
 Not available in debug build
 Not implemented
 OK
@@ -515,6 +529,8 @@ Orientation 3D
 Origin to Geometry
 Orthographic
 Out
+Out Black
+Out White
 Overlay
 PBR
 Pack Assets
@@ -560,6 +576,7 @@ Post Process
 Power
 Preferences
 Preferences...
+Preserve Luminosity
 Preset
 Preset imported:
 Presets
@@ -574,6 +591,7 @@ Prompt
 Quality
 Quantize
 R
+RGB
 RGB Curves
 RGB to BW
 RGBA
@@ -661,9 +679,11 @@ Set as Mask
 Setting Source
 Setup
 Shader
+Shadows
 Shape
 Share Player Link
 Shared
+Sharpen
 Show 2D View
 Show Asset Names
 Show Grid
@@ -682,6 +702,7 @@ Sine
 Size
 Slot
 Smooth
+Smoothness
 Smudge
 Snap
 Snippets
@@ -737,6 +758,7 @@ Textures...
 Theme
 Theme imported:
 Thickness
+Threshold
 Tile
 Tile X
 Tile Y
@@ -759,6 +781,7 @@ To Paint Mask
 To Radians
 Toggle Fullscreen
 Toggle header
+Tolerance
 Tools
 Top
 Touch UI

@@ -103,6 +103,7 @@ Capturar Vídeo
 Teto
 Tamanho da célula em pixels
 Centro
+Canal
 Canais
 Checar Atualizações...
 Textura Quadriculada
@@ -126,15 +127,20 @@ Projetos na nuvem
 Cor
 Cor 1
 Cor 2
+Cor 3
+Cor 4
+Equilíbrio de Cor
 ID de Cor
 Mapa de ID de Cor
 Máscara de Cor
 Rampa de Cores
+Seleção de Cor
 Espaço de Cor
 ID de Cor
 Combinar
 Combinar Cor
 Combinar XYZ
+Máscara de Comparação
 Bússola
 Confirmar
 Console
@@ -237,6 +243,7 @@ Ambiente
 Mapa de Ambiente
 Esferas do Envmap
 Mapa de Ambiente...
+Igual
 Borracha
 Erro: Esperado arquivo .arm
 Erro: Esperado arquivo .hdr
@@ -314,6 +321,7 @@ Textura de Gradiente
 Gravidade X
 Gravidade Y
 Gravidade Z
+Maior
 Maior Que
 Célula da Grade
 Ajuste à Grade
@@ -326,6 +334,7 @@ Mistura de Altura
 Ajuda
 Ocultar Visualização 3D
 Alto Polígonos
+Realces
 Histórico
 Segure {action_paint} para apagar\nSegure {brush_ruler} e pressione {action_paint} para apagar uma linha reta (modo régua)
 Segure {action_paint} para pintar\nSegure {brush_ruler} e pressione {action_paint} para pintar uma linha reta (modo régua)
@@ -354,6 +363,8 @@ Importar arquivo de textura
 Importar...
 Importando malha
 Entrada
+Preto de Entrada
+Branco de Entrada
 Entrada
 Inflar
 Info: Ativo já importado
@@ -393,6 +404,7 @@ Raio Preguiçoso
 Passo Preguiçoso
 Esquerda
 Comprimento
+Menor
 Menor Que
 Níveis
 Tempo de Vida
@@ -432,6 +444,7 @@ Saída de Malha
 Malha...
 Malhas
 Metálico
+Meios-tons
 Mínimo
 Mínimo Máximo
 Mínimo
@@ -485,6 +498,7 @@ Mapa de Normais
 Mapa de Normais 1
 Mapa de Normais 2
 Normalizar
+Diferente
 Não disponível na compilação de depuração
 Não implementado
 OK
@@ -515,6 +529,8 @@ Orientação 3D
 Origem para Geometria
 Ortográfica
 Saída
+Preto de Saída
+Branco de Saída
 Sobrepor
 PBR
 Empacotar Ativos
@@ -560,6 +576,7 @@ Pós-processamento
 Potência
 Preferências
 Preferências...
+Preservar Luminosidade
 Pré-definição
 Pré-definição importada:
 Pré-definições
@@ -574,6 +591,7 @@ Prompt
 Qualidade
 Quantizar
 R
+RGB
 Curvas RGB
 RGB para P&B
 RGBA
@@ -661,9 +679,11 @@ Definir como Máscara
 Definindo Origem
 Configuração
 Shader
+Sombras
 Forma
 Compartilhar Link do Player
 Compartilhado
+Nitidez
 Mostrar Visualização 2D
 Mostrar Nomes dos Ativos
 Mostrar Grade
@@ -682,6 +702,7 @@ Seno
 Tamanho
 Slot
 Suavizar
+Suavidade
 Borrar
 Ajustar
 Trechos
@@ -737,6 +758,7 @@ Texturas...
 Tema
 Tema importado:
 Espessura
+Limiar
 Bloco
 Bloco X
 Bloco Y
@@ -759,6 +781,7 @@ Para Máscara de Pintura
 Para Radianos
 Alternar Tela Cheia
 Alternar cabeçalho
+Tolerância
 Ferramentas
 Superior
 Interface Touch

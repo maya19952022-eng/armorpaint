@@ -103,6 +103,7 @@ Capturer une vidéo
 Plafond
 Taille de cellule en pixels
 Centre
+
 Canaux
 Vérifier les mises à jour...
 Texture d'échiquier
@@ -126,15 +127,20 @@ Projets cloud
 Couleur
 Couleur 1
 Couleur 2
+
+
+
 Color ID
 Carte de Color ID
 Masque de couleur
 Plage de couleur
+
 Espace couleur
 ID Couleur
 Combiner
 Recomposer couleur
 Recomposer XYZ
+
 Gizmos XYZ
 Confirmer
 Console
@@ -237,6 +243,7 @@ Rotation de l'environnement
 Environnement
 Sphères de la carte d'environnement
 Carte d'environnement...
+
 Gomme
 Erreur : fichier .arm attendu
 Erreur : fichier .hdr attendu
@@ -314,6 +321,7 @@ Texture de dégradé
 Gravité X
 Gravité Y
 Gravité Z
+
 Plus grand que
 Cellule de la grille
 Aimantation grille
@@ -326,6 +334,7 @@ Mélange hauteur
 Aide
 Masquer la vue 3D
 High Poly
+
 Historique
 Maintenir {action_paint} pour effacer\nMaintenir {brush_ruler} et appuyer {action_paint} pour effacer ligne droite (mode règle)
 Maintenir {action_paint} pour peindre\nMaintenir {brush_ruler} et appuyer {action_paint} pour peindre ligne droite (mode règle)
@@ -354,6 +363,8 @@ Importer le fichier de texture
 Importer...
 Import du maillage
 Entrée
+
+
 Entrante
 Gonfler
 Info : Ressource déjà importée
@@ -393,6 +404,7 @@ Rayon du ralenti
 Étape du ralenti
 Gauche
 Longueur
+
 Moins que
 Niveaux
 Durée de vie
@@ -432,6 +444,7 @@ Sortie du maillage
 Maillage...
 Maillages
 Métallique
+
 Min
 Min Max
 Minimum
@@ -485,6 +498,7 @@ Carte de normales
 Carte de normales 1
 Carte de normales 2
 Normaliser
+
 Non disponible dans la version de débogage
 Non implémenté
 OK
@@ -515,6 +529,8 @@ Orientation 3D
 Origine vers la géométrie
 Orthographique
 Sortie
+
+
 Superposer
 PBR
 Embarquer les assets
@@ -560,6 +576,7 @@ Post-traitement
 Puissance
 Préférences
 Paramètres...
+
 Préréglage
 Préréglage importé :
 Préréglages
@@ -574,6 +591,7 @@ Prompt
 Qualité
 Quantifier
 R
+
 Courbes RGB
 RGB vers NB
 RGBA
@@ -661,9 +679,11 @@ Définir comme masque
 Définition de la source
 Configuration
 Shader
+
 Forme
 Partager le lien du lecteur
 Partagé
+
 Afficher la vue 2D
 Montrer les noms des assets
 Afficher la grille
@@ -682,6 +702,7 @@ Sinus
 Taille
 Emplacement
 Adoucir
+
 Étaler
 Accrocher
 Extraits
@@ -737,6 +758,7 @@ Textures...
 Thème
 Thème importé :
 Épaisseur
+
 Tuile
 Tuile X
 Tuile Y
@@ -759,6 +781,7 @@ Vers masque de peinture
 En radians
 Plein écran
 Basculer en-tête
+
 Outils
 Dessus
 Interface tactile

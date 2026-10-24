@@ -103,6 +103,7 @@ Zachytit video
 Zaokrouhlit nahoru
 Velikost buňky v pixelech
 Střed
+
 Kanály
 Zkontrolovat aktualizace...
 Šachovnicová textura
@@ -126,15 +127,20 @@ Cloudové projekty
 Barva
 Barva 1
 Barva 2
+
+
+
 ID barvy
 Mapa ID barev
 Maska barvy
 Barevný přechod
+
 Barevný prostor
 ID barvy
 Kombinovat
 Kombinovat barvu
 Kombinovat XYZ
+
 Kompas
 Potvrdit
 Konzole
@@ -237,6 +243,7 @@ Okolí
 Mapa okolí
 Kule mapy okolí
 Mapa okolí...
+
 Guma
 Chyba: Očekáván soubor .arm
 Chyba: Očekáván soubor .hdr
@@ -314,6 +321,7 @@ Přechodová textura
 Gravitace X
 Gravitace Y
 Gravitace Z
+
 Větší než
 Buňka mřížky
 Přichytávání k mřížce
@@ -326,6 +334,7 @@ Míchání výšky
 Nápověda
 Skrýt 3D pohled
 Vysoký počet polygonů
+
 Historie
 Držte {action_paint} pro mazání\nDržte {brush_ruler} a stiskněte {action_paint} pro mazání přímky (režim pravítka)
 Držte {action_paint} pro malování\nDržte {brush_ruler} a stiskněte {action_paint} pro malování přímky (režim pravítka)
@@ -354,6 +363,8 @@ Importovat soubor textury
 Importovat...
 Importování sítě
 Vstup
+
+
 Příchozí
 Nafouknout
 Info: Asset již importován
@@ -393,6 +404,7 @@ Líný poloměr
 Líný krok
 Vlevo
 Délka
+
 Menší než
 Úrovně
 Životnost
@@ -432,6 +444,7 @@ Výstup sítě
 Síť...
 Sítě
 Kovovost
+
 Min
 Min Max
 Minimum
@@ -485,6 +498,7 @@ Normálová mapa
 Normálová mapa 1
 Normálová mapa 2
 Normalizovat
+
 Není dostupné v ladicím buildu
 Neimplementováno
 OK
@@ -515,6 +529,8 @@ Orientace 3D
 Počátek na geometrii
 Ortografie
 Výstup
+
+
 Překrytí
 PBR
 Zabalit assety
@@ -560,6 +576,7 @@ Postprodukce
 Mocnina
 Předvolby
 Předvolby...
+
 Předvolba
 Předvolba importována:
 Předvolby
@@ -574,6 +591,7 @@ Prompt
 Kvalita
 Kvantizovat
 R
+
 Křivky RGB
 RGB na černobílý
 RGBA
@@ -661,9 +679,11 @@ Nastavit jako masku
 Nastavování zdroje
 Nastavení
 Shader
+
 Tvar
 Sdílet odkaz na přehrávač
 Sdílené
+
 Zobrazit 2D pohled
 Zobrazit názvy assetů
 Zobrazit mřížku
@@ -682,6 +702,7 @@ Sinus
 Velikost
 Slot
 Vyhladit
+
 Rozmazat
 Přichytit
 Úryvky
@@ -737,6 +758,7 @@ Textury...
 Téma
 Téma importováno:
 Tloušťka
+
 Dlaždice
 Dlaždice X
 Dlaždice Y
@@ -759,6 +781,7 @@ Na malovací masku
 Na radiány
 Přepnout celou obrazovku
 Přepnout záhlaví
+
 Nástroje
 Horní
 Dotykové rozhraní

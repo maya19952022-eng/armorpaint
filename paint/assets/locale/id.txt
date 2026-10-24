@@ -103,6 +103,7 @@ Tangkap Video
 Langit-langit
 Ukuran sel dalam piksel
 Tengah
+
 Kanal
 Periksa Pembaruan...
 Tekstur Kotak-kotak
@@ -126,15 +127,20 @@ Proyek awan
 Warna
 Warna 1
 Warna 2
+
+
+
 ID Warna
 Peta ID Warna
 Masker Warna
 Rampe Warna
+
 Ruang Warna
 IDWarna
 Gabungkan
 Gabung Warna
 Gabung XYZ
+
 Kompas
 Konfirmasi
 Konsol
@@ -237,6 +243,7 @@ Sudut Lingkungan
 Peta Lingkungan
 Bola Envmap
 Peta Lingkungan...
+
 Penghapus
 Kesalahan: berkas .arm diharapkan
 Kesalahan: berkas .hdr diharapkan
@@ -314,6 +321,7 @@ Tekstur Gradasi
 Gravitasi X
 Gravitasi Y
 Gravitasi Z
+
 Lebih Besar Dari
 Sel Grid
 Snap ke Grid
@@ -326,6 +334,7 @@ Campur Tinggi
 Bantuan
 Sembunyikan Tampilan 3D
 Poly Tinggi
+
 Riwayat
 Tahan {action_paint} untuk menghapus\nTahan {brush_ruler} dan tekan {action_paint} untuk menghapus garis lurus (mode penggaris)
 Tahan {action_paint} untuk melukis\nTahan {brush_ruler} dan tekan {action_paint} untuk melukis garis lurus (mode penggaris)
@@ -354,6 +363,8 @@ Impor berkas tekstur
 Impor...
 Mengimpor mesh
 Masuk
+
+
 Masuk
 Gembungkan
 Info: Aset sudah diimpor
@@ -393,6 +404,7 @@ Radius Malas
 Langkah Malas
 Kiri
 Panjang
+
 Kurang Dari
 Tingkat
 Masa Hidup
@@ -432,6 +444,7 @@ Keluaran Mesh
 Mesh...
 Mesh
 Logam
+
 Min
 Min Maks
 Minimum
@@ -485,6 +498,7 @@ Peta Normal
 Peta Normal 1
 Peta Normal 2
 Normalisasi
+
 Tidak tersedia di build debug
 Belum diimplementasikan
 OK
@@ -515,6 +529,8 @@ Orientasi 3D
 Origin ke Geometri
 Ortografis
 Keluar
+
+
 Hampar
 PBR
 Kemas Aset
@@ -560,6 +576,7 @@ Pasca Proses
 Pangkat
 Preferensi
 Preferensi...
+
 Preset
 Preset diimpor:
 Preset
@@ -574,6 +591,7 @@ Prompt
 Kualitas
 Kuantisasi
 R
+
 Kurva RGB
 RGB ke Hitam Putih
 RGBA
@@ -661,9 +679,11 @@ Atur sebagai Masker
 Mengatur Sumber
 Pengaturan
 Shader
+
 Bentuk
 Bagikan Tautan Pemutar
 Berbagi
+
 Tampilkan Tampilan 2D
 Tampilkan Nama Aset
 Tampilkan Grid
@@ -682,6 +702,7 @@ Sinus
 Ukuran
 Slot
 Haluskan
+
 Oleskan
 Snap
 Snippet
@@ -737,6 +758,7 @@ Tekstur...
 Tema
 Tema diimpor:
 Ketebalan
+
 Petak
 Petak X
 Petak Y
@@ -759,6 +781,7 @@ Ke Masker Lukis
 Ke Radian
 Alihkan Layar Penuh
 Alihkan header
+
 Alat
 Atas
 UI Sentuh

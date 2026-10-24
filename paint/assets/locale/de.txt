@@ -103,6 +103,7 @@ Video aufnehmen
 Aufrunden
 Zellengröße in Pixeln
 Mitte
+
 Kanäle
 Auf Updates prüfen...
 Schach Textur
@@ -126,15 +127,20 @@ Cloud-Projekte
 Farbe
 1. Farbe
 2. Farbe
+
+
+
 Farb ID
 Color ID Map
 Farbmaske
 Farbgradient
+
 Farbraum
 FarbID
 Kombinieren
 Farbe zusammenführen
 XYZ zusammenführen
+
 Kompass
 Bestätigen
 Konsole
@@ -237,6 +243,7 @@ Umgebungswinkel
 Hintergrundbild
 Hintergrundbild Kugeln
 Hintergrundbild...
+
 Radiergummi
 Fehler: .arm Datei erwartet
 Fehler: .hdr Datei erwartet
@@ -314,6 +321,7 @@ Farbverlauf Textur
 Gravitation X
 Gravitation Y
 Gravitation Z
+
 Größer als
 Gitterzelle
 Gitterausrichtung
@@ -326,6 +334,7 @@ Höhenmischung
 Hilfe
 3D Ansicht ausblenden
 High Poly
+
 Verlauf
 {action_paint} gedrückt halten um zu raddieren\n{brush_ruler} gedrückt halten und {action_paint} drücken um eine gerade Linie wegzuraddieren (Lineal)
 {action_paint} gedrückt halten um zu malen\n{brush_ruler} gedrückt halten und {action_paint} drücken um eine gerade Linie zu malen (Lineal)
@@ -354,6 +363,8 @@ Textur importieren
 Importieren...
 Mesh wird importiert
 Eingang
+
+
 Einkommend
 Aufblasen
 Info: Asset bereits importiert
@@ -393,6 +404,7 @@ Träger Radius
 Träger Schritt
 Links
 Länge
+
 Kleiner als
 Stufen
 Lebensdauer
@@ -432,6 +444,7 @@ Mesh-Ausgabe
 Mesh...
 Meshes
 Metallic
+
 Min
 Min Max
 Minumum
@@ -485,6 +498,7 @@ Normal Map
 Normal Map 1
 Normal Map 2
 Normieren
+
 Nicht verfügbar im Debug Build
 Nicht implementiert
 OK
@@ -515,6 +529,8 @@ Orientierung 3D
 Ursprung zur Geometrie
 Orthografisch
 Ausgang
+
+
 Überlagern
 PBR
 Assets zusammenpacken
@@ -560,6 +576,7 @@ Nachbearbeitung
 Potenz
 Einstellungen
 Einstellungen...
+
 Vorlage
 Vorlage importiert:
 Vorlagen
@@ -574,6 +591,7 @@ Prompt
 Qualität
 Quantisieren
 R
+
 RGB Kurven
 RGB zu Graustufen
 RGBA
@@ -661,9 +679,11 @@ Als Maske setzen
 Quelle wird gesetzt
 Einrichtung
 Shader
+
 Form
 Player-Link teilen
 Geteilt
+
 2D Ansicht anzeigen
 Namen der Assets anzeigen
 Gitter anzeigen
@@ -682,6 +702,7 @@ Sinus
 Größe
 Slot
 Glatt
+
 Verwischen
 Snap
 Snippets
@@ -737,6 +758,7 @@ Texturen...
 Theme
 Theme importiert:
 Dicke
+
 Kachel
 Kachel X
 Kachel Y
@@ -759,6 +781,7 @@ Zu Zeichenmaske
 Nach Bogenmaß
 In Vollbild umschalten
 Werkzeugleiste umschalten
+
 Werkzeuge
 Oben
 Touch UI
