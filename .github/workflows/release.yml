@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags:
+    - 'v*' # A tag makes a release with the portable Windows build
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag of the release
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Compile
+      run: |
+        cd paint
+        ../base/make --compile
+    - name: Zip
+      shell: pwsh
+      run: Compress-Archive -Path paint/build/out/* -DestinationPath ArmorPaint-windows.zip
+    - name: Release
+      shell: bash
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      run: |
+        gh release create "$TAG" ArmorPaint-windows.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "ArmorPaint $TAG" --notes-file docs/release_notes.md --prerelease
