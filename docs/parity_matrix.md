@@ -21,13 +21,13 @@ Como atualizar:
 | Ferramentas e pincel | 28 | 8 | 14 | 6 | 29% |
 | Projeções de fill | 7 | 2 | 1 | 4 | 29% |
 | Procedural e biblioteca | 10 | 1 | 5 | 4 | 10% |
-| Baking | 12 | 2 | 3 | 7 | 17% |
+| Baking | 12 | 3 | 2 | 7 | 25% |
 | Viewport, render e shading | 12 | 2 | 5 | 5 | 17% |
 | Import e export | 13 | 1 | 10 | 2 | 8% |
 | Interface, UX e scripting | 11 | 3 | 6 | 2 | 27% |
-| **Total** | **129** | **33 (26%)** | **55** | **41** | meta: 117 ✅ |
+| **Total** | **129** | **34 (26%)** | **54** | **41** | meta: 117 ✅ |
 
-Fora de escopo nas tabelas: 2. Faltam 84 itens ✅ para a meta.
+Fora de escopo nas tabelas: 2. Faltam 83 itens ✅ para a meta.
 
 <!-- placar:fim -->
 
@@ -151,7 +151,7 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 
 | ID | Feature SP | Status | Situação no início (P0) | Tarefa | Fase | Tam. | Notas |
 |---|---|---|---|---|---|---|---|
-| BAKE-01 | Mesh maps como slots por texture set (Normal, World Normal, ID, AO, Curvature, Position, Thickness, Bent Normals, Opacity) consumidos por generators | 🟡 parcial | bake por nó, salvo em layer/Textures | `mesh_map_t` por set em `project_t`; `util_bake.c` com job API headless; nó `Mesh Map` | P2 | L |  |
+| BAKE-01 | Mesh maps como slots por texture set (Normal, World Normal, ID, AO, Curvature, Position, Thickness, Bent Normals, Opacity) consumidos por generators | ✅ feito | bake por nó, salvo em layer/Textures | `mesh_map_t` por set em `project_t`; `util_bake.c` com job API headless; nó `Mesh Map` | P2 | L | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): nove slots no projeto assados na CPU no espaço UV por uma fila de jobs (progresso, cancelar, undo, script), nó Mesh Map, `.arm` versão 23. O nó Bake Texture usa a mesma fila. Normal de high poly, cage e AA vêm com BAKE-03/04/06/07; um set por projeto até a PRJ-05. `mesh_maps.md` |
 | BAKE-02 | Diálogo Baking mode: settings comuns separados dos por-mapa (12.1), seleção de mapas, bake all/selected | ❌ falta | — | `box_bake.c` (ou modo de workspace "Bake") | P2 | M |  |
 | BAKE-03 | High-poly list, match by name (sufixos `_low/_high`), cage/offset global, distâncias frontal/rear, average normals, ignore backface, AA 2x2/4x4/8x8, dilation | 🟡 parcial | high-poly simples, dilate | Estender `render_path_paint.c` bake de high poly: raycast com cage e distâncias; supersample na resolução + downsample; parser de nomes | P2 | L |  |
 | BAKE-04 | Auto cage (11.0) | ❌ falta | — | Cage = low-poly extrudido por normal com offset suavizado (`util_geom.c`) | P2 | M |  |

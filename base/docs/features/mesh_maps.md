@@ -1,0 +1,96 @@
+# Mesh maps
+
+IDs da matriz: BAKE-01 · Fase: P2
+
+Texturas calculadas uma vez a partir da geometria do projeto (oclusão, curvatura, posição, espessura...) e lidas por qualquer material pelo nó **Mesh Map**. São a base para materiais que reagem à forma do modelo: sujeira nas cavidades, desgaste nas quinas, cor por objeto. O projeto tem um slot para cada mapa; assar de novo substitui o mapa do slot.
+
+## Slots
+
+| Slot | O que guarda | Sem bake |
+|---|---|---|
+| **Normal** | Normal map em espaço tangente. Plano (0.5, 0.5, 1) até o bake de high poly (BAKE-03) | Plano |
+| **World Space Normal** | Normal da superfície em espaço de mundo, `n * 0.5 + 0.5` | Preto |
+| **ID** | Uma cor por objeto (ou a cor de vértice, em `id_source`) para usar com Color Selection | Preto |
+| **Ambient Occlusion** | 1 onde nada tapa a superfície, mais escuro nas cavidades e perto de outros objetos | Branco |
+| **Curvature** | 0.5 em superfície plana, mais claro no convexo, mais escuro no côncavo | Cinza |
+| **Position** | Posição no mundo normalizada pela caixa que envolve todos os objetos (0 a 1 por eixo) | Preto |
+| **Thickness** | Distância média até o outro lado do objeto: branco é grosso, escuro é fino | Preto |
+| **Bent Normals** | Direção média por onde a superfície vê o céu, em espaço de mundo | Preto |
+| **Opacity** | Branco onde há geometria, preto fora das ilhas UV | Preto |
+
+Normal, World Space Normal, Position e Bent Normals guardam 16 bits por canal; os outros, 8.
+
+## Onde fica
+
+Editor de materiais → **Input** → **Mesh Map**. O nó tem:
+
+| Controle | O que faz |
+|---|---|
+| **Map** (mapa) | Slot lido pelo nó |
+| **Bake** (assar) / **Rebake** | Assa o slot escolhido com os ajustes atuais do projeto. Durante o bake vira uma barra de progresso; clicar nela cancela |
+| Saída **Color** | RGB do mapa |
+| Saída **Value** | Canal vermelho, para os mapas em tons de cinza |
+
+Ao terminar um bake, as fill layers e os efeitos são refeitos e passam a usar o mapa novo. O painel de bake completo (escolher vários mapas, ajustes comuns e por mapa) vem com a BAKE-02.
+
+## Como o bake funciona
+
+- Todos os objetos do projeto são rasterizados no espaço UV (uma amostra no centro de cada texel); cada texel recebe posição e normal de mundo.
+- Oclusão, Bent Normals e Thickness disparam raios a partir de cada texel contra todos os objetos (raios na CPU, com uma BVH). Oclusão e Bent Normals usam o hemisfério acima da superfície; Thickness, o de dentro.
+- Curvature compara a normal de cada texel com a dos vizinhos na mesma ilha.
+- No fim, as ilhas UV crescem alguns texels (**dilation**) para não aparecer costura no filtro da textura.
+- O bake roda numa fila: cada frame processa algumas linhas em várias threads, então a interface continua respondendo. O nó Bake Texture usa a mesma fila, então um bake de nó e um de mesh map nunca rodam juntos.
+
+## Ajustes
+
+Ficam no projeto (`bake_settings` no `.arm`) e valem para os próximos bakes. Por enquanto só pelo script (`script_bake_get_settings()`); a interface vem com a BAKE-02.
+
+| Campo | Padrão | O que faz |
+|---|---|---|
+| `res` | 2048 | Largura e altura dos mapas |
+| `dilation` | 16 | Texels acrescentados em volta das ilhas UV |
+| `occlusion_samples` | 64 | Raios por texel de Ambient Occlusion e Bent Normals |
+| `occlusion_distance` | 0.25 | Distância máxima de um oclusor, relativa à diagonal da cena |
+| `thickness_samples` | 32 | Raios por texel de Thickness |
+| `thickness_distance` | 0.5 | Distância máxima medida, relativa à diagonal da cena |
+| `curvature_strength` | 1.0 | Multiplica o contraste da curvatura |
+| `id_source` | `MESH_MAP_ID_OBJECT` | Cor por objeto, ou `MESH_MAP_ID_VERTEX_COLOR` para a cor de vértice |
+
+## Atalhos
+
+Nenhum atalho novo. Ctrl+Z/Ctrl+Y desfazem e refazem cada bake e cada limpeza de slot; no histórico o passo se chama "Bake Mesh Map" ou "Clear Mesh Map".
+
+## Projeto e export
+
+- O formato do `.arm` sobe para a versão 23, com dois campos no fim do projeto: `mesh_maps` (por slot: `slot`, `set`, `res`, `bpp` e os pixels RGBA comprimidos com LZ4) e `bake_settings` (JSON com os ajustes acima).
+- Projetos da versão 22 ou anterior abrem sem mesh maps e com os ajustes padrão.
+- Export as .arm de um grupo (LAY-14) não leva os mesh maps.
+- Os mesh maps não entram no export de texturas; o preset "Mesh maps" é a BAKE-10.
+
+## Script
+
+```c
+bake_settings_t *s = script_bake_get_settings();
+s->res               = 1024;
+s->occlusion_samples = 128;
+script_bake_mesh_map(MESH_MAP_OCCLUSION); // ou script_bake_mesh_maps() para os nove
+// A cada frame:
+if (!script_bake_busy()) {
+	f32_array_t *px = script_mesh_map_pixels(MESH_MAP_OCCLUSION); // rgba 0-1, linha a linha
+	gpu_texture_t *t = script_mesh_map_get(MESH_MAP_OCCLUSION);  // NULL sem bake
+}
+float progresso = script_bake_progress();
+script_bake_cancel();
+script_mesh_map_clear(MESH_MAP_ID);
+```
+
+O enum `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_COUNT`) e o enum `mesh_map_id_source_t` estão disponíveis nos scripts.
+
+## Limitações
+
+- Ainda não há bake de high poly (normal, altura e opacidade vindas de outro mesh), cage nem antialiasing: chegam com a BAKE-03, BAKE-04, BAKE-06 e BAKE-07.
+- Um slot por projeto: todos os objetos compartilham o mesmo espaço UV, como as camadas. Texture sets separados são a PRJ-05.
+- UVs fora de 0 a 1 (tiles UDIM além do 1001) não entram nos mapas.
+- A curvatura vem da normal interpolada dentro de cada ilha UV; quinas que caem numa costura de UV não aparecem. A curvatura por geometria é a BAKE-09.
+- O bake roda na CPU. Oclusão e espessura em 4K com muitos raios levam minutos; os bakers por GPU (RT) continuam disponíveis pelo nó Bake Texture.
+- O nó Mesh Map amostra o mapa na coordenada UV da malha; camadas com projeção triplanar ou de decal leem o mapa nessas coordenadas.
