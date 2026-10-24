@@ -1214,6 +1214,15 @@ void layers_duplicate_layer(slot_layer_t *l) {
 					array_insert(g_project->_->layers, array_index_of(g_project->_->layers, new_layer), new_mask);
 				}
 			}
+			slot_layer_t_array_t *filters = slot_layer_get_filters(c, false); // Effects of the layer, in the same order
+			if (filters != NULL) {
+				for (i32 i = 0; i < filters->length; ++i) {
+					slot_layer_t *f = slot_layer_duplicate(filters->buffer[i]);
+					f->parent       = new_layer;
+					array_remove(g_project->_->layers, f);
+					array_insert(g_project->_->layers, array_index_of(g_project->_->layers, new_layer), f);
+				}
+			}
 		}
 		slot_layer_t_array_t *group_masks = slot_layer_get_masks(l, true);
 		if (group_masks != NULL) {

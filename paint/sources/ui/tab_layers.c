@@ -778,8 +778,9 @@ bool tab_layers_can_merge_down(slot_layer_t *l) {
 	if (index == 0) {
 		return false;
 	}
-	// Effects of the layer are below it, they would be merged into
-	if (slot_layer_is_layer(l) && slot_layer_get_filters(l, false) != NULL) {
+	// Effects of the layer are below it, they would be merged into. Effects of the layer below would cover the result.
+	slot_layer_t *below = g_project->_->layers->buffer[index - 1];
+	if (slot_layer_is_effect(l) || slot_layer_has_effects(l) || slot_layer_is_effect(below) || slot_layer_has_effects(below)) {
 		return false;
 	}
 	// Merging changes the pixels of the layer below
@@ -1045,8 +1046,12 @@ void tab_layers_draw_layer_context_menu_draw() {
 	if (slot_layer_is_mask(l) && l->fill_material == NULL && ui_menu_button(tr("Invert"), "", ICON_INVERT)) {
 		sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_invert, NULL);
 	}
-	if (slot_layer_is_mask(l) && ui_menu_button(tr("Apply"), "", ICON_CHECK)) {
-		sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_apply, NULL);
+	if (slot_layer_is_mask(l)) {
+		g_ui->enabled = !l->effect && !slot_layer_has_effects(l); // The mask alone is not what the stack shows
+		if (ui_menu_button(tr("Apply"), "", ICON_CHECK)) {
+			sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_apply, NULL);
+		}
+		g_ui->enabled = true;
 	}
 	if (slot_layer_is_group(l) && ui_menu_button(tr("Merge Group"), "", ICON_NONE)) {
 		sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_merge_group, NULL);

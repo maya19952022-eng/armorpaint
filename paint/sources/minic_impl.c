@@ -1265,7 +1265,7 @@ bool script_layer_invert_mask(slot_layer_t *m) {
 }
 
 slot_layer_t *script_layer_apply_mask(slot_layer_t *m) {
-	if (!script_layer_valid(m) || !slot_layer_is_mask(m)) {
+	if (!script_layer_valid(m) || !slot_layer_is_mask(m) || m->effect || slot_layer_has_effects(m)) {
 		return NULL;
 	}
 	gpu_texture_t *current;
