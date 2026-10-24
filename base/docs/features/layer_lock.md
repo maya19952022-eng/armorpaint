@@ -15,7 +15,7 @@ Trava uma camada para que nenhum pincel, preenchimento ou ferramenta de pintura 
 |---|---|
 | Locked | Liga ou desliga o lock da camada ou do grupo |
 
-Máscaras e filtros seguem o lock da camada a que pertencem: com a camada travada, também não dá para pintar na máscara dela. O lock não impede mover, renomear, apagar, mudar opacidade ou blend.
+Máscaras e efeitos seguem o lock da camada a que pertencem, e as camadas seguem o lock do grupo: com o grupo travado, nenhuma camada dele recebe pintura. O lock bloqueia pincéis, preenchimentos, bakes e partículas; os conta-gotas de cor, de material e de Color ID continuam funcionando. **Merge Down** fica desabilitado quando mudaria uma camada travada. O lock não impede mover, renomear, apagar, mudar opacidade ou blend.
 
 ## Atalhos
 
