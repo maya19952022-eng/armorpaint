@@ -651,9 +651,8 @@ void tab_layers_draw_layer_slot_full(slot_layer_t *l, i32 i) {
 		if (in_focus && !g_ui->is_typing && g_ui->is_ctrl_down && g_ui->is_key_pressed && g_ui->key_code == KEY_CODE_V && tab_layers_clipboard_valid()) {
 			g_ui->is_key_pressed = false;
 			tab_layers_l         = g_context->layer;
-			sys_notify_on_next_frame(slot_layer_is_mask(tab_layers_clipboard) ? &tab_layers_draw_layer_context_menu_paste_mask
-			                                                                  : &tab_layers_draw_layer_context_menu_paste,
-			                         NULL);
+			bool as_mask         = slot_layer_is_mask(tab_layers_clipboard) && !slot_layer_is_effect(tab_layers_clipboard);
+			sys_notify_on_next_frame(as_mask ? &tab_layers_draw_layer_context_menu_paste_mask : &tab_layers_draw_layer_context_menu_paste, NULL);
 		}
 	}
 
@@ -1014,7 +1013,12 @@ void tab_layers_draw_layer_context_menu_draw() {
 	if (ui_menu_button(tr("Copy"), "ctrl+c", ICON_COPY)) {
 		tab_layers_clipboard = l;
 	}
-	bool can_paste = tab_layers_clipboard_valid() && !slot_layer_is_mask(tab_layers_clipboard) && !slot_layer_is_mask(l);
+	slot_layer_t *copied    = tab_layers_clipboard;
+	bool          can_paste = false;
+	if (tab_layers_clipboard_valid()) { // An effect goes into a stack of the same kind
+		can_paste = slot_layer_is_effect(copied) ? slot_layer_is_mask(copied) == slot_layer_is_mask(l) && !slot_layer_is_group(l)
+		                                         : !slot_layer_is_mask(copied) && !slot_layer_is_mask(l);
+	}
 	g_ui->enabled  = can_paste;
 	if (ui_menu_button(tr("Paste"), can_paste ? "ctrl+v" : "", ICON_PASTE)) {
 		sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_paste, NULL);

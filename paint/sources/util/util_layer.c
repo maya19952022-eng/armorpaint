@@ -984,6 +984,8 @@ static slot_material_t *layers_new_effect_material(char *name, bool mask, effect
 	return m;
 }
 
+static slot_layer_t *layers_add_effect_slot(slot_layer_t *target, slot_material_t *m, char *name);
+
 // New effect on top of the effect chain of a layer or mask, each effect has its own material
 slot_layer_t *layers_add_effect(slot_layer_t *target, effect_type_t type) {
 	if (target == NULL || slot_layer_is_group(target) || target->texpaint_sculpt != NULL) {
@@ -998,7 +1000,12 @@ slot_layer_t *layers_add_effect(slot_layer_t *target, effect_type_t type) {
 	}
 	char            *name = layers_effect_name(type);
 	slot_material_t *m    = layers_new_effect_material(string_tmp("%s %s", target->name, name), mask, type);
+	return layers_add_effect_slot(target, m, name);
+}
 
+// The layer or mask of an effect with the material m on top of the effect stack of target
+static slot_layer_t *layers_add_effect_slot(slot_layer_t *target, slot_material_t *m, char *name) {
+	bool                  mask     = slot_layer_is_mask(target);
 	slot_layer_t_array_t *pointers = tab_layers_init_layer_map();
 	slot_layer_t         *e        = NULL;
 	context_set_layer(target);
@@ -1510,8 +1517,33 @@ void layers_move_selected(i32 to) {
 	make_material_parse_mesh_material();
 }
 
-// Copy of src placed above target, the copy and the move are separate undo steps
+// The effect src goes on top of the effect stack of target with a copy of its material
+slot_layer_t *layers_paste_effect(slot_layer_t *src, slot_layer_t *target) {
+	if (src == NULL || target == NULL || !slot_layer_is_effect(src) || src->fill_material == NULL || array_index_of(g_project->_->layers, src) < 0) {
+		return NULL;
+	}
+	if (slot_layer_is_effect(target) && slot_layer_effect_base(target) != NULL) {
+		target = slot_layer_effect_base(target);
+	}
+	if (slot_layer_is_group(target) || slot_layer_is_mask(target) != slot_layer_is_mask(src) || target->texpaint_sculpt != NULL) {
+		return NULL;
+	}
+	slot_material_t  *m      = slot_material_create(g_project->_->materials->buffer[0]->data, NULL);
+	ui_node_canvas_t *canvas = util_clone_canvas(src->fill_material->canvas);
+	canvas->name             = string_copy(slot_material_unique_name(canvas, string_tmp("%s %s", target->name, src->name)));
+	m->canvas                = canvas;
+	any_array_push(g_project->_->materials, m);
+	g_context->material = m;
+	tab_materials_update_material();
+	history_new_material();
+	return layers_add_effect_slot(target, m, src->name);
+}
+
+// Copy of src placed above target, the copy and the move are separate undo steps. An effect goes into the effect stack of target.
 bool layers_paste(slot_layer_t *src, slot_layer_t *target) {
+	if (src != NULL && slot_layer_is_effect(src)) {
+		return layers_paste_effect(src, target) != NULL;
+	}
 	if (src == NULL || target == NULL || array_index_of(g_project->_->layers, src) < 0 || slot_layer_is_mask(src) || slot_layer_is_mask(target)) {
 		return false;
 	}

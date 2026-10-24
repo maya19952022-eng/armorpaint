@@ -99,6 +99,7 @@ void layers_bake_filters(slot_layer_t *l);
 char         *layers_effect_name(effect_type_t type);
 bool          layers_effect_allowed(effect_type_t type, bool mask);
 slot_layer_t *layers_add_effect(slot_layer_t *target, effect_type_t type);
+slot_layer_t *layers_paste_effect(slot_layer_t *src, slot_layer_t *target);
 void layers_update_effects_on_next_frame(void *_);
 bool layers_is_path_material();
 void layers_update_path_layers();
