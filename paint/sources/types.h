@@ -801,6 +801,7 @@ typedef struct bake_settings {
 	i32   curvature_mode;  // mesh_map_curvature_t
 	bool  auto_rebake;     // Outdated maps are baked again once the settings and the scene stop changing
 	bool  quick_rebake;    // Auto rebake shows a preview at a quarter of the resolution first
+	i32   cage;            // bake_cage_t
 } bake_settings_t;
 
 typedef struct bake_job bake_job_t; // util_bake.c

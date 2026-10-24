@@ -83,6 +83,11 @@ typedef enum {
 } mesh_map_curvature_t;
 
 typedef enum {
+	BAKE_CAGE_DISTANCE = 0, // Rays start at Max Frontal Distance above the low poly
+	BAKE_CAGE_AUTO     = 1, // Rays start just past the nearest high poly surface above, searched up to Max Frontal Distance
+} bake_cage_t;
+
+typedef enum {
 	BAKE_STATE_IDLE    = 0,
 	BAKE_STATE_QUEUED  = 1,
 	BAKE_STATE_RUNNING = 2,

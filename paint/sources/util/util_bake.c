@@ -86,7 +86,8 @@ struct bake_job {
 	.high_polys         = "",           \
 	.curvature_mode     = MESH_MAP_CURVATURE_NORMALS, \
 	.auto_rebake        = false,        \
-	.quick_rebake       = true          \
+	.quick_rebake       = true,         \
+	.cage               = BAKE_CAGE_DISTANCE \
 }
 // clang-format on
 
@@ -712,6 +713,32 @@ static void util_bake_interpolate(f32 *v, f32 *b, f32 *out, bool normalize) {
 	}
 }
 
+// True when the ray met the high poly triangle from behind, going the way its normal points
+static bool util_bake_hit_back(util_bake_raster_t *r, i32 tri, f32 *d) {
+	f32 *t     = r->high.pos + tri * 9;
+	f32  e1[3] = {t[3] - t[0], t[4] - t[1], t[5] - t[2]};
+	f32  e2[3] = {t[6] - t[0], t[7] - t[1], t[8] - t[2]};
+	f32  n[3]  = {e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]};
+	return n[0] * d[0] + n[1] * d[1] + n[2] * d[2] > 0.0f;
+}
+
+// Height of the cage above a low poly point: just past the high poly surface above when the point lies inside the high poly
+// (the nearest surface above is met from behind, before any surface below is met from the front), else on the low poly
+static f32 util_bake_auto_cage(util_bake_raster_t *r, f32 *p, f32 *rd, f32 max_front, f32 rear, i32 group) {
+	f32       margin  = r->size * 1e-3f;
+	f32       up[3]   = {rd[0], rd[1], rd[2]};
+	f32       down[3] = {-rd[0], -rd[1], -rd[2]};
+	bvh_hit_t above;
+	bvh_hit_t below;
+	if (!util_bvh_raycast(&r->bvh, p, up, max_front, false, false, r->high.group, group, &above) || !util_bake_hit_back(r, above.tri, up)) {
+		return margin;
+	}
+	if (util_bvh_raycast(&r->bvh, p, down, rear, false, false, r->high.group, group, &below) && !util_bake_hit_back(r, below.tri, down) && below.t < above.t) {
+		return margin;
+	}
+	return above.t + margin;
+}
+
 // What a sample of the map sees: the low poly at a point of its uv space, or the high poly found by a ray from there
 static void util_bake_surface(bake_job_t *job, i32 tri, f32 px, f32 py, util_bake_surface_t *s) {
 	util_bake_raster_t *r   = job->raster;
@@ -740,10 +767,13 @@ static void util_bake_surface(bake_job_t *job, i32 tri, f32 px, f32 py, util_bak
 	util_bake_interpolate(low->ray + tri * 9, b, rd, true);
 	f32       front = job->settings.front_distance * r->size;
 	f32       rear  = job->settings.rear_distance * r->size;
-	f32       o[3]  = {s->lp[0] + rd[0] * front, s->lp[1] + rd[1] * front, s->lp[2] + rd[2] * front};
 	f32       d[3]  = {-rd[0], -rd[1], -rd[2]};
 	i32       group = job->settings.match_by_name ? low->group[tri] : -1;
 	bvh_hit_t h;
+	if (job->settings.cage == BAKE_CAGE_AUTO) {
+		front = util_bake_auto_cage(r, s->lp, rd, front, rear, group);
+	}
+	f32 o[3] = {s->lp[0] + rd[0] * front, s->lp[1] + rd[1] * front, s->lp[2] + rd[2] * front};
 	if (!util_bvh_raycast(&r->bvh, o, d, front + rear, false, job->settings.ignore_backface, r->high.group, group, &h)) {
 		s->hit = false;
 		return;
@@ -1216,6 +1246,7 @@ static u32 util_bake_settings_hash(i32 slot, bake_settings_t *s) {
 	h = util_bake_fnv_i32(h, s->average_normals);
 	h = util_bake_fnv_i32(h, s->ignore_backface);
 	h = util_bake_fnv_i32(h, s->match_by_name);
+	h = util_bake_fnv_i32(h, s->cage);
 	h = util_bake_fnv_string(h, s->high_polys);
 	if (slot == MESH_MAP_OCCLUSION || slot == MESH_MAP_BENT_NORMAL) {
 		h = util_bake_fnv_i32(h, s->occlusion_samples);
@@ -1801,13 +1832,13 @@ static char *util_bake_json_string(char *s) {
 char *util_bake_settings_encode() {
 	bake_settings_t *s          = &util_bake_settings;
 	char            *high_polys = util_bake_json_string(s->high_polys);
-	char            *json =
-	    string("{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,\"thickness_distance\":%f,"
-	           "\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d,\"aa\":%d,\"front_distance\":%f,\"rear_distance\":%f,\"average_normals\":%d,"
-	           "\"ignore_backface\":%d,\"match_by_name\":%d,\"high_polys\":%s,\"curvature_mode\":%d,\"auto_rebake\":%d,\"quick_rebake\":%d,\"baked\":\"",
-	           s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength,
-	           s->id_source, s->maps, s->aa, s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys,
-	           s->curvature_mode, s->auto_rebake, s->quick_rebake);
+	char            *json       = string(
+        "{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,\"thickness_distance\":%f,"
+	                     "\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d,\"aa\":%d,\"front_distance\":%f,\"rear_distance\":%f,\"average_normals\":%d,"
+	                     "\"ignore_backface\":%d,\"match_by_name\":%d,\"high_polys\":%s,\"curvature_mode\":%d,\"auto_rebake\":%d,\"quick_rebake\":%d,\"cage\":%d,\"baked\":\"",
+        s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength, s->id_source,
+        s->maps, s->aa, s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys, s->curvature_mode,
+        s->auto_rebake, s->quick_rebake, s->cage);
 	free(high_polys);
 	// What each slot was baked from, so a reopened project still knows which maps are outdated
 	for (i32 slot = 0; slot < MESH_MAP_COUNT; ++slot) {
@@ -1862,6 +1893,7 @@ void util_bake_settings_decode(char *json) {
 	util_bake_settings_read_i32(m, "curvature_mode", &s->curvature_mode);
 	util_bake_settings_read_bool(m, "auto_rebake", &s->auto_rebake);
 	util_bake_settings_read_bool(m, "quick_rebake", &s->quick_rebake);
+	util_bake_settings_read_i32(m, "cage", &s->cage);
 	char *baked = any_map_get(m, "baked");
 	for (i32 slot = 0; baked != NULL && slot < MESH_MAP_COUNT && *baked != '\0'; ++slot) {
 		util_bake_sigs[slot] = (u32)strtoul(baked, &baked, 16);
@@ -1874,6 +1906,7 @@ void util_bake_settings_decode(char *json) {
 	s->dilation       = s->dilation < 0 ? 0 : s->dilation;
 	s->id_source      = s->id_source == MESH_MAP_ID_VERTEX_COLOR || s->id_source == MESH_MAP_ID_UV_ISLAND ? s->id_source : MESH_MAP_ID_OBJECT;
 	s->curvature_mode = s->curvature_mode == MESH_MAP_CURVATURE_MESH ? MESH_MAP_CURVATURE_MESH : MESH_MAP_CURVATURE_NORMALS;
+	s->cage           = s->cage == BAKE_CAGE_AUTO ? BAKE_CAGE_AUTO : BAKE_CAGE_DISTANCE;
 	s->maps &= (1 << MESH_MAP_COUNT) - 1;
 	s->aa = s->aa >= 8 ? 8 : s->aa >= 4 ? 4 : s->aa >= 2 ? 2 : 1;
 }

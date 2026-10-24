@@ -90,6 +90,16 @@ static void tab_baking_high_poly(bake_settings_t *s) {
 	if (g_ui->is_hovered) {
 		ui_tooltip(tr("name_low is baked only from name_high, and objects ending in _high are high poly"));
 	}
+	string_array_t *cages = any_array_create_from_raw_tmp(
+	    (void *[]){
+	        tr("Fixed Distance"),
+	        tr("Auto"),
+	    },
+	    2);
+	ui_combo(&s->cage, cages, tr("Cage"), true, UI_ALIGN_LEFT, true);
+	if (g_ui->is_hovered) {
+		ui_tooltip(tr("Auto starts each ray just past the high poly above the low poly, up to Max Frontal Distance"));
+	}
 	f32 front = s->front_distance;
 	ui_slider(&front, tr("Max Frontal Distance"), 0.0, 1.0, true, 1000, true, UI_ALIGN_RIGHT, true);
 	if (ui_item_changed()) {
