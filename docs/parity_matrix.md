@@ -21,13 +21,13 @@ Como atualizar:
 | Ferramentas e pincel | 28 | 8 | 14 | 6 | 29% |
 | Projeções de fill | 7 | 2 | 1 | 4 | 29% |
 | Procedural e biblioteca | 10 | 1 | 5 | 4 | 10% |
-| Baking | 12 | 4 | 2 | 6 | 33% |
+| Baking | 12 | 5 | 1 | 6 | 42% |
 | Viewport, render e shading | 12 | 2 | 5 | 5 | 17% |
 | Import e export | 13 | 1 | 10 | 2 | 8% |
 | Interface, UX e scripting | 11 | 3 | 6 | 2 | 27% |
-| **Total** | **129** | **35 (27%)** | **54** | **40** | meta: 117 ✅ |
+| **Total** | **129** | **36 (28%)** | **53** | **40** | meta: 117 ✅ |
 
-Fora de escopo nas tabelas: 2. Faltam 82 itens ✅ para a meta.
+Fora de escopo nas tabelas: 2. Faltam 81 itens ✅ para a meta.
 
 <!-- placar:fim -->
 
@@ -153,7 +153,7 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 |---|---|---|---|---|---|---|---|
 | BAKE-01 | Mesh maps como slots por texture set (Normal, World Normal, ID, AO, Curvature, Position, Thickness, Bent Normals, Opacity) consumidos por generators | ✅ feito | bake por nó, salvo em layer/Textures | `mesh_map_t` por set em `project_t`; `util_bake.c` com job API headless; nó `Mesh Map` | P2 | L | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): nove slots no projeto assados na CPU no espaço UV por uma fila de jobs (progresso, cancelar, undo, script), nó Mesh Map, `.arm` versão 23. O nó Bake Texture usa a mesma fila. Normal de high poly, cage e AA vêm com BAKE-03/04/06/07; um set por projeto até a PRJ-05. `mesh_maps.md` |
 | BAKE-02 | Diálogo Baking mode: settings comuns separados dos por-mapa (12.1), seleção de mapas, bake all/selected | ✅ feito | — | `box_bake.c` (ou modo de workspace "Bake") | P2 | M | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): aba Baking dockável (File → Bake Mesh Maps...) com ajustes comuns (resolução, dilatação) separados dos de cada mapa, seleção de mapas salva no projeto, Bake Selected / Bake All, progresso com cancelar, miniatura, Bake e Clear por mapa. Os ajustes de high poly entram com a BAKE-03. `mesh_maps.md` |
-| BAKE-03 | High-poly list, match by name (sufixos `_low/_high`), cage/offset global, distâncias frontal/rear, average normals, ignore backface, AA 2x2/4x4/8x8, dilation | 🟡 parcial | high-poly simples, dilate | Estender `render_path_paint.c` bake de high poly: raycast com cage e distâncias; supersample na resolução + downsample; parser de nomes | P2 | L |  |
+| BAKE-03 | High-poly list, match by name (sufixos `_low/_high`), cage/offset global, distâncias frontal/rear, average normals, ignore backface, AA 2x2/4x4/8x8, dilation | ✅ feito | high-poly simples, dilate | Estender `render_path_paint.c` bake de high poly: raycast com cage e distâncias; supersample na resolução + downsample; parser de nomes | P2 | L | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): high polys marcados ou casados pelo nome (`_low`/`_high`), raios da cage (Max Frontal Distance) até a Max Rear Distance numa BVH na CPU, normais médias, ignore backface, AA 2x2/4x4/8x8, dilatação; todos os nove mapas vêm do high poly. Normal map em convenção OpenGL. `mesh_maps.md` |
 | BAKE-04 | Auto cage (11.0) | ❌ falta | — | Cage = low-poly extrudido por normal com offset suavizado (`util_geom.c`) | P2 | M |  |
 | BAKE-05 | Auto rebake incremental e quick rebake (12.1) | ❌ falta | — | Marcar região suja (bbox UV) ao mudar parâmetro; rebake só da região; botão "rebake visível" | P2 | M |  |
 | BAKE-06 | Skew map painting (12.1): brush/eraser/polygon fill, preview shader, vetores de direção, edge protection, base normal mesh/per-triangle | ❌ falta | — | Skew map = textura RGBA por set; ferramenta de pintura reaproveita brush; bake de normal usa direção do raio = normal interpolada do skew; shader de preview | P2 | L |  |

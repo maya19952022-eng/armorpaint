@@ -1,6 +1,6 @@
 # Mesh maps
 
-IDs da matriz: BAKE-01, BAKE-02 · Fase: P2
+IDs da matriz: BAKE-01, BAKE-02, BAKE-03 · Fase: P2
 
 Texturas calculadas uma vez a partir da geometria do projeto (oclusão, curvatura, posição, espessura...) e lidas por qualquer material pelo nó **Mesh Map**. São a base para materiais que reagem à forma do modelo: sujeira nas cavidades, desgaste nas quinas, cor por objeto. O projeto tem um slot para cada mapa; assar de novo substitui o mapa do slot.
 
@@ -8,7 +8,7 @@ Texturas calculadas uma vez a partir da geometria do projeto (oclusão, curvatur
 
 | Slot | O que guarda | Sem bake |
 |---|---|---|
-| **Normal** | Normal map em espaço tangente. Plano (0.5, 0.5, 1) até o bake de high poly (BAKE-03) | Plano |
+| **Normal** | Normal map em espaço tangente do high poly, convenção OpenGL (x ao longo de u, y subindo pela imagem). Plano (0.5, 0.5, 1) sem high poly | Plano |
 | **World Space Normal** | Normal da superfície em espaço de mundo, `n * 0.5 + 0.5` | Preto |
 | **ID** | Uma cor por objeto (ou a cor de vértice, em `id_source`) para usar com Color Selection | Preto |
 | **Ambient Occlusion** | 1 onde nada tapa a superfície, mais escuro nas cavidades e perto de outros objetos | Branco |
@@ -16,7 +16,7 @@ Texturas calculadas uma vez a partir da geometria do projeto (oclusão, curvatur
 | **Position** | Posição no mundo normalizada pela caixa que envolve todos os objetos (0 a 1 por eixo) | Preto |
 | **Thickness** | Distância média até o outro lado do objeto: branco é grosso, escuro é fino | Preto |
 | **Bent Normals** | Direção média por onde a superfície vê o céu, em espaço de mundo | Preto |
-| **Opacity** | Branco onde há geometria, preto fora das ilhas UV | Preto |
+| **Opacity** | Branco onde o raio acha o high poly (sem high poly, onde há geometria); preto fora das ilhas UV | Preto |
 
 Normal, World Space Normal, Position e Bent Normals guardam 16 bits por canal; os outros, 8.
 
@@ -48,6 +48,25 @@ File → **Bake Mesh Maps...** abre a aba (também em Window → Tabs → Baking
 
 Ambient Occlusion e Bent Normals usam os mesmos raios, então dividem Samples e Max Distance. A seleção de mapas e todos os ajustes ficam salvos no projeto.
 
+## High poly
+
+Um ou mais objetos do projeto podem servir de high poly: os mapas dos outros objetos (o low poly) passam a vir deles. Para cada amostra, um raio sai de um ponto acima do low poly (a "cage"), desce pela normal e para no primeiro high poly que encontra; dali saem a normal, a posição, o ID, a opacidade, e a oclusão, a espessura e as bent normals são calculadas sobre o high poly. Onde o raio não acha nada, o low poly fica no lugar (e Opacity fica preta, a Normal fica plana).
+
+Na aba Baking, seção **High Poly**:
+
+| Controle | O que faz |
+|---|---|
+| Caixa por objeto | Marca o objeto como high poly. High polys não recebem mapas |
+| **Match by Name** (casar pelo nome) | `nome_low` só acha `nome_high`, e todo objeto terminado em `_high` vira high poly sem precisar marcar ("by name" ao lado do nome) |
+| **Max Frontal Distance** | Altura da cage acima do low poly, relativa à diagonal da cena |
+| **Max Rear Distance** | Até onde abaixo do low poly o raio procura, relativa à diagonal da cena |
+| **Average Normals** | Os raios seguem a média das normais dos vértices no mesmo lugar: sem buracos nas quinas vivas do low poly |
+| **Ignore Backface** | O raio atravessa triângulos do high poly vistos por trás |
+
+Em Common Settings, **Antialiasing** (None, 2x2, 4x4, 8x8) faz várias amostras por texel e tira a média; os raios de oclusão e espessura se dividem entre as amostras. Vale também sem high poly.
+
+High polys continuam visíveis no viewport; esconda-os na aba Meshes ao pintar.
+
 ## Como o bake funciona
 
 - Todos os objetos do projeto são rasterizados no espaço UV (uma amostra no centro de cada texel); cada texel recebe posição e normal de mundo.
@@ -72,6 +91,13 @@ Ficam no projeto (`bake_settings` no `.arm`) e valem para os próximos bakes. Na
 | `curvature_strength` | 1.0 | Multiplica o contraste da curvatura |
 | `id_source` | `MESH_MAP_ID_OBJECT` | Cor por objeto, ou `MESH_MAP_ID_VERTEX_COLOR` para a cor de vértice |
 | `maps` | todos | Um bit por slot (`1 << MESH_MAP_OCCLUSION`...): os mapas que o Bake Selected assa |
+| `aa` | 1 | Amostras por lado do texel: 1, 2, 4 ou 8 |
+| `front_distance` | 0.01 | Altura da cage acima do low poly, relativa à diagonal da cena |
+| `rear_distance` | 0.01 | Até onde abaixo do low poly o high poly é procurado |
+| `average_normals` | true | Raios pela média das normais nos vértices no mesmo lugar |
+| `ignore_backface` | true | Raios atravessam o verso dos triângulos do high poly |
+| `match_by_name` | false | `nome_low` só acha `nome_high`; objetos terminados em `_high` são high poly |
+| `high_polys` | vazio | Nomes dos objetos high poly, um por linha; segue renomeações |
 
 ## Atalhos
 
@@ -94,6 +120,11 @@ script_bake_mesh_map(MESH_MAP_OCCLUSION); // ou script_bake_mesh_maps() para os 
 s->maps = (1 << MESH_MAP_OCCLUSION) | (1 << MESH_MAP_CURVATURE);
 script_bake_selected();                   // os mapas marcados em s->maps
 script_show_tab(TAB_BAKING);              // abre a aba Baking
+script_bake_set_high_poly(script_get_object("corpo_high"), true);
+s->match_by_name  = true;  // corpo_low só acha corpo_high
+s->front_distance = 0.02;  // relativas à diagonal da cena
+s->rear_distance  = 0.02;
+s->aa             = 4;     // 4x4 amostras por texel
 // A cada frame:
 if (!script_bake_busy()) {
 	f32_array_t *px = script_mesh_map_pixels(MESH_MAP_OCCLUSION); // rgba 0-1, linha a linha
@@ -110,7 +141,8 @@ Os enums `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_
 
 ## Limitações
 
-- Ainda não há bake de high poly (normal, altura e opacidade vindas de outro mesh), cage nem antialiasing: chegam com a BAKE-03, BAKE-04, BAKE-06 e BAKE-07.
+- A cage é a superfície do low poly deslocada pela Max Frontal Distance; cage automática suavizada, skew map e cage pintada chegam com a BAKE-04, BAKE-06 e BAKE-07.
+- Não há mapa de altura (Height) vindo do high poly.
 - Um slot por projeto: todos os objetos compartilham o mesmo espaço UV, como as camadas. Texture sets separados são a PRJ-05.
 - UVs fora de 0 a 1 (tiles UDIM além do 1001) não entram nos mapas.
 - A curvatura vem da normal interpolada dentro de cada ilha UV; quinas que caem numa costura de UV não aparecem. A curvatura por geometria é a BAKE-09.
