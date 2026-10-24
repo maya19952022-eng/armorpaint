@@ -487,6 +487,7 @@ Mesh Input
 Mesh Map
 Mesh Maps
 Mesh Output
+Mesh measures the bend of the geometry, also across uv seams
 Mesh...
 Meshes
 Metallic
@@ -545,6 +546,7 @@ Normal Map
 Normal Map 1
 Normal Map 2
 Normalize
+Normals
 Not Equal
 Not available in debug build
 Not baked
@@ -772,6 +774,7 @@ Sort
 Sound
 Sound imported:
 Sounds
+Source
 Sphere
 Spherical
 Splash Screen

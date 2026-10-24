@@ -487,6 +487,7 @@ Háló bemenet
 
 
 Háló kimenet
+
 Háló...
 Hálók
 Fémes (Metallic)
@@ -545,6 +546,7 @@ Normal Map
 Normal Map 1
 Normal Map 2
 Normalizálás
+
 
 Nem elérhető hibakereső változatban
 
@@ -772,6 +774,7 @@ Rendezés
 Hang
 Hang importálva:
 Hangok
+
 Gömb
 Gömb alakú
 Indítóképernyő

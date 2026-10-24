@@ -487,6 +487,7 @@ Entrada de Malha
 Mapa da Malha
 Mapas da Malha
 Saída de Malha
+Mesh mede a dobra da geometria, também sobre costuras de UV
 Malha...
 Malhas
 Metálico
@@ -545,6 +546,7 @@ Mapa de Normais
 Mapa de Normais 1
 Mapa de Normais 2
 Normalizar
+Normais
 Diferente
 Não disponível na compilação de depuração
 Não cozido
@@ -772,6 +774,7 @@ Ordenar
 Som
 Som importado:
 Sons
+Fonte
 Esfera
 Esférico
 Tela de Inicialização

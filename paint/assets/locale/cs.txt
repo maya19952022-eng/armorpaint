@@ -487,6 +487,7 @@ Vstup sítě
 
 
 Výstup sítě
+
 Síť...
 Sítě
 Kovovost
@@ -545,6 +546,7 @@ Normálová mapa
 Normálová mapa 1
 Normálová mapa 2
 Normalizovat
+
 
 Není dostupné v ladicím buildu
 
@@ -772,6 +774,7 @@ Seřadit
 Zvuk
 Zvuk importován:
 Zvuky
+
 Koule
 Sférický
 Úvodní obrazovka
