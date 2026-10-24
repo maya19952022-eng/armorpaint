@@ -63,3 +63,4 @@ IDs da matriz: LAY-01, ... · Fase: P1 · Desde: <PR>
 | [mask_tools.md](mask_tools.md) | LAY-16, LAY-17 | P1 |
 | [effect_nodes.md](effect_nodes.md) | LAY-06, LAY-07, LAY-08, LAY-10 | P1 |
 | [effect_stack.md](effect_stack.md) | LAY-05, LAY-07, LAY-09 | P1 |
+| [geometry_mask.md](geometry_mask.md) | LAY-11 | P1 |
