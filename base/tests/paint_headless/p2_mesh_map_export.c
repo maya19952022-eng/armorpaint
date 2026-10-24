@@ -40,6 +40,16 @@ int red(char *name) {
 	return buffer_get_u8(p, (y * t->width + x) * 4);
 }
 
+// A channel of the exported texel at the center, 0-255. Textures loaded from files read back in rgba order.
+int channel(char *name, int c) {
+	gpu_texture_t *t = data_get_texture(file(name));
+	if (t == NULL) {
+		return -1;
+	}
+	buffer_t *p = script_get_texture_pixels(t);
+	return buffer_get_u8(p, ((t->height / 2) * t->width + t->width / 2) * 4 + c);
+}
+
 void step_bake() {
 	script_project_new();
 	bake_settings_t *s = script_bake_get_settings();
@@ -69,6 +79,9 @@ void check_files() {
 	check(all, "a file per mesh map");
 	check(red("opacity") == 255, string("baked opacity is white (%d)", red("opacity")));
 	check(red("ambient_occlusion") == 255, string("unbaked ambient occlusion has its default, white (%d)", red("ambient_occlusion")));
+	int nr = channel("normal_base", 0);
+	int nb = channel("normal_base", 2);
+	check(nr > 120 && nr < 136 && nb > 250, string("unbaked normal has the flat default 0.5 0.5 1 (%d %d)", nr, nb));
 	int curv = red("curvature");
 	check(curv > 100 && curv < 155, string("flat faces have middle gray curvature (%d)", curv));
 }

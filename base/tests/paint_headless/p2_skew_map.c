@@ -105,7 +105,10 @@ void check_smooth() {
 	check(l != NULL && l->bake_role == BAKE_ROLE_SKEW && script_layer_count() == layers + 1, "paint makes the skew map layer");
 	check(script_get_context()->layer == l && script_get_context()->viewport_mode == VIEWPORT_MODE_MASK, "the skew map is selected and shown in the mask view");
 	check(script_bake_paint_role(BAKE_ROLE_SKEW) == l && script_layer_count() == layers + 1, "a second paint selects the same layer");
-	check(!script_bake_outdated(MESH_MAP_POSITION), "an empty skew map changes nothing");
+}
+
+void check_empty() {
+	check(!script_bake_outdated(MESH_MAP_POSITION), "an empty skew map changes nothing, also once it was read back");
 	script_bake_role_fill(BAKE_ROLE_SKEW, 1.0);
 	check(script_bake_outdated(MESH_MAP_POSITION), "filling the skew map makes the maps outdated");
 	bake();
@@ -165,7 +168,7 @@ void check_reopened() {
 }
 
 int waits_for_bake(int s) {
-	return s >= 1 && s <= 5;
+	return s == 1 || (s >= 3 && s <= 6);
 }
 
 void next_frame() {
@@ -187,27 +190,30 @@ void next_frame() {
 		check_smooth();
 	}
 	else if (step == 2) {
-		check_skewed();
+		check_empty();
 	}
 	else if (step == 3) {
-		check_protected();
+		check_skewed();
 	}
 	else if (step == 4) {
-		check_triangle_base();
+		check_protected();
 	}
 	else if (step == 5) {
-		check_triangle_skewed();
+		check_triangle_base();
 	}
 	else if (step == 6) {
-		// project_save() runs on this frame
+		check_triangle_skewed();
 	}
 	else if (step == 7) {
-		step_reopen();
+		// project_save() runs on this frame
 	}
 	else if (step == 8) {
-		// The role layers are read back on the next frame
+		step_reopen();
 	}
 	else if (step == 9) {
+		// The role layers are read back on the next frame
+	}
+	else if (step == 10) {
 		check_reopened();
 	}
 	else {
