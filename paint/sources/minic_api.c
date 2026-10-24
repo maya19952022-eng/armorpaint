@@ -689,6 +689,7 @@ void minic_register_builtins() {
 	MINIC_B(path_curved);
 	MINIC_B(path_text);
 	MINIC_O(path_material, slot_material_t);
+	MINIC_O(texpaint, gpu_texture_t);
 	MINIC_O(texpaint_sculpt, gpu_texture_t);
 	MINIC_END();
 
