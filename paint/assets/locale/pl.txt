@@ -23,6 +23,7 @@ Wszystkie przetwarzanie odbywa się lokalnie na urządzeniu
 Zezwól na odwróconą kamerę
 Alfa
 Odrzucenie alfy
+
 Ilość
 
 Kąt
@@ -56,11 +57,13 @@ B
 Tył
 Wypalanie
 Wypalanie materiału...
+
 Wypalanie tekstury
 Wypal do tekstur
 Pasma
 Kolor bazowy
 Wygięta normalna
+
 Ścięcie
 Odchylenie
 Bity
@@ -119,6 +122,7 @@ Glina
 Wyczyść
 
 Wyczyść warstwę
+
 Wyczyść próbki kolorów
 Koniec clipu
 Początek clipu
@@ -369,6 +373,7 @@ Odcień/Nasycenie/Wartość
 Cosinus hiperboliczny
 Sinus hiperboliczny
 Tangens hiperboliczny
+
 Tekstura obrazu
 Obraz do PBR
 Importuj
@@ -442,6 +447,7 @@ Logarytm
 Tekstura magiczna
 Uczyń unikalnym
 Instrukcja
+
 Mapa zakresu
 Mapowanie
 Maska
@@ -462,6 +468,7 @@ Połącz grupy
 Połącz warstwy
 Model
 Wejście modelu
+
 Wyjście modelu
 Model...
 Modele
@@ -628,6 +635,7 @@ Losowy
 Losowość
 Zakres
 Współczynnik
+
 Ostatnie
 Powtórz {step}
 Odbij
@@ -788,6 +796,7 @@ Tekstura...
 Tekstury
 Tekstury wyeksportowane
 Tekstury...
+
 Motyw
 Motyw zaimportowany:
 Grubość
@@ -885,6 +894,7 @@ Okno
 Siatka
 Przestrzeń robocza
 Świat
+
 Zawijaj mysz
 Zawijaj mysz wokół granic widoku podczas sterowania kamerą
 X

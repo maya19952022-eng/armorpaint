@@ -23,6 +23,7 @@ Semua pemrosesan dilakukan secara lokal di perangkat
 Izinkan Kamera Terbalik
 Alfa
 Buang Alfa
+
 Jumlah
 
 Sudut
@@ -56,11 +57,13 @@ B
 Belakang
 Bake
 Bake Material...
+
 Bake Tekstur
 Bake ke Tekstur
 Pita
 Warna Dasar
 Normal Bengkok
+
 Bevel
 Bias
 Bit
@@ -119,6 +122,7 @@ Tanah Liat
 Bersihkan
 
 Bersihkan Lapisan
+
 Bersihkan Contoh Warna
 Akhir Klip
 Awal Klip
@@ -369,6 +373,7 @@ Rona/Saturasi/Nilai
 Kosinus Hiperbolik
 Sinus Hiperbolik
 Tangen Hiperbolik
+
 Tekstur Gambar
 Gambar ke PBR
 Impor
@@ -442,6 +447,7 @@ Logaritma
 Tekstur Ajaib
 Jadikan Unik
 Manual
+
 Petakan Rentang
 Pemetaan
 Masker
@@ -462,6 +468,7 @@ Gabung Grup
 Gabung Lapisan
 Mesh
 Masukan Mesh
+
 Keluaran Mesh
 Mesh...
 Mesh
@@ -628,6 +635,7 @@ Acak
 Keacakan
 Rentang
 Rasio
+
 Terbaru
 Ulangi {step}
 Refleksikan
@@ -788,6 +796,7 @@ Tekstur...
 Tekstur
 Tekstur diekspor
 Tekstur...
+
 Tema
 Tema diimpor:
 Ketebalan
@@ -885,6 +894,7 @@ Jendela
 Wireframe
 Ruang Kerja
 Dunia
+
 Bungkus Mouse
 Bungkus mouse di sekitar batas tampilan saat mengontrol kamera
 X

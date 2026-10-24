@@ -23,6 +23,7 @@ Alle Verarbeitung erfolgt lokal auf dem Gerät
 Kamera über Kopf erlauben
 Alpha
 Alpha verwerfen
+
 Stärke
 
 Winkel
@@ -56,11 +57,13 @@ B
 Hinten
 Baken
 Material baken...
+
 Textur baken
 Auf Textur backen
 Bänder
 Base Color
 Gekrümmte Normalen
+
 Abschrägung
 Bias
 Bits
@@ -119,6 +122,7 @@ Ton
 Leeren
 
 Ebene leeren
+
 Farbfelder leeren
 Clip Ende
 Clip Start
@@ -369,6 +373,7 @@ Farbton/Sättigung/Helligkeit
 Kosinus Hyperbolicus
 Sinus Hyperbolicus
 Tangens Hyperbolicus
+
 Bild Textur
 Bild zu PBR
 Importieren
@@ -442,6 +447,7 @@ Logarithmus
 Magie Textur
 Einzigartig machen
 Handbuch
+
 Bereich abbilden
 Mapping
 Maske
@@ -462,6 +468,7 @@ Gruppe vereinigen
 Ebenen zusammenfassen
 Mesh
 Mesh-Eingabe
+
 Mesh-Ausgabe
 Mesh...
 Meshes
@@ -628,6 +635,7 @@ Zufall
 Zufälligkeit
 Bereich
 Verhältnis
+
 Neuste
 Wiederherstellen {step}
 Spiegeln
@@ -788,6 +796,7 @@ Textur...
 Texturen
 Texturen exportiert.
 Texturen...
+
 Theme
 Theme importiert:
 Dicke
@@ -885,6 +894,7 @@ Fenster
 Drahtgitter
 Arbeitsbereich
 Welt
+
 Maus herumführen
 Bei der Steuerung der Kamera die Maus um die Ansichtsgrenzen herumführen.
 X

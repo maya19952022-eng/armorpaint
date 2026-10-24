@@ -23,6 +23,7 @@ Minden feldolgozás helyben történik
 Fejjel lefelé álló kamera engedélyezése
 Alfa
 Alfa eldobása
+
 Mennyiség
 
 Szög
@@ -56,11 +57,13 @@ B
 Hátul
 Sütés (Bake)
 Anyag sütése...
+
 Textúra sütése
 Sütés textúrákra
 Sávok
 Alapszín
 Hajlított normál
+
 Élletörés
 Eltérés (Bias)
 Bitek
@@ -119,6 +122,7 @@ Agyag
 Törlés
 
 Réteg törlése
+
 Színminták törlése
 Vágás vége
 Vágás kezdete
@@ -369,6 +373,7 @@ Hogyan használd
 Hiperbolikus koszinusz
 Hiperbolikus szinusz
 Hiperbolikus tangens
+
 Kép textúra
 Képből PBR
 Importálás
@@ -442,6 +447,7 @@ Logaritmus
 Mágikus textúra
 Egyedivé tétel
 Kézikönyv
+
 Tartomány leképzése
 Leképzés
 Maszk
@@ -462,6 +468,7 @@ Csoport egyesítése
 Rétegek egyesítése
 Háló
 Háló bemenet
+
 Háló kimenet
 Háló...
 Hálók
@@ -628,6 +635,7 @@ Véletlenszerű
 Véletlenszerűség
 Tartomány
 Arány
+
 Legutóbbi
 Mégsem von vissza: {step}
 Visszatükröződés
@@ -788,6 +796,7 @@ Textúra...
 Textúrák
 Textúrák exportálva
 Textúrák...
+
 Téma
 Téma importálva:
 Vastagság
@@ -885,6 +894,7 @@ Ablak
 Drótváz
 Munkaterület
 Világ
+
 Egér átfordítása
 Kamera mozgatása közben az egér átfordul a képernyő szélein
 X

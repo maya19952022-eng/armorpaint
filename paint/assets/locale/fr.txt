@@ -23,6 +23,7 @@ Tout le traitement est effectué localement sur l'appareil
 Autoriser la caméra à l'envers
 Alpha
 Rejeter Alpha
+
 Quantité
 
 Angle
@@ -56,11 +57,13 @@ B
 Arrière
 Rendu
 Exporter le matériau...
+
 Rendu de texture
 Rendu des textures
 Bandes
 Couleur de base
 Bent Normal
+
 Biseau
 Biais
 Bits
@@ -119,6 +122,7 @@ Argile
 Effacer
 
 Effacer le calque
+
 Effacer les échantillons
 Fin du clip
 Début du clip
@@ -369,6 +373,7 @@ Teinte/Saturation/Valeur
 Cosinus hyperbolique
 Sinus hyperbolique
 Tangente hyperbolique
+
 Texture image
 Image vers PBR
 Importer
@@ -442,6 +447,7 @@ Logarithme
 Texture magique
 Rendre unique
 Manuel
+
 Plage de carte
 Mappage
 Masque
@@ -462,6 +468,7 @@ Fusionner le groupe
 Fusionner les calques
 Maillage
 Entrée du maillage
+
 Sortie du maillage
 Maillage...
 Maillages
@@ -628,6 +635,7 @@ Aléatoire
 Caractère aléatoire
 Plage
 Ratio
+
 Récent
 Refaire {step}
 Refléter
@@ -788,6 +796,7 @@ Texture...
 Textures
 Textures exportées
 Textures...
+
 Thème
 Thème importé :
 Épaisseur
@@ -885,6 +894,7 @@ Fenêtre
 Fil de fer
 Espace de travail
 Monde
+
 Boucler la souris
 Boucler la souris autour des limites de la vue pendant le contrôle caméra
 X

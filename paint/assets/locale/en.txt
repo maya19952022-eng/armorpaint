@@ -23,6 +23,7 @@ All processing is done locally on device
 Allow Upside Down Camera
 Alpha
 Alpha Discard
+Ambient Occlusion
 Amount
 Anchor Point
 Angle
@@ -56,11 +57,13 @@ B
 Back
 Bake
 Bake Material...
+Bake Mesh Map
 Bake Texture
 Bake to Textures
 Bands
 Base Color
 Bent Normal
+Bent Normals
 Bevel
 Bias
 Bits
@@ -119,6 +122,7 @@ Clay
 Clear
 Clear Geometry Mask
 Clear Layer
+Clear Mesh Map
 Clear Swatches
 Clip End
 Clip Start
@@ -369,6 +373,7 @@ Hue/Saturation/Value
 Hyperbolic Cosine
 Hyperbolic Sine
 Hyperbolic Tangent
+ID
 Image Texture
 Image to PBR
 Import
@@ -442,6 +447,7 @@ Logarithm
 Magic Texture
 Make Unique
 Manual
+Map
 Map Range
 Mapping
 Mask
@@ -462,6 +468,7 @@ Merge Group
 Merge Layers
 Mesh
 Mesh Input
+Mesh Map
 Mesh Output
 Mesh...
 Meshes
@@ -628,6 +635,7 @@ Random
 Randomness
 Range
 Ratio
+Rebake
 Recent
 Redo {step}
 Reflect
@@ -788,6 +796,7 @@ Texture...
 Textures
 Textures exported
 Textures...
+The layer is locked
 Theme
 Theme imported:
 Thickness
@@ -885,6 +894,7 @@ Window
 Wireframe
 Workspace
 World
+World Space Normal
 Wrap Mouse
 Wrap mouse around view boundaries during camera control
 X

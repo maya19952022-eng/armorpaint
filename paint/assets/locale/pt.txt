@@ -23,6 +23,7 @@ Todo o processamento é feito localmente no dispositivo
 Permitir Câmera Invertida
 Alfa
 Descartar Alfa
+Oclusão de Ambiente
 Quantidade
 Ponto de Âncora
 Ângulo
@@ -56,11 +57,13 @@ B
 Costas
 Cozinhar
 Cozinhar Material
+Cozinhar Mapa da Malha
 Cozinhar Textura
 Cozinhar para Texturas
 Faixas
 Cor Base
 Normal Dobrada
+Normais Dobradas
 Chanfro
 Viés
 Bits
@@ -119,6 +122,7 @@ Argila
 Limpar
 Limpar Máscara Geométrica
 Limpar Camada
+Limpar Mapa da Malha
 Limpar Amostras
 Fim do Recorte
 Início do Recorte
@@ -369,6 +373,7 @@ Matiz/Saturação/Valor
 Cosseno Hiperbólico
 Seno Hiperbólico
 Tangente Hiperbólica
+ID
 Textura de Imagem
 Imagem para PBR
 Importar
@@ -442,6 +447,7 @@ Logaritmo
 Textura Mágica
 Tornar Único
 Manual
+Mapa
 Mapear Intervalo
 Mapeamento
 Máscara
@@ -462,6 +468,7 @@ Mesclar Grupo
 Mesclar Camadas
 Malha
 Entrada de Malha
+Mapa da Malha
 Saída de Malha
 Malha...
 Malhas
@@ -628,6 +635,7 @@ Aleatório
 Aleatoriedade
 Intervalo
 Proporção
+Cozinhar de Novo
 Recente
 Refazer {step}
 Refletir
@@ -788,6 +796,7 @@ Textura...
 Texturas
 Texturas exportadas
 Texturas...
+A camada está travada
 Tema
 Tema importado:
 Espessura
@@ -885,6 +894,7 @@ Janela
 Aramado
 Área de Trabalho
 Mundo
+Normal no Espaço do Mundo
 Envolver Mouse
 Envolver mouse nas bordas da visualização durante controle da câmera
 X
