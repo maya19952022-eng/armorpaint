@@ -1243,9 +1243,12 @@ slot_layer_t *layers_flatten_group(slot_layer_t *group) {
 		return NULL;
 	}
 	layers_duplicate_layer(group);
-	slot_layer_t *flat = layers_merge_group_history(g_context->layer, false);
-	flat->name         = string_copy(slot_layer_unique_name(flat, string_tmp("%s %s", group->name, tr("Flattened"))));
-	group->visible     = false;
+	slot_layer_t *flat     = layers_merge_group_history(g_context->layer, false);
+	char         *old_name = flat->name;
+	flat->name             = string_copy(slot_layer_unique_name(flat, string_tmp("%s %s", group->name, tr("Flattened"))));
+	tab_stages_rename_layer(old_name, flat->name); // The layers tab lists the names of the stage
+	tab_stages_add_layer(flat->name);
+	group->visible = false;
 	context_set_layer(flat);
 	make_material_parse_mesh_material();
 	g_context->layers_preview_dirty = true;

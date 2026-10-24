@@ -1144,7 +1144,10 @@ history_layer_props_t *history_layer_props(slot_layer_t *l) {
 }
 
 void history_set_layer_props(history_layer_props_t *p, slot_layer_t *l) {
+	char *old_name  = l->name;
 	l->name         = string_copy(p->name);
+	tab_stages_rename_layer(old_name, l->name);
+	tab_stages_add_layer(l->name);
 	l->visible      = p->visible;
 	l->locked       = p->locked;
 	l->mask_opacity = p->mask_opacity;
