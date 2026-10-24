@@ -197,9 +197,20 @@ void check_slots() {
 	check(a < b - 20.0, string("fill layer reads the baked occlusion: %.0f next to the wall, %.0f away", a, b));
 
 	saved_occlusion = ao;
+
+	// The layer scale tiles the material, the mesh map stays on the mesh
+	l->scale = 3.0;
+	script_layer_update(l);
 }
 
 void step_rebake() {
+	slot_layer_t *l = layer_by_name("mm_fill");
+	float         a = layer_red(l, texel_u(FLOOR_NEAR), texel_u(ROW_TOP));
+	float         b = layer_red(l, texel_u(FLOOR_FAR), texel_u(ROW_TOP));
+	check(a < b - 20.0, string("a scaled fill layer reads the mesh map on the mesh uvs: %.0f next to the wall, %.0f away", a, b));
+	l->scale = 1.0;
+	script_layer_update(l);
+
 	script_bake_get_settings()->occlusion_distance = 0.02;
 	script_bake_mesh_map(MESH_MAP_OCCLUSION);
 }

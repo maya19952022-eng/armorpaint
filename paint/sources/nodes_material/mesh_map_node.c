@@ -7,11 +7,26 @@ static i32 mesh_map_node_slot(ui_node_t *node) {
 	return slot >= 0 && slot < MESH_MAP_COUNT ? slot : MESH_MAP_OCCLUSION;
 }
 
+// Mesh maps are baked in the first uv map. When painting, tex_coord carries the layer scale or a triplanar
+// or decal projection, so the map is read with the mesh uvs instead. Node previews show the whole map.
+static char *mesh_map_node_uv() {
+	char *context = parser_material_kong->context->data->name;
+	if (!string_equals(context, "paint") && !string_equals(context, "atlas")) {
+		return "tex_coord";
+	}
+	if (string_array_index_of(parser_material_kong->outs, "float2 tex_coord_mesh") == -1) {
+		node_shader_context_add_elem(parser_material_kong->context, "tex", "short2norm");
+		node_shader_add_out(parser_material_kong, "float2 tex_coord_mesh");
+		node_shader_write_vert(parser_material_kong, "output.tex_coord_mesh = input.tex;");
+	}
+	return "input.tex_coord_mesh";
+}
+
 static char *mesh_map_node_sample(ui_node_t *node) {
 	i32   slot = mesh_map_node_slot(node);
 	char *name = string_tmp("texmeshmap%d", slot);
 	node_shader_add_texture(parser_material_kong, name, string_tmp("_texmeshmap%d", slot));
-	return string_tmp("sample(%s, sampler_linear, tex_coord)", name);
+	return string_tmp("sample(%s, sampler_linear, %s)", name, mesh_map_node_uv());
 }
 
 static char *mesh_map_node_vector(ui_node_t *node, ui_node_socket_t *socket) {
