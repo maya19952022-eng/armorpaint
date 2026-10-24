@@ -55,3 +55,4 @@ IDs da matriz: LAY-01, ... · Fase: P1 · Desde: <PR>
 | Página | IDs | Fase |
 |---|---|---|
 | [per_channel_blending.md](per_channel_blending.md) | LAY-01 | P1 |
+| [group_flatten.md](group_flatten.md) | LAY-14 | P1 |
