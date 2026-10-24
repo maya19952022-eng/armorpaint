@@ -326,7 +326,27 @@ project_t *import_arm_from_map_to_arm(any_map_t *old) {
 	project->mesh_nodes_objects = any_map_get(old, "mesh_nodes_objects");
 	project->mesh_paths         = any_map_get(old, "mesh_paths");
 
+	any_array_t *mms = any_map_get(old, "mesh_maps"); // Version 23
+	if (mms != NULL) {
+		project->mesh_maps = any_array_create_from_raw((void *[]){}, 0);
+		for (i32 i = 0; i < mms->length; ++i) {
+			any_map_t       *m = mms->buffer[i];
+			mesh_map_data_t *d = ALLOC_INIT(mesh_map_data_t, {0});
+			d->slot            = armpack_map_get_i32(m, "slot");
+			d->set             = armpack_map_get_i32(m, "set");
+			d->res             = armpack_map_get_i32(m, "res");
+			d->bpp             = armpack_map_get_i32(m, "bpp");
+			d->texture         = any_map_get(m, "texture");
+			any_array_push(project->mesh_maps, d);
+		}
+	}
+	project->bake_settings = any_map_get(old, "bake_settings");
+
 	return project;
+}
+
+project_t *import_arm_from_version_22(any_map_t *old) {
+	return import_arm_from_map_to_arm(old); // No mesh maps
 }
 
 project_t *import_arm_from_version_21(any_map_t *old) {
@@ -539,7 +559,7 @@ project_t *import_arm_from_old(buffer_t *b) {
 	    import_arm_from_version_5,  import_arm_from_version_6,  import_arm_from_version_7,  import_arm_from_version_8,  import_arm_from_version_9,
 	    import_arm_from_version_10, import_arm_from_version_11, import_arm_from_version_12, import_arm_from_version_13, import_arm_from_version_14,
 	    import_arm_from_version_15, import_arm_from_version_16, import_arm_from_version_17, import_arm_from_version_18, import_arm_from_version_19,
-	    import_arm_from_version_20, import_arm_from_version_21,
+	    import_arm_from_version_20, import_arm_from_version_21, import_arm_from_version_22,
 	};
 	for (i32 v = sizeof(fns) / sizeof(fns[0]) - 1; v >= 0; --v) {
 		if (import_arm_is_version(b, i32_to_string(v))) {

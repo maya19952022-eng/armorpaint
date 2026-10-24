@@ -1257,6 +1257,7 @@ void import_arm_run_project(char *path) {
 
 	nodes_mesh_import();
 	util_path_tool_import();
+	util_bake_import(g_project);
 
 	import_arm_progress(0.95);
 	tab_meshes_sort_hierarchy();
