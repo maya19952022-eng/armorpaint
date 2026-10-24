@@ -553,8 +553,15 @@ node_shader_context_t *make_paint_run_context(material_t *data, char *context_id
 	char *matid_string = parser_material_vec1(matid * 3.0);
 	node_shader_write_frag(kong, string_tmp("float matid = %s;", matid_string));
 
+	// A layer effect keeps the material id and the emission or subsurface flag of what it changes
+	slot_layer_t *effect_input = slot_layer_is_filter(g_context->layer) ? slot_layer_effect_input(g_context->layer) : NULL;
+	if (effect_input != NULL && slot_layer_is_layer(effect_input)) {
+		i32 index = array_index_of(g_project->_->layers, effect_input);
+		node_shader_add_texture(kong, "texpaint_nor_effect", string_tmp("_texpaint_nor%d", index));
+		node_shader_write_frag(kong, "matid = sample_lod(texpaint_nor_effect, sampler_linear, sample_tc, 0.0).a;");
+	}
 	// matid % 3 == 0 - normal, 1 - emission, 2 - subsurface
-	if (g_context->material->paint_emis && make_material_emis_used) {
+	else if (g_context->material->paint_emis && make_material_emis_used) {
 		node_shader_write_frag(kong, "if (emis > 0.0) {");
 		node_shader_write_frag(kong, "	matid += 1.0 / 255.0;");
 		node_shader_write_frag(kong, "	if (str == 0.0) { discard; }");

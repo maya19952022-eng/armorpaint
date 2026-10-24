@@ -39,16 +39,20 @@ char *layer_node_value(ui_node_t *node, ui_node_socket_t *socket) {
 		node_shader_add_texture(parser_material_kong, string_tmp("texpaint_pack%s", ls), string_tmp("_texpaint_pack%s", ls));
 		return string_tmp("sample(texpaint_pack%s, sampler_linear, tex_coord).b", ls);
 	}
-	else if (socket == node->outputs->buffer[6]) {
-		return "0.0";
-	} // Emission
+	else if (socket == node->outputs->buffer[6]) { // Emission, flag 1 of the material id in nor.a
+		node_shader_add_function(parser_material_kong, str_layer_flag);
+		node_shader_add_texture(parser_material_kong, string_tmp("texpaint_nor%s", ls), string_tmp("_texpaint_nor%s", ls));
+		return string_tmp("(1.0 - step(0.5, abs(layer_flag(sample(texpaint_nor%s, sampler_linear, tex_coord).a) - 1.0)))", ls);
+	}
 	else if (socket == node->outputs->buffer[7]) { // Height
 		node_shader_add_texture(parser_material_kong, string_tmp("texpaint_pack%s", ls), string_tmp("_texpaint_pack%s", ls));
 		return string_tmp("sample(texpaint_pack%s, sampler_linear, tex_coord).a", ls);
 	}
-	else {
-		return "0.0";
-	} // Subsurface
+	else { // Subsurface, flag 2
+		node_shader_add_function(parser_material_kong, str_layer_flag);
+		node_shader_add_texture(parser_material_kong, string_tmp("texpaint_nor%s", ls), string_tmp("_texpaint_nor%s", ls));
+		return string_tmp("step(1.5, layer_flag(sample(texpaint_nor%s, sampler_linear, tex_coord).a))", ls);
+	}
 }
 
 void layer_node_init() {

@@ -448,6 +448,14 @@ float3 hue_sat(float3 col, float4 shift) { \
 } \
 ";
 
+// Flag in the alpha of texpaint_nor: 0 normal, 1 emission, 2 subsurface
+char *str_layer_flag = "\
+float layer_flag(float a) { \
+	float id = floor(a * 255.0 + 0.5); \
+	return id - 3.0 * floor(id / 3.0 + 0.001); \
+} \
+";
+
 char *str_brightcontrast = "\
 float3 brightcontrast(float3 col, float bright, float contr) { \
 	float a = 1.0 + contr; \
