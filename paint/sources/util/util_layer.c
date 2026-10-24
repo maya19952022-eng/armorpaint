@@ -413,6 +413,57 @@ static bool layers_refill_after_paint(slot_layer_t *l, void *data) {
 	return slot_layer_is_effect(l) && layers_owner(l) == data;
 }
 
+static bool layers_canvas_reads_mesh_maps(ui_node_canvas_t *c, i32 depth) {
+	for (i32 i = 0; c != NULL && i < c->nodes->length; ++i) {
+		ui_node_t *n = c->nodes->buffer[i];
+		if (string_equals(n->type, "MESH_MAP")) {
+			return true;
+		}
+		if (string_equals(n->type, "GROUP") && depth < 8) {
+			for (i32 j = 0; j < g_project->_->material_groups->length; ++j) {
+				node_group_t *g = g_project->_->material_groups->buffer[j];
+				if (string_equals(g->canvas->name, n->name) && layers_canvas_reads_mesh_maps(g->canvas, depth + 1)) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+// The material samples a mesh map through a Mesh Map node, in its canvas or in its node groups
+bool layers_material_reads_mesh_maps(slot_material_t *m) {
+	return m != NULL && layers_canvas_reads_mesh_maps(m->canvas, 0);
+}
+
+// Fills that read mesh maps, and the effects of the layers that own one
+static bool layers_refill_mesh_map(slot_layer_t *l, void *data) {
+	if (layers_material_reads_mesh_maps(l->fill_material) || layers_material_linked(l->fill_material)) {
+		return true;
+	}
+	if (!slot_layer_is_effect(l)) {
+		return false;
+	}
+	slot_layer_t *owner = layers_owner(l);
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		slot_layer_t *f = g_project->_->layers->buffer[i];
+		if (layers_owner(f) == owner && layers_material_reads_mesh_maps(f->fill_material)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// A mesh map changed: refill whatever reads it, whichever material is selected
+void layers_update_mesh_map_layers() {
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		if (layers_material_reads_mesh_maps(g_project->_->layers->buffer[i]->fill_material)) {
+			layers_refill(&layers_refill_mesh_map, NULL);
+			return;
+		}
+	}
+}
+
 // Effects are refilled from the bottom of the stack up, so each one reads the fresh output of the one below it
 void layers_update_effects() {
 	layers_refill(&layers_refill_effect, NULL);

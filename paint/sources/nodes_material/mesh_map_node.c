@@ -9,9 +9,10 @@ static i32 mesh_map_node_slot(ui_node_t *node) {
 
 // Mesh maps are baked in the first uv map. When painting, tex_coord carries the layer scale or a triplanar
 // or decal projection, so the map is read with the mesh uvs instead. Node previews show the whole map.
+// Sculpt layers paint in vertex space without mesh uvs and keep tex_coord.
 static char *mesh_map_node_uv() {
 	char *context = parser_material_kong->context->data->name;
-	if (!string_equals(context, "paint") && !string_equals(context, "atlas")) {
+	if ((!string_equals(context, "paint") && !string_equals(context, "atlas")) || g_context->layer->texpaint_sculpt != NULL) {
 		return "tex_coord";
 	}
 	if (string_array_index_of(parser_material_kong->outs, "float2 tex_coord_mesh") == -1) {
@@ -53,7 +54,14 @@ static void mesh_map_node_button(i32 node_id) {
 		make_material_parse_paint_material(true); // Sample the other slot
 	}
 
-	if (util_bake_current_slot() == slot) {
+	i32 state = util_bake_state(slot, NULL);
+	if (state == BAKE_STATE_QUEUED) { // Waits for the bakes ahead of it, a click takes it out of the queue
+		if (ui_icon_button(tr("Queued"), ICON_STOP, UI_ALIGN_CENTER)) {
+			util_bake_cancel_job(slot, NULL);
+		}
+		ui_nodes_hwnd->redraws = 2;
+	}
+	else if (state == BAKE_STATE_RUNNING) {
 		f32 progress        = util_bake_progress();
 		i32 _BUTTON_COL     = g_theme->BUTTON_COL;
 		g_theme->BUTTON_COL = g_theme->HIGHLIGHT_COL;
@@ -62,7 +70,7 @@ static void mesh_map_node_button(i32 node_id) {
 		ui_slider(&progress, label, 0.0, 1.0, true, 100, false, UI_ALIGN_CENTER, true);
 		g_theme->BUTTON_COL = _BUTTON_COL;
 		if (g_ui->is_hovered && g_ui->input_released) {
-			util_bake_cancel();
+			util_bake_cancel_job(slot, NULL);
 		}
 		ui_nodes_hwnd->redraws = 2;
 	}

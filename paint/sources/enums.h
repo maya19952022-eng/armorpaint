@@ -75,6 +75,12 @@ typedef enum {
 } mesh_map_id_source_t;
 
 typedef enum {
+	BAKE_STATE_IDLE    = 0,
+	BAKE_STATE_QUEUED  = 1,
+	BAKE_STATE_RUNNING = 2,
+} bake_state_t;
+
+typedef enum {
 	VIEWPORT_MODE_NONE          = -1,
 	VIEWPORT_MODE_LIT           = 0,
 	VIEWPORT_MODE_BASE_COLOR    = 1,

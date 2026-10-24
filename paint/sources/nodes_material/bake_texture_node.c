@@ -149,7 +149,7 @@ static void bake_texture_node_queue(ui_node_t *node, int bake_type, bool rt_bake
 	d->node                    = node;
 	d->bake_type               = bake_type;
 	d->rt_bake                 = rt_bake;
-	util_bake_run_custom(bake_texture_node_step, bake_texture_node_cancel, d, NULL, NULL);
+	util_bake_run_custom(bake_texture_node_step, bake_texture_node_cancel, d, node, NULL, NULL);
 }
 
 static void bake_texture_node_button(i32 node_id) {
@@ -191,8 +191,14 @@ static void bake_texture_node_button(i32 node_id) {
 	bool rt_bake =
 	    bake_type == BAKE_TYPE_OCCLUSION || bake_type == BAKE_TYPE_LIGHTMAP || bake_type == BAKE_TYPE_BENT_NORMAL || bake_type == BAKE_TYPE_THICKNESS;
 
-	bool baking = g_context->tool == TOOL_TYPE_BAKE && g_context->pdirty > 0;
-	if (baking) {
+	i32  state  = util_bake_state(-1, node);
+	bool baking = state == BAKE_STATE_RUNNING && g_context->tool == TOOL_TYPE_BAKE && g_context->pdirty > 0;
+	if (state == BAKE_STATE_QUEUED) { // Waits for the bakes ahead of it, a click takes it out of the queue
+		if (ui_icon_button(tr("Queued"), ICON_STOP, UI_ALIGN_CENTER)) {
+			util_bake_cancel_job(-1, node);
+		}
+	}
+	else if (baking) {
 		f32 progress = render_path_raytrace_bake_current_sample / (float)g_context->bake_samples;
 		if (progress > 1.0) {
 			progress = 1.0;
@@ -208,8 +214,11 @@ static void bake_texture_node_button(i32 node_id) {
 		g_theme->BUTTON_COL = _BUTTON_COL;
 
 		if (g_ui->is_hovered && g_ui->input_released) {
-			g_context->pdirty = 0; // Stop baking
+			util_bake_cancel_job(-1, node); // Stops this bake and keeps what was baked so far
 		}
+	}
+	else if (state == BAKE_STATE_RUNNING) {
+		ui_text(tr("Baking..."), UI_ALIGN_CENTER, 0);
 	}
 	else if (ui_icon_button(tr("Bake"), ICON_PLAY, UI_ALIGN_CENTER)) {
 		bake_texture_node_queue(node, bake_type, rt_bake);

@@ -1415,6 +1415,18 @@ void script_bake_cancel(void) {
 	util_bake_cancel();
 }
 
+// bake_state_t of a mesh map slot: idle, queued or running
+i32 script_bake_state(i32 slot) {
+	return slot >= 0 && slot < MESH_MAP_COUNT ? util_bake_state(slot, NULL) : BAKE_STATE_IDLE;
+}
+
+// Takes one slot out of the queue, or stops it when it is running
+void script_bake_cancel_slot(i32 slot) {
+	if (slot >= 0 && slot < MESH_MAP_COUNT) {
+		util_bake_cancel_job(slot, NULL);
+	}
+}
+
 f32 script_bake_progress(void) {
 	return util_bake_progress();
 }

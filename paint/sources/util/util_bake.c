@@ -31,6 +31,7 @@ struct bake_job {
 	void (*done)(void *data);
 	void *done_data;
 	void *data;
+	void *owner; // Custom job, the node or tool that started it
 };
 
 // clang-format off
@@ -594,7 +595,7 @@ static gpu_texture_t *util_bake_upload(i32 slot, f32 *px, i32 res) {
 		free(b);
 	}
 	draw_begin(rt, false, 0);
-	draw_set_pipeline(pipes_copy);
+	draw_set_pipeline(vector ? pipes_copy64 : pipes_copy); // The pipeline matches the target format
 	draw_image(src, 0, 0);
 	draw_set_pipeline(NULL);
 	draw_end();
@@ -603,9 +604,24 @@ static gpu_texture_t *util_bake_upload(i32 slot, f32 *px, i32 res) {
 }
 
 // Materials with a Mesh Map node read the new texture
+// Layers, material icons and the selected node preview that read a mesh map, whichever material is selected
 void util_bake_maps_changed() {
-	layers_update_fill_layers();
-	g_context->ddirty = 2;
+	layers_update_mesh_map_layers();
+	slot_material_t *_material = g_context->material;
+	for (i32 i = 0; i < g_project->_->materials->length; ++i) {
+		slot_material_t *m = g_project->_->materials->buffer[i];
+		if (layers_material_reads_mesh_maps(m)) {
+			g_context->material = m;
+			util_render_make_material_preview();
+		}
+	}
+	g_context->material = _material;
+	if (layers_material_reads_mesh_maps(_material)) {
+		make_material_parse_paint_material(true);
+	}
+	ui_nodes_last_node_selected_id = -1; // Remake the preview of the selected node
+	g_context->ddirty              = 2;
+	ui_dock_redraw(TAB_AREA_SIDEBAR1);
 	if (ui_nodes_hwnd != NULL) {
 		ui_nodes_hwnd->redraws = 2;
 	}
@@ -764,10 +780,14 @@ static void util_bake_push(bake_job_t *job) {
 	util_bake_jobs[util_bake_jobs_count++] = job;
 }
 
-// Queues a bake of the slot with the current settings, done is called once the slot holds the new map
+// Queues a bake of the slot with the current settings, done is called once the slot holds the new map.
+// A slot already waiting in the queue is not queued twice.
 bool util_bake_run(i32 slot, void (*done)(void *), void *done_data) {
 	if (slot < 0 || slot >= MESH_MAP_COUNT) {
 		return false;
+	}
+	if (util_bake_state(slot, NULL) == BAKE_STATE_QUEUED && done == NULL) {
+		return true;
 	}
 	bake_job_t *job = calloc(1, sizeof(bake_job_t));
 	job->slot       = slot;
@@ -785,15 +805,67 @@ void util_bake_run_all(void (*done)(void *), void *done_data) {
 }
 
 // A job that drives another bake, like the Bake Texture node, queued with the mesh maps. The job frees data with free().
-void util_bake_run_custom(bool (*step)(bake_job_t *), void (*cancel)(bake_job_t *), void *data, void (*done)(void *), void *done_data) {
+void util_bake_run_custom(bool (*step)(bake_job_t *), void (*cancel)(bake_job_t *), void *data, void *owner, void (*done)(void *), void *done_data) {
 	bake_job_t *job = calloc(1, sizeof(bake_job_t));
 	job->slot       = -1;
+	job->owner      = owner;
 	job->step       = step;
 	job->cancel     = cancel;
 	job->data       = data;
 	job->done       = done;
 	job->done_data  = done_data;
 	util_bake_push(job);
+}
+
+static bool util_bake_job_matches(bake_job_t *job, i32 slot, void *owner) {
+	return slot >= 0 ? job->slot == slot : job->slot < 0 && job->owner == owner;
+}
+
+// State of a mesh map slot, or of the custom job of an owner when slot is -1
+i32 util_bake_state(i32 slot, void *owner) {
+	if (util_bake_job != NULL && util_bake_job_matches(util_bake_job, slot, owner)) {
+		return BAKE_STATE_RUNNING;
+	}
+	for (i32 i = 0; i < util_bake_jobs_count; ++i) {
+		if (util_bake_job_matches(util_bake_jobs[i], slot, owner)) {
+			return BAKE_STATE_QUEUED;
+		}
+	}
+	return BAKE_STATE_IDLE;
+}
+
+// Cancels the jobs of a slot, or of an owner when slot is -1, and leaves the rest of the queue
+void util_bake_cancel_job(i32 slot, void *owner) {
+	i32 kept = 0;
+	for (i32 i = 0; i < util_bake_jobs_count; ++i) {
+		if (util_bake_job_matches(util_bake_jobs[i], slot, owner)) {
+			util_bake_job_free(util_bake_jobs[i]);
+		}
+		else {
+			util_bake_jobs[kept++] = util_bake_jobs[i];
+		}
+	}
+	util_bake_jobs_count = kept;
+	bake_job_t *job      = util_bake_job;
+	if (job != NULL && util_bake_job_matches(job, slot, owner)) {
+		if (job->slot < 0) { // Finishes on its own
+			if (!job->cancelled && job->cancel != NULL) {
+				job->cancel(job);
+			}
+			job->cancelled = true;
+			return;
+		}
+		util_bake_job_free(job);
+		util_bake_job = NULL;
+	}
+	if (util_bake_job == NULL && util_bake_jobs_count == 0) {
+		sys_remove_update(util_bake_update);
+	}
+}
+
+// Jobs waiting behind the running one
+i32 util_bake_queued() {
+	return util_bake_jobs_count;
 }
 
 bool util_bake_busy() {
@@ -941,19 +1013,20 @@ void util_bake_export(project_t *project) {
 		buffer_t *pixels = gpu_get_texture_pixels(tex);
 		bool      vector = tex->format == GPU_TEXTURE_FORMAT_RGBA64;
 #ifdef IRON_BGRA
-		if (!vector) { // Stored as rgba
-			buffer_t *swapped = buffer_create(pixels->length);
+		if (!vector) { // Stored as rgba, the readback is a copy that the next readback overwrites
 			for (i32 i = 0; i + 3 < pixels->length; i += 4) {
-				swapped->buffer[i]     = pixels->buffer[i + 2];
-				swapped->buffer[i + 1] = pixels->buffer[i + 1];
-				swapped->buffer[i + 2] = pixels->buffer[i];
-				swapped->buffer[i + 3] = pixels->buffer[i + 3];
+				u8 b                 = pixels->buffer[i];
+				pixels->buffer[i]     = pixels->buffer[i + 2];
+				pixels->buffer[i + 2] = b;
 			}
-			pixels = swapped;
 		}
 #endif
 		mesh_map_data_t *d = ALLOC_INIT(mesh_map_data_t, {.slot = slot, .set = 0, .res = tex->width, .bpp = vector ? 16 : 8, .texture = lz4_encode(pixels)});
 		any_array_push(project->mesh_maps, d);
+		// Keep no cpu copy of the map after saving
+		free(tex->buffer->buffer);
+		free(tex->buffer);
+		tex->buffer = NULL;
 	}
 	if (project->mesh_maps->length == 0) {
 		project->mesh_maps = NULL;
@@ -988,7 +1061,7 @@ void util_bake_import(project_t *project) {
 		gpu_texture_t *src    = gpu_create_texture_from_bytes_raw(pixels, d->res, d->res, vector ? GPU_TEXTURE_FORMAT_RGBA64 : GPU_TEXTURE_FORMAT_RGBA32);
 		gpu_texture_t *rt     = gpu_create_render_target(d->res, d->res, vector ? GPU_TEXTURE_FORMAT_RGBA64 : GPU_TEXTURE_FORMAT_RGBA32);
 		draw_begin(rt, false, 0);
-		draw_set_pipeline(pipes_copy);
+		draw_set_pipeline(vector ? pipes_copy64 : pipes_copy);
 		draw_image(src, 0, 0);
 		draw_set_pipeline(NULL);
 		draw_end();
