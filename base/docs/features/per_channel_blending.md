@@ -29,7 +29,8 @@ Nenhum atalho novo. Ctrl+Z/Ctrl+Y desfazem e refazem mudanças de blend e de opa
 ## Projeto e export
 
 - Projetos salvos a partir desta versão usam o formato `.arm` versão 22, com os campos `blending_ch` e `opacity_ch` por camada.
-- Projetos antigos (versão 21 ou anterior) abrem igual: o blend da camada vai para a cor base, "Normal Blend" vira Combine e "Height Blend" vira Add.
+- Projetos antigos (versão 21 ou anterior) abrem com o mesmo resultado no export: o blend da camada vai para a cor base, "Normal Blend" vira Combine e "Height Blend" vira Add (desmarcado vira Mix).
+- Mudança no viewport para camadas antigas com "Height Blend" desmarcado: antes o viewport substituía a altura de baixo mesmo onde a camada não tinha pintura; agora mistura pela opacidade (Mix), como o export e o merge já faziam.
 - O export de texturas, o merge de camadas, o flatten da visão 2D e o viewport usam as mesmas regras por canal.
 - Correção junto: com a altura ligada e algum de oclusão/roughness/metallic desligado, o export ignorava a altura da camada; agora ela entra.
 
