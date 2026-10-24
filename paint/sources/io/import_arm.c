@@ -985,7 +985,8 @@ void import_arm_run_project(char *path) {
 		if (ld->name != NULL) {
 			l->name = string_copy(ld->name);
 		}
-		l->visible = ld->visible;
+		l->visible      = ld->visible;
+		l->mask_opacity = ld->opacity_mask; // Groups have an opacity too
 		any_array_push(g_project->_->layers, l);
 		if (!is_group) {
 			gpu_texture_t *_texpaint      = NULL;
@@ -1050,9 +1051,8 @@ void import_arm_run_project(char *path) {
 			if (ld->decal_mat != NULL) {
 				l->decal_mat = mat4_from_f32_array(ld->decal_mat, 0);
 			}
-			l->mask_opacity = ld->opacity_mask;
-			l->object_mask  = ld->object_mask;
-			l->blending     = ld->blending;
+			l->object_mask = ld->object_mask;
+			l->blending    = ld->blending;
 
 			l->paint_base         = ld->paint_base;
 			l->paint_opac         = ld->paint_opac;
