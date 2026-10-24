@@ -74,7 +74,6 @@ slot_layer_t *slot_layer_create(char *ext, layer_slot_type_t type, slot_layer_t 
 	raw->visible            = true;
 	raw->mask_opacity       = 1.0; // Opacity mask
 	raw->show_panel         = true;
-	raw->blending           = BLEND_TYPE_MIX;
 	raw->object_mask        = 0;
 	raw->scale              = 1.0;
 	raw->angle              = 0.0;
@@ -85,12 +84,11 @@ slot_layer_t *slot_layer_create(char *ext, layer_slot_type_t type, slot_layer_t 
 	raw->paint_rough        = true;
 	raw->paint_met          = true;
 	raw->paint_nor          = true;
-	raw->paint_nor_blend    = true;
 	raw->paint_height       = true;
-	raw->paint_height_blend = true;
 	raw->paint_emis         = true;
 	raw->paint_subs         = true;
 	raw->decal_mat          = mat4_identity(); // Decal layer
+	slot_layer_reset_channels(raw);
 
 	if (string_equals(ext, "")) {
 		raw->id = 0;
@@ -128,7 +126,6 @@ slot_layer_t *slot_layer_create(char *ext, layer_slot_type_t type, slot_layer_t 
 		i32 id        = (raw->id + 1);
 		raw->name     = string("Mask %d", id);
 		char *format  = "RGBA32"; // Full bits for undo support, R8 is used
-		raw->blending = BLEND_TYPE_MIX;
 
 		{
 			render_target_t *t = render_target_create();
@@ -401,7 +398,8 @@ slot_layer_t *slot_layer_duplicate(slot_layer_t *raw) {
 	l->mask_opacity       = raw->mask_opacity;
 	l->fill_material      = raw->fill_material;
 	l->object_mask        = raw->object_mask;
-	l->blending           = raw->blending;
+	memcpy(l->blending, raw->blending, sizeof(raw->blending));
+	memcpy(l->opacity, raw->opacity, sizeof(raw->opacity));
 	l->uv_type            = raw->uv_type;
 	l->decal_mat          = raw->decal_mat;
 	l->scale              = raw->scale;
@@ -412,9 +410,7 @@ slot_layer_t *slot_layer_duplicate(slot_layer_t *raw) {
 	l->paint_rough        = raw->paint_rough;
 	l->paint_met          = raw->paint_met;
 	l->paint_nor          = raw->paint_nor;
-	l->paint_nor_blend    = raw->paint_nor_blend;
 	l->paint_height       = raw->paint_height;
-	l->paint_height_blend = raw->paint_height_blend;
 	l->paint_emis         = raw->paint_emis;
 	l->paint_subs         = raw->paint_subs;
 
@@ -723,8 +719,23 @@ i32 slot_layer_get_object_mask(slot_layer_t *raw) {
 	return (slot_layer_is_mask(raw) || slot_layer_is_filter(raw)) ? raw->parent->object_mask : raw->object_mask;
 }
 
-i32 slot_layer_get_blending(slot_layer_t *raw) {
-	return slot_layer_is_filter(raw) ? raw->parent->blending : raw->blending;
+i32 slot_layer_get_blending(slot_layer_t *raw, layer_channel_t ch) {
+	return slot_layer_is_filter(raw) ? raw->parent->blending[ch] : raw->blending[ch];
+}
+
+// Layer opacity times the opacity of one channel
+f32 slot_layer_get_channel_opacity(slot_layer_t *raw, layer_channel_t ch) {
+	f32 f = slot_layer_is_filter(raw) ? raw->parent->opacity[ch] : raw->opacity[ch];
+	return slot_layer_get_opacity(raw) * f;
+}
+
+void slot_layer_reset_channels(slot_layer_t *raw) {
+	for (i32 i = 0; i < LAYER_CH_COUNT; ++i) {
+		raw->blending[i] = BLEND_TYPE_MIX;
+		raw->opacity[i]  = 1.0;
+	}
+	raw->blending[LAYER_CH_NOR]    = BLEND_TYPE_NORMAL_COMBINE;
+	raw->blending[LAYER_CH_HEIGHT] = BLEND_TYPE_ADD;
 }
 
 bool slot_layer_is_layer(slot_layer_t *raw) {

@@ -801,6 +801,58 @@ void script_layer_update(slot_layer_t *l) {
 	g_context->ddirty               = 2;
 }
 
+// Blending and opacity of one layer_channel_t, a negative blending keeps the current one
+void script_layer_set_channel(slot_layer_t *l, i32 channel, i32 blending, f32 opacity) {
+	if (!script_layer_valid(l) || channel < 0 || channel >= LAYER_CH_COUNT) {
+		return;
+	}
+	bool normal = channel == LAYER_CH_NOR;
+	bool valid  = normal ? (blending == BLEND_TYPE_MIX || blending == BLEND_TYPE_NORMAL_COMBINE) : (blending >= 0 && blending <= BLEND_TYPE_VALUE);
+	opacity     = opacity < 0.0 ? 0.0 : opacity > 1.0 ? 1.0 : opacity;
+	context_set_layer(l);
+	if (valid && l->blending[channel] != blending) {
+		history_layer_blending();
+		l->blending[channel] = blending;
+	}
+	if (l->opacity[channel] != opacity) {
+		history_layer_opacity();
+		l->opacity[channel] = opacity;
+	}
+	script_layer_update(l);
+}
+
+static void script_layer_op_end(gpu_texture_t *current, bool in_use);
+
+void script_undo(void) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	history_undo();
+	script_layer_op_end(current, in_use);
+}
+
+void script_redo(void) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	history_redo();
+	script_layer_op_end(current, in_use);
+}
+
+i32 script_layer_get_channel_blending(slot_layer_t *l, i32 channel) {
+	if (!script_layer_valid(l) || channel < 0 || channel >= LAYER_CH_COUNT) {
+		return -1;
+	}
+	return l->blending[channel];
+}
+
+f32 script_layer_get_channel_opacity(slot_layer_t *l, i32 channel) {
+	if (!script_layer_valid(l) || channel < 0 || channel >= LAYER_CH_COUNT) {
+		return -1.0;
+	}
+	return l->opacity[channel];
+}
+
 bool script_layer_move(slot_layer_t *l, i32 to) {
 	if (!script_layer_valid(l) || to < 0 || to >= g_project->_->layers->length) {
 		return false;

@@ -167,7 +167,19 @@ typedef enum {
 	BLEND_TYPE_SATURATION   = 15,
 	BLEND_TYPE_COLOR        = 16,
 	BLEND_TYPE_VALUE        = 17,
+	BLEND_TYPE_NORMAL_COMBINE = 18, // Normal channel only, whiteout blend
 } blend_type_t;
+
+// Layer channels with their own blending and opacity
+typedef enum {
+	LAYER_CH_BASE   = 0,
+	LAYER_CH_NOR    = 1,
+	LAYER_CH_OCC    = 2,
+	LAYER_CH_ROUGH  = 3,
+	LAYER_CH_MET    = 4,
+	LAYER_CH_HEIGHT = 5,
+	LAYER_CH_COUNT  = 6,
+} layer_channel_t;
 
 typedef enum {
 	CAMERA_CONTROLS_NONE   = -1,

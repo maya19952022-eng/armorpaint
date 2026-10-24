@@ -116,6 +116,30 @@ void history_layer_object_clear(slot_layer_t *l) {
 	layers_update_fill_layers();
 }
 
+// Exchanges the per channel blending or opacity of a layer with the ones stored in the step
+static void history_swap_channels(history_step_t *step, slot_layer_t *l, bool blending, bool opacity) {
+	for (i32 i = 0; i < LAYER_CH_COUNT; ++i) {
+		if (blending) {
+			i32 t                   = l->blending[i];
+			l->blending[i]          = step->layer_blending[i];
+			step->layer_blending[i] = t;
+		}
+		if (opacity) {
+			f32 t                     = l->opacity[i];
+			l->opacity[i]             = step->layer_opacity_ch[i];
+			step->layer_opacity_ch[i] = t;
+		}
+	}
+}
+
+// Restores the per channel blending and opacity stored in the step
+static void history_set_channels(history_step_t *step, slot_layer_t *l) {
+	for (i32 i = 0; i < LAYER_CH_COUNT; ++i) {
+		l->blending[i] = step->layer_blending[i];
+		l->opacity[i]  = step->layer_opacity_ch[i];
+	}
+}
+
 void history_swap_layer_props(history_step_t *step) {
 	slot_layer_t *l = g_project->_->layers->buffer[step->layer];
 
@@ -341,7 +365,7 @@ void history_undo() {
 			slot_layer_t *lay = history_undo_slot(history_undo_i);
 			slot_layer_swap(l, lay);
 			l->mask_opacity = step->layer_opacity;
-			l->blending     = step->layer_blending;
+			history_set_channels(step, l);
 			l->object_mask  = step->layer_object;
 			make_material_parse_mesh_material();
 
@@ -395,7 +419,7 @@ void history_undo() {
 			slot_layer_swap(g_context->layer, lay);
 
 			g_context->layer->mask_opacity  = step->layer_opacity;
-			g_context->layer->blending      = step->layer_blending;
+			history_set_channels(step, g_context->layer);
 			g_context->layer->object_mask   = step->layer_object;
 			g_context->layers_preview_dirty = true;
 			make_material_parse_mesh_material();
@@ -471,13 +495,12 @@ void history_undo() {
 			f32 t                          = g_context->layer->mask_opacity;
 			g_context->layer->mask_opacity = step->layer_opacity;
 			step->layer_opacity            = t;
+			history_swap_channels(step, g_context->layer, false, true);
 			make_material_parse_mesh_material();
 		}
 		else if (step->action == HISTORY_ACTION_LAYER_BLENDING) {
 			context_set_layer(g_project->_->layers->buffer[step->layer]);
-			blend_type_t t             = g_context->layer->blending;
-			g_context->layer->blending = step->layer_blending;
-			step->layer_blending       = t;
+			history_swap_channels(step, g_context->layer, true, false);
 			make_material_parse_mesh_material();
 		}
 		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_NAME || step->action == HISTORY_ACTION_LAYER_OBJECT ||
@@ -787,13 +810,12 @@ void history_redo() {
 			f32 t                          = g_context->layer->mask_opacity;
 			g_context->layer->mask_opacity = step->layer_opacity;
 			step->layer_opacity            = t;
+			history_swap_channels(step, g_context->layer, false, true);
 			make_material_parse_mesh_material();
 		}
 		else if (step->action == HISTORY_ACTION_LAYER_BLENDING) {
 			context_set_layer(g_project->_->layers->buffer[step->layer]);
-			blend_type_t t             = g_context->layer->blending;
-			g_context->layer->blending = step->layer_blending;
-			step->layer_blending       = t;
+			history_swap_channels(step, g_context->layer, true, false);
 			make_material_parse_mesh_material();
 		}
 		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_NAME || step->action == HISTORY_ACTION_LAYER_OBJECT ||
@@ -933,8 +955,11 @@ history_step_t *history_push(history_action_t action) {
 	                                .material       = mpos,
 	                                .brush          = bpos,
 	                                .layer_opacity  = g_context->layer->mask_opacity,
-	                                .layer_object   = g_context->layer->object_mask,
-	                                .layer_blending = g_context->layer->blending});
+	                                .layer_object   = g_context->layer->object_mask});
+	for (i32 i = 0; i < LAYER_CH_COUNT; ++i) {
+		step->layer_blending[i]   = g_context->layer->blending[i];
+		step->layer_opacity_ch[i] = g_context->layer->opacity[i];
+	}
 
 	any_array_push(history_steps, step);
 

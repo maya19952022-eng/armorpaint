@@ -33,6 +33,8 @@ void pipes_init() {
 	pipes_opac     = pipes_get_constant_location("float");
 	pipes_blending = pipes_get_constant_location("int");
 	pipes_tex1w    = pipes_get_constant_location("float");
+	pipes_opac_ch  = pipes_get_constant_location("float4");
+	pipes_blend_ch = pipes_get_constant_location("float4");
 
 	{
 

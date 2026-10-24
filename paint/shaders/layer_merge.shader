@@ -3,6 +3,8 @@ cbuffer constants {
 	float opac;
 	int blending;
 	float tex1w;
+	float4 opac_ch; // Mode 105, opacity of occlusion, roughness, metallic, height
+	float4 blend_ch; // Mode 105, blend_type_t of each channel
 };
 
 sampler sampler_linear;
@@ -47,6 +49,53 @@ float3 rgb_to_hsv(float3 c) {
 	return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
 }
 
+// Same formulas as make_material_blend_mode_scalar() in make_material.c
+float blend_scalar(float a, float b, float s, int mode) {
+	if (mode == 1) { // Darken
+		return lerp(a, min(a, b), s);
+	}
+	if (mode == 2) { // Multiply
+		return lerp(a, a * b, s);
+	}
+	if (mode == 3) { // Burn
+		return lerp(a, 1.0 - (1.0 - a) / max(b, 0.0001), s);
+	}
+	if (mode == 4) { // Lighten
+		return max(a, b * s);
+	}
+	if (mode == 5) { // Screen
+		return 1.0 - ((1.0 - s) + s * (1.0 - b)) * (1.0 - a);
+	}
+	if (mode == 6) { // Dodge
+		return lerp(a, a / max(1.0 - b, 0.0001), s);
+	}
+	if (mode == 7) { // Add
+		return lerp(a, a + b, s);
+	}
+	if (mode == 8) { // Overlay
+		return lerp(a, lerp(2.0 * a * b, 1.0 - 2.0 * (1.0 - a) * (1.0 - b), step(0.5, a)), s);
+	}
+	if (mode == 9) { // Soft Light
+		return (1.0 - s) * a + s * ((1.0 - a) * b * a + a * (1.0 - (1.0 - b) * (1.0 - a)));
+	}
+	if (mode == 10) { // Linear Light
+		return a + s * (2.0 * (b - 0.5));
+	}
+	if (mode == 11) { // Difference
+		return lerp(a, abs(a - b), s);
+	}
+	if (mode == 12) { // Subtract
+		return lerp(a, a - b, s);
+	}
+	if (mode == 13) { // Divide
+		return (1.0 - s) * a + s * a / max(b, 0.0001);
+	}
+	if (mode == 14 || mode == 15 || mode == 16) { // Hue, Saturation, Color, a gray value has none
+		return a;
+	}
+	return lerp(a, b, s); // Mix, Value
+}
+
 float4 frag(vert_out input) {
 	float4 col0 = sample_lod(tex0, sampler_linear, input.tex, 0.0);
 	float4 cola = sample_lod(texa, sampler_linear, input.tex, 0.0);
@@ -54,6 +103,15 @@ float4 frag(vert_out input) {
 	float str = col0.a * constants.opac;
 	str *= maskr;
 
+	if (constants.blending == 105) { // Merging _pack with a blending and opacity per channel
+		float4 col1 = sample_lod(tex1, sampler_linear, input.tex, 0.0);
+		float s = col0.a * maskr;
+		return float4(
+			clamp(blend_scalar(cola.r, col1.r, s * constants.opac_ch.x, int(constants.blend_ch.x)), 0.0, 1.0),
+			clamp(blend_scalar(cola.g, col1.g, s * constants.opac_ch.y, int(constants.blend_ch.y)), 0.0, 1.0),
+			clamp(blend_scalar(cola.b, col1.b, s * constants.opac_ch.z, int(constants.blend_ch.z)), 0.0, 1.0),
+			blend_scalar(cola.a, col1.a, s * constants.opac_ch.w, int(constants.blend_ch.w)));
+	}
 	if (constants.blending == 101) { // Merging _nor and _pack
 		float4 col1 = sample_lod(tex1, sampler_linear, input.tex, 0.0);
 		return lerp(cola, col1, str);

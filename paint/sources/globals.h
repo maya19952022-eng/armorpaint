@@ -7,7 +7,7 @@
 
 char *manifest_title           = "ArmorPaint";
 char *manifest_version         = "1.1alpha";
-char *manifest_version_project = "21";
+char *manifest_version_project = "22";
 char *manifest_version_config  = "1";
 char *manifest_url             = "https://armorpaint.org";
 char *manifest_url_android     = "https://play.google.com/store/apps/details?id=org.armorpaint";
@@ -65,6 +65,8 @@ i32              pipes_texa;
 i32              pipes_opac;
 i32              pipes_blending;
 i32              pipes_tex1w;
+i32              pipes_opac_ch;
+i32              pipes_blend_ch;
 i32              pipes_tex0_mask;
 i32              pipes_texa_mask;
 i32              pipes_opac_apply_mask;
@@ -371,6 +373,7 @@ char           *tab_layers_layer_name = "";
 char           *tab_meshes_mesh_name  = "";
 slot_layer_t   *tab_layers_l;
 paint_tex_t     tab_layers_preview_tex           = PAINT_TEX_BASE;
+layer_channel_t tab_layers_channel               = LAYER_CH_BASE; // Channel edited by the blending combo of a layer row
 gpu_texture_t  *util_uv_uvmap                    = NULL;
 bool            util_uv_uvmap_cached             = false;
 gpu_texture_t  *util_uv_trianglemap              = NULL;

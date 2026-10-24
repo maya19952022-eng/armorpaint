@@ -246,7 +246,7 @@ buffer_t *export_arm_encode_project(char *path) {
 		                              .opacity_mask       = l->mask_opacity,
 		                              .fill_material      = l->fill_material != NULL ? array_index_of(g_project->_->materials, l->fill_material) : -1,
 		                              .object_mask        = l->object_mask,
-		                              .blending           = l->blending,
+		                              .blending           = l->blending[LAYER_CH_BASE],
 		                              .parent             = l->parent != NULL ? array_index_of(g_project->_->layers, l->parent) : -1,
 		                              .visible            = l->visible,
 		                              .texpaint_nor       = l->texpaint_nor != NULL ? lz4_encode(gpu_get_texture_pixels(l->texpaint_nor)) : NULL,
@@ -258,9 +258,9 @@ buffer_t *export_arm_encode_project(char *path) {
 		                              .paint_rough        = l->paint_rough,
 		                              .paint_met          = l->paint_met,
 		                              .paint_nor          = l->paint_nor,
-		                              .paint_nor_blend    = l->paint_nor_blend,
+		                              .paint_nor_blend    = l->blending[LAYER_CH_NOR] == BLEND_TYPE_NORMAL_COMBINE,
 		                              .paint_height       = l->paint_height,
-		                              .paint_height_blend = l->paint_height_blend,
+		                              .paint_height_blend = l->blending[LAYER_CH_HEIGHT] == BLEND_TYPE_ADD,
 		                              .paint_emis         = l->paint_emis,
 		                              .paint_subs         = l->paint_subs,
 		                              .path_points        = l->path_points,
@@ -270,7 +270,13 @@ buffer_t *export_arm_encode_project(char *path) {
 		                              .path_tool          = l->path_tool,
 		                              .path_curved        = l->path_curved,
 		                              .path_text          = l->path_text,
-		                              .path_material      = l->path_material != NULL ? array_index_of(g_project->_->materials, l->path_material) : -1});
+		                              .path_material      = l->path_material != NULL ? array_index_of(g_project->_->materials, l->path_material) : -1,
+		                              .blending_ch        = i32_array_create(LAYER_CH_COUNT),
+		                              .opacity_ch         = f32_array_create(LAYER_CH_COUNT)});
+		for (i32 j = 0; j < LAYER_CH_COUNT; ++j) {
+			d->blending_ch->buffer[j] = l->blending[j];
+			d->opacity_ch->buffer[j]  = l->opacity[j];
+		}
 		any_array_push(ld, d);
 	}
 
@@ -399,6 +405,8 @@ buffer_t *export_arm_encode_project(char *path) {
 			array_free(d->decal_mat);
 			free(d->decal_mat);
 		}
+		array_delete(d->blending_ch);
+		array_delete(d->opacity_ch);
 		free(d);
 	}
 	array_free(ld);

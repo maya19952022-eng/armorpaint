@@ -353,9 +353,9 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 			gpu_set_texture(pipes_tex1, empty);
 			gpu_set_texture(pipes_texmask, mask);
 			gpu_set_texture(pipes_texa, layers_temp_image);
-			gpu_set_float(pipes_opac, slot_layer_get_opacity(l1));
+			gpu_set_float(pipes_opac, slot_layer_get_channel_opacity(l1, LAYER_CH_BASE));
 			gpu_set_float(pipes_tex1w, empty->width);
-			gpu_set_int(pipes_blending, layers->length > 1 ? slot_layer_get_blending(l1) : 0);
+			gpu_set_int(pipes_blending, layers->length > 1 ? slot_layer_get_blending(l1, LAYER_CH_BASE) : 0);
 			gpu_set_vertex_buffer(const_data_screen_aligned_vb);
 			gpu_set_index_buffer(const_data_screen_aligned_ib);
 			gpu_draw();
@@ -375,9 +375,9 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 			gpu_set_texture(pipes_tex1, l1->texpaint_nor);
 			gpu_set_texture(pipes_texmask, mask);
 			gpu_set_texture(pipes_texa, layers_temp_image);
-			gpu_set_float(pipes_opac, slot_layer_get_opacity(l1));
+			gpu_set_float(pipes_opac, slot_layer_get_channel_opacity(l1, LAYER_CH_NOR));
 			gpu_set_float(pipes_tex1w, l1->texpaint_nor->width);
-			gpu_set_int(pipes_blending, l1->paint_nor_blend ? 102 : 101);
+			gpu_set_int(pipes_blending, layers_nor_merge_mode(l1));
 			gpu_set_vertex_buffer(const_data_screen_aligned_vb);
 			gpu_set_index_buffer(const_data_screen_aligned_ib);
 			gpu_draw();
@@ -391,18 +391,7 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 			draw_set_pipeline(NULL);
 			draw_end();
 
-			if (l1->paint_occ && l1->paint_rough && l1->paint_met && l1->paint_height) {
-				layers_commands_merge_pack(pipes_merge, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask,
-				                           l1->paint_height_blend ? 103 : 101);
-			}
-			else {
-				if (l1->paint_occ)
-					layers_commands_merge_pack(pipes_merge_r, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-				if (l1->paint_rough)
-					layers_commands_merge_pack(pipes_merge_g, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-				if (l1->paint_met)
-					layers_commands_merge_pack(pipes_merge_b, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-			}
+			layers_commands_merge_pack(layers_expc, l1, mask);
 		}
 	}
 

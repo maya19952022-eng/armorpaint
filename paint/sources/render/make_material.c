@@ -490,6 +490,53 @@ char *make_material_blend_mode(node_shader_t *kong, i32 blending, char *cola, ch
 	}
 }
 
+// Blending of a single channel, same formulas as blend_scalar() in layer_merge.shader
+char *make_material_blend_mode_scalar(i32 blending, char *a, char *b, char *s) {
+	if (blending == BLEND_TYPE_DARKEN) {
+		return string_tmp("lerp(%s, min(%s, %s), %s)", a, a, b, s);
+	}
+	else if (blending == BLEND_TYPE_MULTIPLY) {
+		return string_tmp("lerp(%s, %s * %s, %s)", a, a, b, s);
+	}
+	else if (blending == BLEND_TYPE_BURN) {
+		return string_tmp("lerp(%s, 1.0 - (1.0 - %s) / max(%s, 0.0001), %s)", a, a, b, s);
+	}
+	else if (blending == BLEND_TYPE_LIGHTEN) {
+		return string_tmp("max(%s, %s * %s)", a, b, s);
+	}
+	else if (blending == BLEND_TYPE_SCREEN) {
+		return string_tmp("(1.0 - ((1.0 - %s) + %s * (1.0 - %s)) * (1.0 - %s))", s, s, b, a);
+	}
+	else if (blending == BLEND_TYPE_DODGE) {
+		return string_tmp("lerp(%s, %s / max(1.0 - %s, 0.0001), %s)", a, a, b, s);
+	}
+	else if (blending == BLEND_TYPE_ADD) {
+		return string_tmp("lerp(%s, %s + %s, %s)", a, a, b, s);
+	}
+	else if (blending == BLEND_TYPE_OVERLAY) {
+		return string_tmp("lerp(%s, lerp(2.0 * %s * %s, 1.0 - 2.0 * (1.0 - %s) * (1.0 - %s), step(0.5, %s)), %s)", a, a, b, a, b, a, s);
+	}
+	else if (blending == BLEND_TYPE_SOFT_LIGHT) {
+		return string_tmp("((1.0 - %s) * %s + %s * ((1.0 - %s) * %s * %s + %s * (1.0 - (1.0 - %s) * (1.0 - %s))))", s, a, s, a, b, a, a, b, a);
+	}
+	else if (blending == BLEND_TYPE_LINEAR_LIGHT) {
+		return string_tmp("(%s + %s * (2.0 * (%s - 0.5)))", a, s, b);
+	}
+	else if (blending == BLEND_TYPE_DIFFERENCE) {
+		return string_tmp("lerp(%s, abs(%s - %s), %s)", a, a, b, s);
+	}
+	else if (blending == BLEND_TYPE_SUBTRACT) {
+		return string_tmp("lerp(%s, %s - %s, %s)", a, a, b, s);
+	}
+	else if (blending == BLEND_TYPE_DIVIDE) {
+		return string_tmp("((1.0 - %s) * %s + %s * %s / max(%s, 0.0001))", s, a, s, a, b);
+	}
+	else if (blending == BLEND_TYPE_HUE || blending == BLEND_TYPE_SATURATION || blending == BLEND_TYPE_COLOR) {
+		return a; // A gray value has no hue or saturation
+	}
+	return string_tmp("lerp(%s, %s, %s)", a, b, s); // Mix, Value
+}
+
 void make_material_parse_depth_material() {
 	if (make_material_depth_scon != NULL) {
 		make_material_delete_context(make_material_depth_scon);

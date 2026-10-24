@@ -260,21 +260,33 @@ void layers_make_export_img() {
 	}
 }
 
-void layers_commands_merge_pack(gpu_pipeline_t *pipe, gpu_texture_t *i0, gpu_texture_t *i1, gpu_texture_t *i1pack, f32 i1mask_opacity, gpu_texture_t *i1texmask,
-                                i32 i1blending) {
+// Merges occlusion, roughness, metallic and height of l1 into i0, each with its channel blending and opacity,
+// layers_temp_image holds a copy of i0
+void layers_commands_merge_pack(gpu_texture_t *i0, slot_layer_t *l1, gpu_texture_t *i1texmask) {
 	_gpu_begin(i0, NULL, NULL, GPU_CLEAR_NONE, 0, 0.0);
-	gpu_set_pipeline(pipe);
-	gpu_set_texture(pipes_tex0, i1);
-	gpu_set_texture(pipes_tex1, i1pack);
+	gpu_set_pipeline(pipes_merge);
+	gpu_set_texture(pipes_tex0, l1->texpaint);
+	gpu_set_texture(pipes_tex1, l1->texpaint_pack);
 	gpu_set_texture(pipes_texmask, i1texmask);
 	gpu_set_texture(pipes_texa, layers_temp_image);
-	gpu_set_float(pipes_opac, i1mask_opacity);
-	gpu_set_float(pipes_tex1w, i1pack->width);
-	gpu_set_int(pipes_blending, i1blending);
+	gpu_set_float(pipes_opac, 1.0);
+	gpu_set_float(pipes_tex1w, l1->texpaint_pack->width);
+	gpu_set_int(pipes_blending, 105);
+	gpu_set_float4(pipes_opac_ch, l1->paint_occ ? slot_layer_get_channel_opacity(l1, LAYER_CH_OCC) : 0.0,
+	               l1->paint_rough ? slot_layer_get_channel_opacity(l1, LAYER_CH_ROUGH) : 0.0,
+	               l1->paint_met ? slot_layer_get_channel_opacity(l1, LAYER_CH_MET) : 0.0,
+	               l1->paint_height ? slot_layer_get_channel_opacity(l1, LAYER_CH_HEIGHT) : 0.0);
+	gpu_set_float4(pipes_blend_ch, slot_layer_get_blending(l1, LAYER_CH_OCC), slot_layer_get_blending(l1, LAYER_CH_ROUGH),
+	               slot_layer_get_blending(l1, LAYER_CH_MET), slot_layer_get_blending(l1, LAYER_CH_HEIGHT));
 	gpu_set_vertex_buffer(const_data_screen_aligned_vb);
 	gpu_set_index_buffer(const_data_screen_aligned_ib);
 	gpu_draw();
 	gpu_end();
+}
+
+// Blending mode of the layer_merge shader for the normal channel
+i32 layers_nor_merge_mode(slot_layer_t *l1) {
+	return slot_layer_get_blending(l1, LAYER_CH_NOR) == BLEND_TYPE_NORMAL_COMBINE ? 102 : 101;
 }
 
 bool layers_is_fill_material() {
@@ -1015,9 +1027,9 @@ void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
 			gpu_set_texture(pipes_tex1, empty);
 			gpu_set_texture(pipes_texmask, mask);
 			gpu_set_texture(pipes_texa, layers_temp_image);
-			gpu_set_float(pipes_opac, slot_layer_get_opacity(l1));
+			gpu_set_float(pipes_opac, slot_layer_get_channel_opacity(l1, LAYER_CH_BASE));
 			gpu_set_float(pipes_tex1w, empty->width);
-			gpu_set_int(pipes_blending, slot_layer_get_blending(l1));
+			gpu_set_int(pipes_blending, slot_layer_get_blending(l1, LAYER_CH_BASE));
 			gpu_set_vertex_buffer(const_data_screen_aligned_vb);
 			gpu_set_index_buffer(const_data_screen_aligned_ib);
 			gpu_draw();
@@ -1038,9 +1050,9 @@ void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
 				gpu_set_texture(pipes_tex1, l1->texpaint_nor);
 				gpu_set_texture(pipes_texmask, mask);
 				gpu_set_texture(pipes_texa, layers_temp_image);
-				gpu_set_float(pipes_opac, slot_layer_get_opacity(l1));
+				gpu_set_float(pipes_opac, slot_layer_get_channel_opacity(l1, LAYER_CH_NOR));
 				gpu_set_float(pipes_tex1w, l1->texpaint_nor->width);
-				gpu_set_int(pipes_blending, l1->paint_nor_blend ? 102 : 101);
+				gpu_set_int(pipes_blending, layers_nor_merge_mode(l1));
 				gpu_set_vertex_buffer(const_data_screen_aligned_vb);
 				gpu_set_index_buffer(const_data_screen_aligned_ib);
 				gpu_draw();
@@ -1056,21 +1068,7 @@ void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
 			draw_end();
 
 			if (l1->paint_occ || l1->paint_rough || l1->paint_met || l1->paint_height) {
-				if (l1->paint_occ && l1->paint_rough && l1->paint_met && l1->paint_height) {
-					layers_commands_merge_pack(pipes_merge, l0->texpaint_pack, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask,
-					                           l1->paint_height_blend ? 103 : 101);
-				}
-				else {
-					if (l1->paint_occ) {
-						layers_commands_merge_pack(pipes_merge_r, l0->texpaint_pack, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-					}
-					if (l1->paint_rough) {
-						layers_commands_merge_pack(pipes_merge_g, l0->texpaint_pack, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-					}
-					if (l1->paint_met) {
-						layers_commands_merge_pack(pipes_merge_b, l0->texpaint_pack, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-					}
-				}
+				layers_commands_merge_pack(l0->texpaint_pack, l1, mask);
 			}
 		}
 	}
@@ -1266,9 +1264,9 @@ slot_layer_t *layers_flatten(bool height_to_normal, slot_layer_t_array_t *layers
 			gpu_set_texture(pipes_tex1, empty);
 			gpu_set_texture(pipes_texmask, mask);
 			gpu_set_texture(pipes_texa, layers_temp_image);
-			gpu_set_float(pipes_opac, slot_layer_get_opacity(l1));
+			gpu_set_float(pipes_opac, slot_layer_get_channel_opacity(l1, LAYER_CH_BASE));
 			gpu_set_float(pipes_tex1w, empty->width);
-			gpu_set_int(pipes_blending, layers->length > 1 ? slot_layer_get_blending(l1) : 0);
+			gpu_set_int(pipes_blending, layers->length > 1 ? slot_layer_get_blending(l1, LAYER_CH_BASE) : 0);
 			gpu_set_vertex_buffer(const_data_screen_aligned_vb);
 			gpu_set_index_buffer(const_data_screen_aligned_ib);
 			gpu_draw();
@@ -1289,9 +1287,9 @@ slot_layer_t *layers_flatten(bool height_to_normal, slot_layer_t_array_t *layers
 			gpu_set_texture(pipes_tex1, l1->texpaint_nor);
 			gpu_set_texture(pipes_texmask, mask);
 			gpu_set_texture(pipes_texa, layers_temp_image);
-			gpu_set_float(pipes_opac, slot_layer_get_opacity(l1));
+			gpu_set_float(pipes_opac, slot_layer_get_channel_opacity(l1, LAYER_CH_NOR));
 			gpu_set_float(pipes_tex1w, l1->texpaint_nor->width);
-			gpu_set_int(pipes_blending, l1->paint_nor_blend ? 102 : 101);
+			gpu_set_int(pipes_blending, layers_nor_merge_mode(l1));
 			gpu_set_vertex_buffer(const_data_screen_aligned_vb);
 			gpu_set_index_buffer(const_data_screen_aligned_ib);
 			gpu_draw();
@@ -1305,21 +1303,7 @@ slot_layer_t *layers_flatten(bool height_to_normal, slot_layer_t_array_t *layers
 			draw_set_pipeline(NULL);
 			draw_end();
 
-			if (l1->paint_occ && l1->paint_rough && l1->paint_met && l1->paint_height) {
-				layers_commands_merge_pack(pipes_merge, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask,
-				                           l1->paint_height_blend ? 103 : 101);
-			}
-			else {
-				if (l1->paint_occ) {
-					layers_commands_merge_pack(pipes_merge_r, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-				}
-				if (l1->paint_rough) {
-					layers_commands_merge_pack(pipes_merge_g, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-				}
-				if (l1->paint_met) {
-					layers_commands_merge_pack(pipes_merge_b, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-				}
-			}
+			layers_commands_merge_pack(layers_expc, l1, mask);
 		}
 	}
 

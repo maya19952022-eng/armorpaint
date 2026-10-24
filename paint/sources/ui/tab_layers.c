@@ -312,37 +312,84 @@ bool tab_layers_combo_object(slot_layer_t *l, bool label) {
 	return changed;
 }
 
-bool tab_layers_combo_blending(slot_layer_t *l, bool label) {
-	string_array_t *blending_combo = any_array_create_from_raw_tmp(
+static string_array_t *tab_layers_channel_names() {
+	return any_array_create_from_raw_tmp(
 	    (void *[]){
-	        tr("Mix"),
-	        tr("Darken"),
-	        tr("Multiply"),
-	        tr("Burn"),
-	        tr("Lighten"),
-	        tr("Screen"),
-	        tr("Dodge"),
-	        tr("Add"),
-	        tr("Overlay"),
-	        tr("Soft Light"),
-	        tr("Linear Light"),
-	        tr("Difference"),
-	        tr("Subtract"),
-	        tr("Divide"),
-	        tr("Hue"),
-	        tr("Saturation"),
-	        tr("Color"),
-	        tr("Value"),
+	        tr("Base Color"),
+	        tr("Normal Map"),
+	        tr("Occlusion"),
+	        tr("Roughness"),
+	        tr("Metallic"),
+	        tr("Height"),
 	    },
-	    18);
-	i32 blending = l->blending;
-	ui_set_next_id((ui_id_t)&l->blending);
-	ui_combo(&blending, blending_combo, tr("Blending"), label, UI_ALIGN_LEFT, true);
+	    LAYER_CH_COUNT);
+}
+
+bool tab_layers_combo_channel_blending(slot_layer_t *l, layer_channel_t ch, char *label) {
+	string_array_t *blending_combo;
+	i32             blending;
+	if (ch == LAYER_CH_NOR) { // Normals mix or combine, the color modes do not apply
+		blending_combo = any_array_create_from_raw_tmp(
+		    (void *[]){
+		        tr("Mix"),
+		        tr("Combine"),
+		    },
+		    2);
+		blending = l->blending[ch] == BLEND_TYPE_NORMAL_COMBINE ? 1 : 0;
+	}
+	else {
+		blending_combo = any_array_create_from_raw_tmp(
+		    (void *[]){
+		        tr("Mix"),
+		        tr("Darken"),
+		        tr("Multiply"),
+		        tr("Burn"),
+		        tr("Lighten"),
+		        tr("Screen"),
+		        tr("Dodge"),
+		        tr("Add"),
+		        tr("Overlay"),
+		        tr("Soft Light"),
+		        tr("Linear Light"),
+		        tr("Difference"),
+		        tr("Subtract"),
+		        tr("Divide"),
+		        tr("Hue"),
+		        tr("Saturation"),
+		        tr("Color"),
+		        tr("Value"),
+		    },
+		    18);
+		blending = l->blending[ch];
+	}
+	ui_set_next_id((ui_id_t)&l->blending[ch]);
+	ui_combo(&blending, blending_combo, label != NULL ? label : tr("Blending"), label != NULL, UI_ALIGN_LEFT, true);
 	bool changed = ui_item_changed();
 	if (changed) {
 		context_set_layer(l);
 		history_layer_blending();
-		l->blending = blending;
+		l->blending[ch] = ch == LAYER_CH_NOR ? (blending == 1 ? BLEND_TYPE_NORMAL_COMBINE : BLEND_TYPE_MIX) : blending;
+		make_material_parse_mesh_material();
+	}
+	return changed;
+}
+
+bool tab_layers_combo_blending(slot_layer_t *l, bool label) {
+	char *text = label ? tab_layers_channel_names()->buffer[tab_layers_channel] : NULL;
+	return tab_layers_combo_channel_blending(l, tab_layers_channel, text);
+}
+
+bool tab_layers_slider_channel_opacity(slot_layer_t *l, layer_channel_t ch) {
+	f32 opacity = l->opacity[ch];
+	ui_set_next_id((ui_id_t)&l->opacity[ch]);
+	ui_slider(&opacity, "", 0.0, 1.0, true, 100.0, true, UI_ALIGN_RIGHT, true);
+	bool changed = ui_item_changed();
+	if (changed) {
+		if (g_ui->input_started) {
+			context_set_layer(l);
+			history_layer_opacity();
+		}
+		l->opacity[ch] = opacity;
 		make_material_parse_mesh_material();
 	}
 	return changed;
@@ -846,25 +893,47 @@ void tab_layers_draw_layer_context_menu_draw() {
 		ui_menu_separator();
 		ui_menu_align();
 		ui_menu_label(tr("Channels"), NULL);
-		ui_menu_align();
+		bool            channels_changed = false;
+		bool            per_channel      = slot_layer_is_layer(l) && !slot_layer_is_filter(l) && l->texpaint_sculpt == NULL;
+		bool           *enabled[]        = {&l->paint_base, &l->paint_nor, &l->paint_occ, &l->paint_rough, &l->paint_met, &l->paint_height};
+		string_array_t *names            = any_array_create_from_raw_tmp(
+            (void *[]){
+                tr("Base Color"),
+                tr("Normal"),
+                tr("Occlusion"),
+                tr("Roughness"),
+                tr("Metallic"),
+                tr("Height"),
+            },
+            LAYER_CH_COUNT);
+		i32 shown = g_config->tools == TOOLS_SCULPT ? 1 : LAYER_CH_COUNT;
+		ui_menu_align(); // Once, the rows below keep its offset
+		for (i32 i = 0; i < shown; ++i) {
+			if (per_channel) {
+				// Enabled, blending and opacity of each channel
+				f32_array_t *row = f32_array_create_from_raw_tmp(
+				    (f32[]){
+				        0.45,
+				        0.33,
+				        0.22,
+				    },
+				    3);
+				ui_row(row);
+				channels_changed |= tab_layers_channel_check(enabled[i], names->buffer[i]);
+				tab_layers_combo_channel_blending(l, i, NULL);
+				tab_layers_slider_channel_opacity(l, i);
+			}
+			else {
+				ui_row(f32_array_create_from_raw_tmp((f32[]){1.0}, 1));
+				channels_changed |= tab_layers_channel_check(enabled[i], names->buffer[i]);
+			}
+		}
 		ui_row2();
-		bool channels_changed = tab_layers_channel_check(&l->paint_base, tr("Base Color"));
 		channels_changed |= tab_layers_channel_check(&l->paint_opac, tr("Opacity"));
-
 		if (g_config->tools != TOOLS_SCULPT) {
-			ui_row2();
-			channels_changed |= tab_layers_channel_check(&l->paint_nor, tr("Normal"));
-			channels_changed |= tab_layers_channel_check(&l->paint_nor_blend, tr("Normal Blend"));
-			ui_row2();
-			channels_changed |= tab_layers_channel_check(&l->paint_rough, tr("Roughness"));
-			channels_changed |= tab_layers_channel_check(&l->paint_met, tr("Metallic"));
-			ui_row2();
-			channels_changed |= tab_layers_channel_check(&l->paint_height, tr("Height"));
-			channels_changed |= tab_layers_channel_check(&l->paint_height_blend, tr("Height Blend"));
-			ui_row2();
 			channels_changed |= tab_layers_channel_check(&l->paint_emis, tr("Emission"));
+			ui_row(f32_array_create_from_raw_tmp((f32[]){1.0}, 1)); // A row left open would carry its width into the next frame
 			channels_changed |= tab_layers_channel_check(&l->paint_subs, tr("Subsurface"));
-			channels_changed |= tab_layers_channel_check(&l->paint_occ, tr("Occlusion"));
 		}
 
 		if (channels_changed) {
@@ -1249,6 +1318,13 @@ void tab_layers_draw_edit() {
 	if (ui_item_changed()) {
 		g_context->layers_preview_dirty = true;
 		ui_menu_keep_open               = true;
+	}
+
+	ui_menu_align();
+	ui_combo((int *)&tab_layers_channel, tab_layers_channel_names(), tr("Blending Channel"), true, UI_ALIGN_LEFT, true);
+	if (ui_item_changed()) {
+		ui_menu_keep_open = true;
+		ui_dock_redraw(TAB_AREA_SIDEBAR0);
 	}
 
 	g_ui->changed = false;

@@ -706,6 +706,21 @@ static void import_arm_sculpt_init(void *_) {
 	sys_remove_update(import_arm_sculpt_init);
 }
 
+// Per channel blending and opacity, projects before version 22 have one blending and two flags
+static void import_arm_layer_channels(slot_layer_t *l, layer_data_t *ld) {
+	slot_layer_reset_channels(l);
+	if (ld->blending_ch != NULL && ld->opacity_ch != NULL) {
+		for (i32 i = 0; i < LAYER_CH_COUNT && i < ld->blending_ch->length && i < ld->opacity_ch->length; ++i) {
+			l->blending[i] = ld->blending_ch->buffer[i];
+			l->opacity[i]  = ld->opacity_ch->buffer[i];
+		}
+		return;
+	}
+	l->blending[LAYER_CH_BASE]   = ld->blending;
+	l->blending[LAYER_CH_NOR]    = ld->paint_nor_blend ? BLEND_TYPE_NORMAL_COMBINE : BLEND_TYPE_MIX;
+	l->blending[LAYER_CH_HEIGHT] = ld->paint_height_blend ? BLEND_TYPE_ADD : BLEND_TYPE_MIX;
+}
+
 void import_arm_run_project(char *path) {
 	bool keep_script_trust       = import_arm_keep_script_trust;
 	bool was_trusted             = project_scripts_trusted;
@@ -1052,7 +1067,7 @@ void import_arm_run_project(char *path) {
 				l->decal_mat = mat4_from_f32_array(ld->decal_mat, 0);
 			}
 			l->object_mask = ld->object_mask;
-			l->blending    = ld->blending;
+			import_arm_layer_channels(l, ld);
 
 			l->paint_base         = ld->paint_base;
 			l->paint_opac         = ld->paint_opac;
@@ -1060,9 +1075,7 @@ void import_arm_run_project(char *path) {
 			l->paint_rough        = ld->paint_rough;
 			l->paint_met          = ld->paint_met;
 			l->paint_nor          = ld->paint_nor;
-			l->paint_nor_blend    = ld->paint_nor_blend;
 			l->paint_height       = ld->paint_height;
-			l->paint_height_blend = ld->paint_height_blend;
 			l->paint_emis         = ld->paint_emis;
 			l->paint_subs         = ld->paint_subs;
 			l->path_points        = ld->path_points;

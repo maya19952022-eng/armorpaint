@@ -57,7 +57,8 @@ typedef struct slot_layer {
 	f32                   mask_opacity;     // Opacity mask
 	struct slot_material *fill_material;
 	bool                  show_panel;
-	blend_type_t          blending;
+	blend_type_t          blending[LAYER_CH_COUNT]; // Per channel, [LAYER_CH_BASE] first
+	f32                   opacity[LAYER_CH_COUNT];  // Per channel, multiplies mask_opacity
 	i32                   object_mask;
 	f32                   scale;
 	f32                   angle;
@@ -69,9 +70,7 @@ typedef struct slot_layer {
 	bool                  paint_rough;
 	bool                  paint_met;
 	bool                  paint_nor;
-	bool                  paint_nor_blend;
 	bool                  paint_height;
-	bool                  paint_height_blend;
 	bool                  paint_emis;
 	bool                  paint_subs;
 	mat4_t                decal_mat; // Decal layer
@@ -549,7 +548,8 @@ typedef struct history_step {
 	i32                          brush;
 	f32                          layer_opacity;
 	i32                          layer_object;
-	i32                          layer_blending;
+	i32                          layer_blending[LAYER_CH_COUNT];
+	f32                          layer_opacity_ch[LAYER_CH_COUNT];
 	i32                          prev_order; // Previous layer position
 	i32                          canvas_type;
 	char                        *layer_name;
@@ -726,6 +726,8 @@ typedef struct layer_data {
 	bool              path_curved;
 	i32               path_material;
 	bool              path_text;
+	i32_array_t      *blending_ch; // Per layer_channel_t, version 22
+	f32_array_t      *opacity_ch;
 } layer_data_t;
 
 typedef struct timeline_layer_keyframe_data {
