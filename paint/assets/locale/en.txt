@@ -1,6 +1,5 @@
 (compressed)
 (packed)
-+
 -X
 -Y
 -Z
@@ -15,6 +14,7 @@ About...
 Absolute
 Add
 Add Animation
+Add Effect
 Add Swatch
 Add new swatch
 Add picked color to swatches
@@ -24,6 +24,7 @@ Allow Upside Down Camera
 Alpha
 Alpha Discard
 Amount
+Anchor Point
 Angle
 Angle Reject
 Animation
@@ -36,16 +37,19 @@ Apply Mask
 Apply Nodes
 Apply Sculpt
 Apply Skinning
+Apply Transform
 Arccosine
 Arcsine
 Arctan2
 Arctangent
 Array
 Asset
+Assets
 Atlas
 Atlases
 Attribute
 Auto
+Auto Run Scripts
 Average
 Axis
 B
@@ -55,7 +59,6 @@ Bake Material...
 Bake Texture
 Bake to Textures
 Bands
-Base
 Base Color
 Bent Normal
 Bevel
@@ -65,6 +68,7 @@ Black Mask
 Blender Executable
 Blender executable path not set
 Blending
+Blending Channel
 Bloom
 Blur
 Blur Envmap
@@ -96,6 +100,7 @@ Camera Rotation Speed
 Camera Texture
 Camera Zoom Speed
 Cancel
+Capsule
 Capture Background
 Capture Output
 Capture Screenshot
@@ -116,7 +121,6 @@ Clear Layer
 Clear Swatches
 Clip End
 Clip Start
-Clipping
 Clone
 Close
 Cloth
@@ -142,6 +146,7 @@ Combine Color
 Combine XYZ
 Compare Mask
 Compass
+Cone
 Confirm
 Console
 Console Model
@@ -157,9 +162,12 @@ Cosine
 Could not download
 Count
 Crease
+Create Baked Material
 Create Color Layer
 Create Material
+Crop
 Cross Product
+Cube
 Cull Backfaces
 Cursor
 Curvature
@@ -168,6 +176,7 @@ Curve
 Curved
 Custom
 Cut
+Cylinder
 Darken
 Debug
 Decal
@@ -182,6 +191,7 @@ Delete Brush
 Delete Layer
 Delete Material
 Delete Node Group
+Delete Selected
 Delete Swatch
 Delete Unused
 Delta
@@ -263,6 +273,7 @@ Export Material
 Export Mesh
 Export Player
 Export Textures
+Export as .arm
 Export swatches
 Export texture files
 Exporting mesh
@@ -285,6 +296,9 @@ Filter
 Filter Textures
 Flat
 Flatten
+Flatten Group
+Flatten Selected
+Flattened
 Float Curve
 Floor
 Floored Modulo
@@ -307,6 +321,7 @@ Friction
 From Max
 From Min
 Front
+Frustum Culling
 Full
 Fuzziness
 G
@@ -323,16 +338,16 @@ Gravity Y
 Gravity Z
 Greater
 Greater Than
+Grid
 Grid Cell
 Grid Snap
 Group
 Group Input
 Group Output
+Group Selected
 Hardness
 Height
-Height Blend
 Help
-Hide 3D View
 High Poly
 Highlights
 History
@@ -390,6 +405,7 @@ Keymap
 Keymap imported:
 Lacunarity
 Language
+Large Icons
 Layer
 Layer Angle
 Layer Blending
@@ -416,6 +432,8 @@ Lit
 Live Brush Preview
 Live Material Preview
 Location
+Lock Layer
+Locked
 Logarithm
 Magic Texture
 Make Unique
@@ -458,12 +476,14 @@ Model
 Models
 Models Directory...
 Modifier
+Modifiers
 Modify
 Modify Animation
 Modulo
 Mortar
 Mortar Size
 Mortar Smooth
+Move
 Multiply
 Name
 Neural
@@ -493,7 +513,6 @@ Noise Grain
 Noise Texture
 None
 Normal
-Normal Blend
 Normal Map
 Normal Map 1
 Normal Map 2
@@ -532,7 +551,6 @@ Out
 Out Black
 Out White
 Overlay
-PBR
 Pack Assets
 Pack into Project
 Padding
@@ -543,7 +561,9 @@ Parametric
 Parent
 Partial Derivative
 Particle
+Pass Through
 Paste
+Paste as Mask
 Path
 Path Traced
 Path Tracer
@@ -563,6 +583,7 @@ Pinch
 Ping-Pong
 Pivot
 Pixel Size
+Plane
 Plateau
 Play
 Player
@@ -581,6 +602,7 @@ Preset
 Preset imported:
 Presets
 Pressure controls
+Preview
 Previous
 Previous folder
 Processing...
@@ -623,10 +645,11 @@ Request Feature
 Reset
 Reset Envmap
 Reset Layout
+Resize
+Resize...
 Resolution
 Restore
 Restore Swatches
-Restore default swatches
 Right
 Rings
 Rotate
@@ -636,6 +659,7 @@ Round
 Row Height
 Run
 Run in Player
+Run script nodes when opening a project without asking
 Running...
 SSAO
 Samples
@@ -659,6 +683,7 @@ Script opened
 Scripts
 Sculpt
 Sculpt Layer
+Seamless
 Search
 Search for nodes
 Segments
@@ -701,6 +726,7 @@ Signing in...
 Sine
 Size
 Slot
+Small Icons
 Smooth
 Smoothness
 Smudge
@@ -732,12 +758,14 @@ Straight
 Strength
 Stretch
 Subdivide
+Submesh
 Subsurface
 Subtract
 Super Sample
 Swatches
 Swatches...
 Symmetry
+Tabs
 Tangent
 Target
 Template
@@ -780,10 +808,11 @@ To Paint Layer
 To Paint Mask
 To Radians
 Toggle Fullscreen
-Toggle header
+Toggle Header
 Tolerance
 Tools
 Top
+Torus
 Touch UI
 Transform
 Transform Object
@@ -877,9 +906,9 @@ player
 plugin enabled
 prompt
 sRGB
+selected
 source
 triangles
 type
 untitled
-x
 {shortcut} and move mouse

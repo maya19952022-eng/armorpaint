@@ -1,6 +1,5 @@
 (komprimiert)
 (gepackt)
-+
 -X
 -Y
 -Z
@@ -15,6 +14,7 @@ A
 Absolutbetrag
 Hinzufügen
 Animation hinzufügen
+
 Farbfeld hinzufügen
 Neues Farbfeld hinzufügen
 Gewählte Farbe zu Farbfeldern hinzufügen
@@ -24,6 +24,7 @@ Kamera über Kopf erlauben
 Alpha
 Alpha verwerfen
 Stärke
+
 Winkel
 Winkel verwerfen
 Animation
@@ -36,16 +37,19 @@ Maske anwenden
 Nodes anwenden
 Skulptur anwenden
 Skinning anwenden
+
 Arkuskosinus
 Arkussinus
 Arkustangens 2
 Arkustangens
 Array
 Asset
+
 Atlas
 Atlanten
 Attribut
 Automatisch
+
 Mittelwert
 Achse
 B
@@ -55,7 +59,6 @@ Material baken...
 Textur baken
 Auf Textur backen
 Bänder
-Basis
 Base Color
 Gekrümmte Normalen
 Abschrägung
@@ -65,6 +68,7 @@ Schwarze Maske
 Blender Programm
 Blender Programmpfad nicht gesetzt
 Vermischen
+
 Bloom
 Unschärfe
 Hintergrundbild weichzeichnen
@@ -96,6 +100,7 @@ Kamera Rotationsgeschwindigkeit
 Kameratextur
 Kamera Zoomgeschwindigkeit
 Abbrechen
+
 Hintergrund aufnehmen
 Ausgabe aufnehmen
 Bildschirmfoto aufnehmen
@@ -116,7 +121,6 @@ Ebene leeren
 Farbfelder leeren
 Clip Ende
 Clip Start
-Clipping
 Klonen
 Schließen
 Stoff
@@ -142,6 +146,7 @@ Farbe zusammenführen
 XYZ zusammenführen
 
 Kompass
+
 Bestätigen
 Konsole
 Konsolen Modell
@@ -157,9 +162,12 @@ Kosinus
 Download fehlgeschlagen:
 Anzahl
 Falte
+
 Farbebene erzeugen
 Material erzeugen
+
 Kreuzprodukt
+
 Rückseiten ausblenden
 Cursor
 Krümmung
@@ -168,6 +176,7 @@ Kurve
 Gebogen
 Benutzerdefiniert
 Ausschneiden
+
 Abdunkeln
 Debug
 Aufkleber
@@ -182,6 +191,7 @@ Pinsel löschen
 Ebene löschen
 Material Löschen
 Node Gruppe löschen
+
 Farbfeld löschen
 Unbenutzte löschen
 Delta
@@ -263,6 +273,7 @@ Material exportieren
 Mesh exportieren
 Player exportieren
 Texturen exportieren
+
 Farbfelder exportieren
 Texturdateien exportieren
 Mesh wird exportiert
@@ -285,6 +296,9 @@ Filter
 Texturen filtern
 Flach
 Abflachen
+
+
+
 Float Kurve
 Abrunden
 Abgerundetes Modulo
@@ -307,6 +321,7 @@ Reibung
 Von Max
 Von Min
 Vorn
+
 Voll
 Unschärfe
 G
@@ -323,16 +338,16 @@ Gravitation Y
 Gravitation Z
 
 Größer als
+
 Gitterzelle
 Gitterausrichtung
 Gruppe
 Gruppeneingabe
 Gruppenausgabe
+
 Härte
 Height
-Höhenmischung
 Hilfe
-3D Ansicht ausblenden
 High Poly
 
 Verlauf
@@ -390,6 +405,7 @@ Tastenbelegung
 Tastenbelegung importiert:
 Lakunarität
 Sprache
+
 Ebene
 Ebenenwinkel
 Ebenenüberblendung
@@ -416,6 +432,8 @@ Beleuchtet (Lit)
 Echtzeit Pinselvorschau
 Echtzeit Materialvorschau
 Position
+
+
 Logarithmus
 Magie Textur
 Einzigartig machen
@@ -458,12 +476,14 @@ Modell
 Modelle
 Modelle Ordner...
 Modifikator
+
 Ändern
 Animation ändern
 Modulo
 Mörtelfarbe
 Mörtelgröße
 Mörtel Glättung
+
 Multiplizieren
 Name
 Neural
@@ -493,7 +513,6 @@ Rausch Körnung
 Rausch Textur
 Keins
 Normale
-Normalen mischen
 Normal Map
 Normal Map 1
 Normal Map 2
@@ -532,7 +551,6 @@ Ausgang
 
 
 Überlagern
-PBR
 Assets zusammenpacken
 In Projekt packen
 Abstand
@@ -543,7 +561,9 @@ Parametrisch
 Eltern
 Partielle Ableitung
 Partikel
+
 Einfügen
+
 Pfad
 Pfadverfolgung
 Pfadverfolger
@@ -563,6 +583,7 @@ Zusammenziehen
 Ping-Pong
 Drehpunkt
 Pixelgröße
+
 Plateau
 Abspielen
 Player
@@ -581,6 +602,7 @@ Vorlage
 Vorlage importiert:
 Vorlagen
 Kontrolle für Anpressdruck
+
 Zurück
 Vorheriger Ordner
 Verarbeite...
@@ -623,10 +645,11 @@ Funktion vorschlagen
 Zurücksetzen
 Hintergrundbild Zurücksetzen
 Layout zurücksetzen
+
+
 Auflösung
 Wiederherstellen
 Farbfelder wiederherstellen
-Standardfarbfelder wiederherstellen
 Rechts
 Ringe
 Drehen
@@ -636,6 +659,7 @@ Runden
 Reihenhöhe
 Ausführen
 Im Player ausführen
+
 Läuft...
 SSAO
 Samples
@@ -659,6 +683,7 @@ Skript geöffnet
 Skripte
 Skulptur
 Skulpturebene
+
 Suchen
 Nach Nodes suchen
 Segmente
@@ -701,6 +726,7 @@ Anmeldung läuft...
 Sinus
 Größe
 Slot
+
 Glatt
 
 Verwischen
@@ -732,12 +758,14 @@ Gerade
 Stärke
 Dehnen
 Unterteilen
+
 Subsurface
 Subtrahieren
 Supersampling
 Farbfelder
 Farbfelder...
 Symmetrie
+
 Tangente
 Ziel
 Vorlage
@@ -780,10 +808,11 @@ Zu Malebene
 Zu Zeichenmaske
 Nach Bogenmaß
 In Vollbild umschalten
-Werkzeugleiste umschalten
+
 
 Werkzeuge
 Oben
+
 Touch UI
 Transformation
 Objekt transformieren
@@ -877,9 +906,9 @@ player
 Plugin aktiviert
 Eingabe
 sRGB
+
 Quelle
 Dreiecke
 Typ
 unbenannt
-x
 {shortcut} und Maus bewegen

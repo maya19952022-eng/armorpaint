@@ -1,6 +1,5 @@
 (skompresowane)
 (spakowane)
-+
 -X
 -Y
 -Z
@@ -15,6 +14,7 @@ O...
 Bezwględna
 Dodaj
 Dodaj animację
+
 Dodaj próbkę
 Dodaj nową próbkę
 Dodaj wybrany kolor do próbek
@@ -24,6 +24,7 @@ Zezwól na odwróconą kamerę
 Alfa
 Odrzucenie alfy
 Ilość
+
 Kąt
 Odrzucenie kątu
 Animacja
@@ -36,16 +37,19 @@ Zatwierdź maskę
 Zastosuj węzły
 Zatwierdź rzeźbienie
 Zastosuj skinning
+
 Arcus cosinus
 Arcus sinus
 Arcus tangens 2
 Arcus tangens
 Szyk
 Zasób
+
 Atlas
 Atlasy
 Atrybut
 Automatyczny
+
 Średnia
 Oś
 B
@@ -55,7 +59,6 @@ Wypalanie materiału...
 Wypalanie tekstury
 Wypal do tekstur
 Pasma
-Podstawowy
 Kolor bazowy
 Wygięta normalna
 Ścięcie
@@ -65,6 +68,7 @@ Czarna maska
 Plik wykonywalny Blendera
 Ścieżka do pliku wykonywalnego Blendera nie ustawiona
 Mieszanie
+
 Bloom
 Rozmycie
 Rozmyj Envmapę
@@ -96,6 +100,7 @@ Prędkość obracania kamery
 Tekstura kamery
 Prędkość zoomu kamery
 Anuluj
+
 Przechwyć tło
 Przechwyć wyjście
 Przechwyć zrzut ekranu
@@ -116,7 +121,6 @@ Wyczyść warstwę
 Wyczyść próbki kolorów
 Koniec clipu
 Początek clipu
-Przycinanie
 Klonowanie
 Bliski
 Tkanina
@@ -142,6 +146,7 @@ Połącz kolor
 Połącz XYZ
 
 Kompas
+
 Potwierdź
 Konsola
 Model konsoli
@@ -157,9 +162,12 @@ Cosinus
 Nie można pobrać
 Liczba
 Zagięcie
+
 Utwórz warstwę koloru
 Utwórz materiał
+
 Iloczyn wektorowy
+
 Ukrywanie backface'ów
 Kursor
 Krzywizna
@@ -168,6 +176,7 @@ Krzywa
 Wygięte
 Własne
 Wytnij
+
 Przyciemnienie
 Debugowanie
 Dekal
@@ -182,6 +191,7 @@ Usuń pędzel
 Usuń warstwę
 Usuń materiał
 Usuń grupę węzłów
+
 Usuń próbkę koloru
 Usuń nieużywane
 Delta
@@ -263,6 +273,7 @@ Eksportuj materiał
 Eksportuj model
 Eksportuj odtwarzacz
 Eksportuj tekstury
+
 Eksportuj próbki
 Eksportuj pliki tekstur
 Eksportowanie modelu
@@ -285,6 +296,9 @@ Filtr
 Filtruj tekstury
 Płaski
 Spłaszcz
+
+
+
 Krzywa liczby
 Zaokrąglij w dół
 Modulo z podłogą
@@ -307,6 +321,7 @@ Tarcie
 Od maksimum
 Od minimum
 Przód
+
 Pełny
 Rozmycie
 G
@@ -323,16 +338,16 @@ Grawitacja Y
 Grawitacja Z
 
 Więcej niż
+
 Komórka siatki
 Przyciąganie do siatki
 Grupa
 Wejście grupy
 Wyjście grupy
+
 Twardość
 Wysokość
-Mieszanie wysokości
 Pomoc
-Ukryj widok 3D
 Wysoki poly
 
 Historia
@@ -390,6 +405,7 @@ Mapa klawiszy
 Mapa klawiszy zaimportowana:
 Lakunarność
 Język
+
 Warstwa
 Kąt warstwy
 Mieszanie warstw
@@ -416,6 +432,8 @@ Oświetlony
 Podgląd pędzla na żywo
 Podgląd materiału na żywo
 Pozycja
+
+
 Logarytm
 Tekstura magiczna
 Uczyń unikalnym
@@ -458,12 +476,14 @@ Model
 Modele
 Katalog modeli...
 Modyfikator
+
 Zmodyfikuj
 Zmodyfikuj animację
 Modulo
 Zaprawa
 Rozmiar zaprawy
 Wygładzenie zaprawy
+
 Mnożenie
 Nazwa
 Neuronowy
@@ -493,7 +513,6 @@ Ziarnistość szumu
 Tekstura szumu
 Brak
 Normalna
-Mieszanie normalnych
 Mapa normalnych
 Mapa normalnych 1
 Mapa normalnych 2
@@ -532,7 +551,6 @@ Wyjście
 
 
 Nakładka
-PBR
 Spakuj zasoby
 Spakuj do projektu
 Wypełnienie
@@ -543,7 +561,9 @@ Parametryczny
 Rodzic
 Częściowa pochodna
 Cząsteczka
+
 Wklej
+
 Ścieżka
 Śledzenie ścieżek
 Śledzenie ścieżek
@@ -563,6 +583,7 @@ Przypnij do nagłówka
 Ping-Pong
 Punkt obrotu
 Rozmiar piksela
+
 Płaskowyż
 Odtwórz
 Odtwarzacz
@@ -581,6 +602,7 @@ Preset
 Preset zaimportowany:
 Presety
 Kontrola nacisku
+
 Poprzedni
 Poprzedni folder
 Przetwarzanie...
@@ -623,10 +645,11 @@ Zaproponuj funkcję
 Resetuj
 Resetuj Envmapę
 Resetuj układ
+
+
 Rozdzielczość
 Przywróć
 Przywróć próbki kolorów
-Przywróć domyślne próbki
 Prawy
 Pierścienie
 Obracaj
@@ -636,6 +659,7 @@ Zaokrąglij
 Wysokość rzędu
 Uruchom
 Uruchom w odtwarzaczu
+
 Uruchomiono...
 SSAO
 Próbki
@@ -659,6 +683,7 @@ Skrypt otwarty
 Skrypty
 Rzeźbienie
 Warstwa rzeźbienia
+
 Szukaj
 Szukaj węzłów
 Segmenty
@@ -701,6 +726,7 @@ Logowanie...
 Sinus
 Rozmiar
 Slot
+
 Wygładzanie
 
 Rozmazanie
@@ -732,12 +758,14 @@ Prosty
 Siła
 Rozciągnij
 Podziel
+
 Podpowierzchniowe
 Odejmowanie
 Superpróbkowanie
 Próbki kolorów
 Próbki...
 Symetria
+
 Tangens
 Cel
 Szablon
@@ -780,10 +808,11 @@ Do warstwy malowania
 Do maski malowania
 Do radianów
 Przełącz pełny ekran
-Przełącz nagłówek
+
 
 Narzędzia
 Góra
+
 Interfejs dotykowy
 Transformacja
 Przekształć obiekt
@@ -877,9 +906,9 @@ player
 Plugin włączony
 Zapytanie
 sRGB
+
 źródło
 trójkąty
 typ
 bez tytułu
-x
 {shortcut} i poruszaj myszą

@@ -1,6 +1,5 @@
 (compressé)
 (empaqueté)
-+
 -X
 -Y
 -Z
@@ -15,6 +14,7 @@ A
 Absolu
 Ajouter
 Ajouter une animation
+
 Ajouter l'échantillon
 Ajouter nouvel échantillon
 Ajouter la couleur sélectionnée aux échantillons
@@ -24,6 +24,7 @@ Autoriser la caméra à l'envers
 Alpha
 Rejeter Alpha
 Quantité
+
 Angle
 Rejet par angle
 Animation
@@ -36,16 +37,19 @@ Appliquer le masque
 Appliquer les nœuds
 Appliquer la sculpture
 Appliquer le skinning
+
 Arc cosinus
 Arc sinus
 Arc tangente 2
 Arc tangente
 Réseau
 Asset
+
 Atlas
 Atlas
 Attributs
 Auto
+
 Moyenne
 Axe
 B
@@ -55,7 +59,6 @@ Exporter le matériau...
 Rendu de texture
 Rendu des textures
 Bandes
-Base
 Couleur de base
 Bent Normal
 Biseau
@@ -65,6 +68,7 @@ Masque noir
 Exécutable Blender
 Chemin vers l'exécutable Blender non défini
 Mode de fusion
+
 Éblouissement
 Flou
 Flouter l'environnement
@@ -96,6 +100,7 @@ Vitesse de rotation caméra
 Texture caméra
 Vitesse du zoom caméra
 Annuler
+
 Capturer l'arrière-plan
 Capturer sortie
 Capturer capture d'écran
@@ -116,7 +121,6 @@ Effacer le calque
 Effacer les échantillons
 Fin du clip
 Début du clip
-Découpage
 Clonage
 Fermer
 Tissu
@@ -142,6 +146,7 @@ Recomposer couleur
 Recomposer XYZ
 
 Gizmos XYZ
+
 Confirmer
 Console
 Modèle de console
@@ -157,9 +162,12 @@ Cosinus
 Impossible de télécharger
 Nombre
 Pli
+
 Créer un calque de couleur
 Créer un matériau
+
 Produit vectoriel
+
 Éliminer les faces arrière
 Curseur
 Courbure
@@ -168,6 +176,7 @@ Courbe
 Courbé
 Personnalisé
 Couper
+
 Assombrir
 Débogage
 Décalcomanie
@@ -182,6 +191,7 @@ Supprimer la brosse
 Supprimer le calque
 Supprimer matériau
 Supprimer groupe de nœuds
+
 Supprimer l'échantillon
 Supprimer les inutilisées
 Delta
@@ -263,6 +273,7 @@ Exporter matériau
 Exporter le maillage
 Exporter le lecteur
 Exporter les textures
+
 Exporter échantillons
 Exporter des fichiers de textures
 Export du maillage
@@ -285,6 +296,9 @@ Filtrer
 Filtrer les textures
 Plat
 Aplatir
+
+
+
 Courbe de flottant
 Plancher
 Modulo plancher
@@ -307,6 +321,7 @@ Friction
 De maximum
 De minimum
 Avant
+
 Complet
 Flou
 V
@@ -323,16 +338,16 @@ Gravité Y
 Gravité Z
 
 Plus grand que
+
 Cellule de la grille
 Aimantation grille
 Groupe
 Entrée groupe
 Sortie groupe
+
 Dureté
 Hauteur
-Mélange hauteur
 Aide
-Masquer la vue 3D
 High Poly
 
 Historique
@@ -390,6 +405,7 @@ Raccourcis clavier
 Raccourcis importés :
 Lacunarité
 Langue
+
 Calque
 Angle du calque
 Mode de fusion calque
@@ -416,6 +432,8 @@ Lumière linéaire
 Aperçu de brosse en live
 Aperçu de matière en live
 Position
+
+
 Logarithme
 Texture magique
 Rendre unique
@@ -458,12 +476,14 @@ Modèle
 Modèles
 Dossier modèles...
 Modificateur
+
 Modifier
 Modifier l'animation
 Modulo
 Mortier
 Taille du mortier
 Adoucissement du mortier
+
 Multiplier
 Nom
 Neuronal
@@ -493,7 +513,6 @@ Grain du bruit
 Texture de bruit
 Aucun
 Normale
-Mélange normales
 Carte de normales
 Carte de normales 1
 Carte de normales 2
@@ -532,7 +551,6 @@ Sortie
 
 
 Superposer
-PBR
 Embarquer les assets
 Empaqueter dans projet
 Marge
@@ -543,7 +561,9 @@ Paramétrique
 Parent
 Dérivée partielle
 Particules
+
 Coller
+
 Chemin
 Tracé de chemin
 Traceur de chemins
@@ -563,6 +583,7 @@ Pincer
 Ping-pong
 Pivot
 Taille de pixel
+
 Plateau
 Lecture
 Lecteur
@@ -581,6 +602,7 @@ Préréglage
 Préréglage importé :
 Préréglages
 Contrôles de pression
+
 Précédent
 Dossier précédent
 Traitement...
@@ -623,10 +645,11 @@ Demander une fonctionnalité
 Réinitialiser
 Réinitialiser carte d'environnement
 Réinitialiser la mise en page
+
+
 Résolution
 Rétablir
 Rétablir les échantillons
-Restaurer échantillons par défaut
 Droite
 Anneaux
 Rotation
@@ -636,6 +659,7 @@ Arrondi
 Hauteur de rangée
 Exécuter
 Exécuter dans le lecteur
+
 En cours...
 SSAO
 Échantillons
@@ -659,6 +683,7 @@ Script ouvert
 Scripts
 Sculpture
 Calque sculpture
+
 Rechercher
 Rechercher des nœuds
 Segments
@@ -701,6 +726,7 @@ Connexion en cours...
 Sinus
 Taille
 Emplacement
+
 Adoucir
 
 Étaler
@@ -732,12 +758,14 @@ Droit
 Force
 Étirer
 Subdiviser
+
 Sous-surface
 Soustraire
 Superéchantillonnage
 Échantillons
 Échantillons...
 Symétrie
+
 Tangente
 Cible
 Modèle
@@ -780,10 +808,11 @@ Vers calque de peinture
 Vers masque de peinture
 En radians
 Plein écran
-Basculer en-tête
+
 
 Outils
 Dessus
+
 Interface tactile
 Transformation
 Transformer l'objet
@@ -877,9 +906,9 @@ player
 plugin activé
 invite
 sRGB
+
 source
 triangles
 type
 sans titre
-x
 {shortcut} et déplacer la souris

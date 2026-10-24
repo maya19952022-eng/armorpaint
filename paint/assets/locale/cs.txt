@@ -1,6 +1,5 @@
 (komprimované)
 (zabalené)
-+
 -X
 -Y
 -Z
@@ -15,6 +14,7 @@ O programu...
 Absolutní
 Přidat
 Přidat animaci
+
 Přidat vzorek
 Přidat nový vzorek
 Přidat vybranou barvu do vzorků
@@ -24,6 +24,7 @@ Povolit převrácenou kameru
 Alfa
 Zahodit alfa
 Množství
+
 Úhel
 Odmítnout úhel
 Animace
@@ -36,16 +37,19 @@ Použít masku
 Použít uzly
 Použít sochání
 Použít skinning
+
 Arkuskosinus
 Arkussinus
 Arktangens 2
 Arktangens
 Pole
 Asset
+
 Atlas
 Atlasy
 Atribut
 Automaticky
+
 Průměr
 Osa
 B
@@ -55,7 +59,6 @@ Zapékat materiál...
 Zapékání textury
 Zapékat do textur
 Pásy
-Základní
 Základní barva
 Ohnutá normála
 Zkosení
@@ -65,6 +68,7 @@ Bity
 Spustitelný soubor Blenderu
 Cesta ke spustitelnému souboru Blenderu není nastavena
 Míchání
+
 Bloom
 Rozostření
 Rozostřit mapu okolí
@@ -96,6 +100,7 @@ Rychlost otáčení kamery
 Textura kamery
 Rychlost přibližování kamery
 Zrušit
+
 Zachytit pozadí
 Zachytit výstup
 Zachytit snímek obrazovky
@@ -116,7 +121,6 @@ Vyčistit vrstvu
 Vyčistit vzorky
 Konec ořezu
 Začátek ořezu
-Ořezání
 Klonovat
 Zavřít
 Látka
@@ -142,6 +146,7 @@ Kombinovat barvu
 Kombinovat XYZ
 
 Kompas
+
 Potvrdit
 Konzole
 Model konzole
@@ -157,9 +162,12 @@ Kosinus
 Nelze stáhnout
 Počet
 Záhyb
+
 Vytvořit barevnou vrstvu
 Vytvořit materiál
+
 Vektorový součin
+
 Vyřadit zadní plochy
 Kurzor
 Zakřivení
@@ -168,6 +176,7 @@ Křivka
 Zakřivený
 Vlastní
 Vyjmout
+
 Ztmavit
 Ladění
 Dekál
@@ -182,6 +191,7 @@ Smazat štětec
 Smazat vrstvu
 Smazat materiál
 Smazat skupinu uzlů
+
 Smazat vzorek
 Smazat nepoužité
 Delta
@@ -263,6 +273,7 @@ Exportovat materiál
 Exportovat síť
 Exportovat přehrávač
 Exportovat textury
+
 Exportovat vzorky
 Exportovat soubory textur
 Exportování sítě
@@ -285,6 +296,9 @@ Filtr
 Filtrovat textury
 Plochý
 Zploštit
+
+
+
 Křivka čísla
 Zaokrouhlit dolů
 Modulo dolní
@@ -307,6 +321,7 @@ Tření
 Z maxima
 Z minima
 Přední
+
 Plný
 Neostrost
 G
@@ -323,16 +338,16 @@ Gravitace Y
 Gravitace Z
 
 Větší než
+
 Buňka mřížky
 Přichytávání k mřížce
 Skupina
 Vstup skupiny
 Výstup skupiny
+
 Tvrdost
 Výška
-Míchání výšky
 Nápověda
-Skrýt 3D pohled
 Vysoký počet polygonů
 
 Historie
@@ -390,6 +405,7 @@ Klávesová mapa
 Klávesová mapa importována:
 Lakunarita
 Jazyk
+
 Vrstva
 Úhel vrstvy
 Míchání vrstev
@@ -416,6 +432,8 @@ Osvětlený
 Živý náhled štětce
 Živý náhled materiálu
 Umístění
+
+
 Logaritmus
 Magická textura
 Učinit jedinečným
@@ -458,12 +476,14 @@ Model
 Modely
 Adresář modelů...
 Modifikátor
+
 Upravit
 Upravit animaci
 Modulo
 Malta
 Velikost malty
 Vyhlazení malty
+
 Násobit
 Název
 Neuronový
@@ -493,7 +513,6 @@ Uzly
 Šumová textura
 Žádný
 Normála
-Míchání normál
 Normálová mapa
 Normálová mapa 1
 Normálová mapa 2
@@ -532,7 +551,6 @@ Výstup
 
 
 Překrytí
-PBR
 Zabalit assety
 Zabalit do projektu
 Odsazení
@@ -543,7 +561,9 @@ Parametrický
 Rodič
 Částečná derivace
 Částice
+
 Vložit
+
 Cesta
 Trasovaná cesta
 Trasovač cest
@@ -563,6 +583,7 @@ Sevřít
 Ping-pong
 Střed otáčení
 Velikost pixelu
+
 Plošina
 Přehrát
 Přehrávač
@@ -581,6 +602,7 @@ Předvolba
 Předvolba importována:
 Předvolby
 Ovládání tlakem
+
 Předchozí
 Předchozí složka
 Zpracovávání...
@@ -623,10 +645,11 @@ Požádat o funkci
 Resetovat
 Resetovat mapu okolí
 Resetovat rozložení
+
+
 Rozlišení
 Obnovit
 Obnovit vzorky
-Obnovit výchozí vzorky
 Vpravo
 Kruhy
 Otáčet
@@ -636,6 +659,7 @@ Zaokrouhlit
 Výška řádku
 Spustit
 Spustit v přehrávači
+
 Probíhá...
 SSAO
 Vzorky
@@ -659,6 +683,7 @@ Skript otevřen
 Skripty
 Sochání
 Sochařská vrstva
+
 Hledat
 Hledat uzly
 Segmenty
@@ -701,6 +726,7 @@ Přihlašování...
 Sinus
 Velikost
 Slot
+
 Vyhladit
 
 Rozmazat
@@ -732,12 +758,14 @@ Přímý
 Síla
 Natáhnout
 Rozdělit
+
 Podpovrch
 Odečíst
 Supersampling
 Vzorky
 Vzorky...
 Symetrie
+
 Tangenta
 Cíl
 Šablona
@@ -780,10 +808,11 @@ Na malovací vrstvu
 Na malovací masku
 Na radiány
 Přepnout celou obrazovku
-Přepnout záhlaví
+
 
 Nástroje
 Horní
+
 Dotykové rozhraní
 Transformace
 Transformovat objekt
@@ -877,9 +906,9 @@ player
 plugin povolen
 dotaz
 sRGB
+
 zdroj
 trojúhelníky
 typ
 bez názvu
-x
 {shortcut} a pohyb myší

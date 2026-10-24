@@ -1,6 +1,5 @@
 (comprimido)
 Empacotado
-+
 -X
 -Y
 -Z
@@ -15,6 +14,7 @@ Sobre...
 Absoluto
 Adicionar
 Adicionar Animação
+Adicionar Efeito
 Adicionar Amostra
 Adicionar nova amostra
 Adicionar cor selecionada às amostras
@@ -24,6 +24,7 @@ Permitir Câmera Invertida
 Alfa
 Descartar Alfa
 Quantidade
+Ponto de Âncora
 Ângulo
 Rejeição de Ângulo
 Animação
@@ -36,16 +37,19 @@ Aplicar Máscara
 Aplicar Nós
 Aplicar Escultura
 Aplicar Skinning
+Aplicar Transformação
 Arcocosseno
 Arcoseno
 Arctan2
 Arco tangente
 Matriz
 Ativo
+Recursos
 Atlas
 Atlas
 Atributo
 Automático
+Executar Scripts Automaticamente
 Média
 Eixo
 B
@@ -55,7 +59,6 @@ Cozinhar Material
 Cozinhar Textura
 Cozinhar para Texturas
 Faixas
-Base
 Cor Base
 Normal Dobrada
 Chanfro
@@ -65,6 +68,7 @@ Máscara Preta
 Executável do Blender
 Caminho do executável do Blender não definido
 Mistura
+Canal da Mistura
 Brilho Emissivo
 Borrão
 Borrar Mapa de Ambiente
@@ -96,6 +100,7 @@ Velocidade de Rotação da Câmera
 Textura da Câmera
 Velocidade de Zoom da Câmera
 Cancelar
+Cápsula
 Capturar Fundo
 Capturar Saída
 Capturar Tela
@@ -116,7 +121,6 @@ Limpar Camada
 Limpar Amostras
 Fim do Recorte
 Início do Recorte
-Recorte
 Clonar
 Fechar
 Tecido
@@ -142,6 +146,7 @@ Combinar Cor
 Combinar XYZ
 Máscara de Comparação
 Bússola
+Cone
 Confirmar
 Console
 Modelo do Console
@@ -157,9 +162,12 @@ Cosseno
 Não foi possível baixar
 Contagem
 Vinco
+Criar Material Cozinhado
 Criar Camada de Cor
 Criar Material
+Recortar
 Produto Vetorial
+Cubo
 Descartar Faces de Trás
 Cursor
 Curvatura
@@ -168,6 +176,7 @@ Curva
 Curvado
 Personalizado
 Cortar
+Cilindro
 Escurecer
 Depuração
 Decalque
@@ -182,6 +191,7 @@ Apagar Pincel
 Apagar Camada
 Apagar Material
 Apagar Grupo de Nós
+Apagar Selecionadas
 Apagar Amostra
 Apagar Não Usadas
 Delta
@@ -263,6 +273,7 @@ Exportar Material
 Exportar Malha
 Exportar Player
 Exportar Texturas
+Exportar como .arm
 Exportar amostras
 Exportar arquivos de textura
 Exportando malha
@@ -285,6 +296,9 @@ Filtro
 Filtrar Texturas
 Plano
 Achatar
+Achatar Grupo
+Achatar Selecionadas
+Achatada
 Curva de Float
 Chão
 Módulo Piso
@@ -307,6 +321,7 @@ Atrito
 Do Máximo
 Do Mínimo
 Frente
+Descarte por Frustum
 Completo
 Borrosidade
 G
@@ -323,16 +338,16 @@ Gravidade Y
 Gravidade Z
 Maior
 Maior Que
+Grade
 Célula da Grade
 Ajuste à Grade
 Grupo
 Entrada de Grupo
 Saída de Grupo
+Agrupar Selecionadas
 Dureza
 Altura
-Mistura de Altura
 Ajuda
-Ocultar Visualização 3D
 Alto Polígonos
 Realces
 Histórico
@@ -390,6 +405,7 @@ Mapa de Teclas
 Mapa de teclas importado:
 Lacunaridade
 Idioma
+Ícones Grandes
 Camada
 Ângulo da Camada
 Mistura de Camada
@@ -416,6 +432,8 @@ Iluminado
 Pré-visualização do Pincel ao Vivo
 Pré-visualização de Material ao Vivo
 Localização
+Travar Camada
+Travada
 Logaritmo
 Textura Mágica
 Tornar Único
@@ -458,12 +476,14 @@ Modelo
 Modelos
 Diretório de Modelos...
 Modificador
+Modificadores
 Modificar
 Modificar Animação
 Módulo
 Argamassa
 Tamanho da Argamassa
 Suavização da Argamassa
+Mover
 Multiplicar
 Nome
 Neural
@@ -493,7 +513,6 @@ Grão de Ruído
 Textura de Ruído
 Nenhum
 Normal
-Mistura de Normal
 Mapa de Normais
 Mapa de Normais 1
 Mapa de Normais 2
@@ -532,7 +551,6 @@ Saída
 Preto de Saída
 Branco de Saída
 Sobrepor
-PBR
 Empacotar Ativos
 Empacotar no Projeto
 Preenchimento
@@ -543,7 +561,9 @@ Paramétrico
 Pai
 Derivada Parcial
 Partícula
+Passagem Direta
 Colar
+Colar como Máscara
 Caminho
 Traçado de Caminho
 Traçador de Caminho
@@ -563,6 +583,7 @@ Beliscar
 Ping-Pong
 Pivô
 Tamanho do Pixel
+Plano
 Platô
 Reproduzir
 Player
@@ -581,6 +602,7 @@ Pré-definição
 Pré-definição importada:
 Pré-definições
 Controles de Pressão
+Prévia
 Anterior
 Pasta anterior
 Processando...
@@ -623,10 +645,11 @@ Sugerir Recurso
 Resetar
 Resetar Mapa de Ambiente
 Resetar Layout
+Redimensionar
+Redimensionar...
 Resolução
 Restaurar
 Restaurar Amostras
-Restaurar amostras padrão
 Direita
 Anéis
 Rotacionar
@@ -636,6 +659,7 @@ Arredondar
 Altura da Linha
 Executar
 Executar no Player
+Executar nós de script ao abrir um projeto sem perguntar
 Executando...
 SSAO
 Amostras
@@ -659,6 +683,7 @@ Script aberto
 Scripts
 Escultura
 Camada de Escultura
+Sem Emendas
 Procurar
 Procurar por Nós
 Segmentos
@@ -701,6 +726,7 @@ Entrando...
 Seno
 Tamanho
 Slot
+Ícones Pequenos
 Suavizar
 Suavidade
 Borrar
@@ -732,12 +758,14 @@ Reto
 Força
 Esticar
 Subdividir
+Submalha
 Subsuperfície
 Subtrair
 Super Amostragem
 Amostras
 Amostras...
 Simetria
+Abas
 Tangente
 Destino
 Modelo
@@ -780,10 +808,11 @@ Para Camada de Pintura
 Para Máscara de Pintura
 Para Radianos
 Alternar Tela Cheia
-Alternar cabeçalho
+Alternar Cabeçalho
 Tolerância
 Ferramentas
 Superior
+Toro
 Interface Touch
 Transformar
 Transformar Objeto
@@ -877,9 +906,9 @@ player
 extensão ativada
 Prompt
 sRGB
+selecionadas
 Origem
 triângulos
 tipo
 sem título
-x
 {shortcut} e mover mouse
