@@ -305,11 +305,13 @@ bool layers_is_fill_material() {
 }
 
 static void layers_update_fill_layers_material();
+static void layers_refill(bool (*selected)(slot_layer_t *l, void *data), void *data);
+static bool layers_refill_effect_of_material(slot_layer_t *l, void *data);
 
 // Fill layers and masks of the current material, then the effects that may read them
 void layers_update_fill_layers() {
 	layers_update_fill_layers_material();
-	layers_update_effects();
+	layers_refill(&layers_refill_effect_of_material, g_context->material);
 }
 
 // Points the Effect Input node of an effect material to the layer or mask it reads
@@ -323,8 +325,25 @@ static void layers_set_effect_input(slot_material_t *m, slot_layer_t *input) {
 	}
 }
 
-// Effects are refilled from the bottom of the stack up, so each one reads the fresh output of the one below it
-void layers_update_effects() {
+// The layer an effect or mask belongs to, the layer itself otherwise
+static slot_layer_t *layers_owner(slot_layer_t *l) {
+	return l != NULL && l->parent != NULL && (slot_layer_is_mask(l) || slot_layer_is_filter(l)) ? l->parent : l;
+}
+
+// The material reads layers through Layer or Layer Mask nodes, other than the input of an effect
+static bool layers_material_linked(slot_material_t *m) {
+	for (i32 i = 0; m != NULL && i < m->canvas->nodes->length; ++i) {
+		ui_node_t *n = m->canvas->nodes->buffer[i];
+		if ((string_equals(n->type, "LAYER") || string_equals(n->type, "LAYER_MASK")) && !string_equals(n->name, "Effect Input")) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Refills the slots that pass the filter in one pass from the bottom of the stack up, so each one reads fresh layers
+// below it: effects read the element below them, linked fills read other layers through their nodes
+static void layers_refill(bool (*selected)(slot_layer_t *l, void *data), void *data) {
 	if (bake_texture_node_baking) {
 		return;
 	}
@@ -332,16 +351,22 @@ void layers_update_effects() {
 	slot_material_t *_material = g_context->material;
 	bool             any       = false;
 	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
-		slot_layer_t *e = g_project->_->layers->buffer[i];
-		if (!slot_layer_is_effect(e) || e->fill_material == NULL || e->texpaint_sculpt != NULL) {
+		slot_layer_t *l = g_project->_->layers->buffer[i];
+		if (l->fill_material == NULL || l->texpaint_sculpt != NULL || slot_layer_is_group(l) || !selected(l, data)) {
 			continue;
 		}
-		slot_layer_t *input = slot_layer_effect_input(e);
-		if (input != NULL) {
-			layers_set_effect_input(e->fill_material, input);
+		if (slot_layer_is_effect(l)) {
+			slot_layer_t *base = slot_layer_effect_base(l);
+			if (base == NULL || array_index_of(g_project->_->layers, base) < 0) {
+				continue; // Lost its layer or mask, keeps its last result
+			}
+			slot_layer_t *input = slot_layer_effect_input(l);
+			if (input != NULL) {
+				layers_set_effect_input(l->fill_material, input);
+			}
 		}
-		g_context->layer    = e;
-		g_context->material = e->fill_material;
+		g_context->layer    = l;
+		g_context->material = l->fill_material;
 		layers_set_object_mask();
 		layers_update_fill_layer(true);
 		any = true;
@@ -356,6 +381,41 @@ void layers_update_effects() {
 	g_context->rtdirty              = 1;
 	g_context->ddirty               = 2;
 	g_context->layers_preview_dirty = true;
+}
+
+static bool layers_refill_effect(slot_layer_t *l, void *data) {
+	return slot_layer_is_effect(l);
+}
+
+// Effects of the layers that own a slot filled with the material, and effects reading other layers
+static bool layers_refill_effect_of_material(slot_layer_t *l, void *data) {
+	if (!slot_layer_is_effect(l)) {
+		return false;
+	}
+	if (l->fill_material == data || layers_material_linked(l->fill_material)) {
+		return true;
+	}
+	slot_layer_t *owner = layers_owner(l);
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		slot_layer_t *f = g_project->_->layers->buffer[i];
+		if (f->fill_material == data && layers_owner(f) == owner) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// After painting: effects of the painted layer, and every fill reading other layers
+static bool layers_refill_after_paint(slot_layer_t *l, void *data) {
+	if (layers_material_linked(l->fill_material)) {
+		return true;
+	}
+	return slot_layer_is_effect(l) && layers_owner(l) == data;
+}
+
+// Effects are refilled from the bottom of the stack up, so each one reads the fresh output of the one below it
+void layers_update_effects() {
+	layers_refill(&layers_refill_effect, NULL);
 }
 
 bool layers_has_effects() {
@@ -561,33 +621,19 @@ void layers_update_fill_layer(bool parse_paint) {
 		draw_begin(current, false, 0);
 }
 
+// Runs every frame of a stroke: fills reading other layers and the effects of the painted layer, in one pass bottom up
 void layers_update_linked_layers() {
 	nodes_mesh_layer_changed(g_context->layer);
-	slot_material_t *_material  = g_context->material;
-	bool             any_linked = false;
+	slot_material_t *_material = g_context->material;
 	for (i32 i = 0; i < g_project->_->materials->length; ++i) {
-		slot_material_t *m          = g_project->_->materials->buffer[i];
-		bool             has_linked = false;
-		for (i32 j = 0; j < m->canvas->nodes->length; ++j) {
-			ui_node_t *node = m->canvas->nodes->buffer[j];
-			if (string_equals(node->type, "LAYER") || string_equals(node->type, "LAYER_MASK")) {
-				has_linked = true;
-				break;
-			}
+		slot_material_t *m = g_project->_->materials->buffer[i];
+		if (layers_material_linked(m)) {
+			g_context->material = m;
+			make_material_bake_node_previews_linked();
 		}
-		if (!has_linked) {
-			continue;
-		}
-		any_linked          = true;
-		g_context->material = m;
-		make_material_bake_node_previews_linked();
-		layers_update_fill_layers_material();
 	}
 	g_context->material = _material;
-	layers_update_effects();
-	if (any_linked) {
-		make_material_parse_paint_material(false);
-	}
+	layers_refill(&layers_refill_after_paint, layers_owner(g_context->layer));
 }
 
 void layers_set_object_mask() {
@@ -1528,6 +1574,9 @@ void layers_move_selected(i32 to) {
 	}
 	history_order_batch = false;
 	history_order_layers_end();
+	if (layers_has_effects()) {
+		layers_update_effects();
+	}
 	context_set_layer(active);
 	make_material_parse_mesh_material();
 }

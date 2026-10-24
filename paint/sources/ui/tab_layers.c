@@ -291,6 +291,9 @@ void tab_layers_delete_layer(slot_layer_t *l) {
 	g_context->ddirty = 2;
 	tab_layers_remap_all_layer_pointers(pointers);
 	tab_stages_prune();
+	if (layers_has_effects()) { // An effect above the deleted one reads something else now
+		layers_update_effects();
+	}
 	base_redraw_status();
 }
 

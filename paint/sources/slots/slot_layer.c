@@ -1258,5 +1258,8 @@ void slot_layer_move(slot_layer_t *raw, i32 to) {
 	tab_layers_remap_all_layer_pointers(pointers);
 	if (record) {
 		history_order_layers_end();
+		if (layers_has_effects()) { // Effects read the element below them
+			layers_update_effects();
+		}
 	}
 }
