@@ -498,6 +498,7 @@ Háló bemenet
 
 Háló kimenet
 
+
 Háló...
 Hálók
 Fémes (Metallic)

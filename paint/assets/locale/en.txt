@@ -497,6 +497,7 @@ Mesh Input
 Mesh Map
 Mesh Maps
 Mesh Output
+Mesh map not baked
 Mesh measures the bend of the geometry, also across uv seams
 Mesh...
 Meshes

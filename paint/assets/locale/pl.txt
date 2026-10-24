@@ -498,6 +498,7 @@ Wejście modelu
 
 Wyjście modelu
 
+
 Model...
 Modele
 Metaliczność

@@ -497,6 +497,7 @@ Entrada de Malha
 Mapa da Malha
 Mapas da Malha
 Saída de Malha
+Mesh map não assado
 Mesh mede a dobra da geometria, também sobre costuras de UV
 Malha...
 Malhas
