@@ -115,6 +115,7 @@ static void tab_baking_high_poly(bake_settings_t *s) {
 }
 
 static bool tab_baking_skew_open = false;
+static bool tab_baking_cage_open = false;
 
 // The gray painted into the skew and cage maps, and the buttons that select, fill and clear one
 static void tab_baking_role(bake_settings_t *s, i32 role) {
@@ -155,6 +156,18 @@ static void tab_baking_skew(bake_settings_t *s) {
 	ui_check(&s->edge_protection, tr("Edge Protection"), "");
 	if (g_ui->is_hovered) {
 		ui_tooltip(tr("Near hard edges rays keep the smooth normals, turning them there would open gaps"));
+	}
+}
+
+static void tab_baking_cage(bake_settings_t *s) {
+	tab_baking_role(s, BAKE_ROLE_CAGE);
+	f32 range = s->cage_range;
+	ui_slider(&range, tr("Range"), 0.0, 1.0, true, 1000, true, UI_ALIGN_RIGHT, true);
+	if (ui_item_changed()) {
+		s->cage_range = range < 0.0 ? 0.0 : range; // Typed values above 1 are kept
+	}
+	if (g_ui->is_hovered) {
+		ui_tooltip(tr("Offset of the cage where the cage map is white, relative to the size of the scene. Middle gray is no offset, black pulls the cage in"));
 	}
 }
 
@@ -282,6 +295,9 @@ void tab_baking_draw(i32 *htab) {
 	}
 	if (ui_panel(&tab_baking_skew_open, tr("Skew Map"), false, false, false)) {
 		tab_baking_skew(s);
+	}
+	if (ui_panel(&tab_baking_cage_open, tr("Cage Map"), false, false, false)) {
+		tab_baking_cage(s);
 	}
 
 	ui_separator(4, true);

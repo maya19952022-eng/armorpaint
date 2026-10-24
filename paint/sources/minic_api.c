@@ -976,6 +976,7 @@ void minic_register_builtins() {
 	MINIC_I(skew_base);
 	MINIC_B(edge_protection);
 	MINIC_F(paint_value);
+	MINIC_F(cage_range);
 	MINIC_END();
 
 	MINIC_STRUCT(project_t);

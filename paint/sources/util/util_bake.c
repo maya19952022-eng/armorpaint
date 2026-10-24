@@ -96,7 +96,8 @@ struct bake_job {
 	.cage               = BAKE_CAGE_DISTANCE, \
 	.skew_base          = BAKE_SKEW_BASE_MESH, \
 	.edge_protection    = true,         \
-	.paint_value        = 1.0           \
+	.paint_value        = 1.0,          \
+	.cage_range         = 0.05          \
 }
 // clang-format on
 
@@ -971,6 +972,10 @@ static void util_bake_surface(bake_job_t *job, i32 tri, f32 px, f32 py, util_bak
 	if (job->settings.cage == BAKE_CAGE_AUTO) {
 		front = util_bake_auto_cage(r, s->lp, rd, front, rear, group);
 	}
+	if (r->cage != NULL) { // Painted offset over the cage
+		front += util_bake_role_sample(r, r->cage, px, py) * job->settings.cage_range * r->size;
+		front = front > 0.0f ? front : 0.0f;
+	}
 	f32 o[3] = {s->lp[0] + rd[0] * front, s->lp[1] + rd[1] * front, s->lp[2] + rd[2] * front};
 	if (!util_bvh_raycast(&r->bvh, o, d, front + rear, false, job->settings.ignore_backface, r->high.group, group, &h)) {
 		s->hit = false;
@@ -1522,6 +1527,7 @@ static u32 util_bake_settings_hash(i32 slot, bake_settings_t *s) {
 	h = util_bake_fnv_i32(h, s->cage);
 	h = util_bake_fnv_i32(h, s->skew_base);
 	h = util_bake_fnv_i32(h, s->edge_protection);
+	h = util_bake_fnv_f32(h, s->cage_range);
 	h = util_bake_fnv_string(h, s->high_polys);
 	if (slot == MESH_MAP_OCCLUSION || slot == MESH_MAP_BENT_NORMAL) {
 		h = util_bake_fnv_i32(h, s->occlusion_samples);
@@ -2138,7 +2144,8 @@ char *util_bake_settings_encode() {
 	              json, s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys);
 	json = string("%s\"curvature_mode\":%d,\"auto_rebake\":%d,\"quick_rebake\":%d,\"cage\":%d,", json, s->curvature_mode, s->auto_rebake, s->quick_rebake,
 	              s->cage);
-	json = string("%s\"skew_base\":%d,\"edge_protection\":%d,\"paint_value\":%.9g,\"baked\":\"", json, s->skew_base, s->edge_protection, s->paint_value);
+	json = string("%s\"skew_base\":%d,\"edge_protection\":%d,\"paint_value\":%.9g,\"cage_range\":%.9g,\"baked\":\"", json, s->skew_base, s->edge_protection,
+	              s->paint_value, s->cage_range);
 	free(high_polys);
 	// What each slot was baked from, so a reopened project still knows which maps are outdated
 	for (i32 slot = 0; slot < MESH_MAP_COUNT; ++slot) {
@@ -2197,6 +2204,7 @@ void util_bake_settings_decode(char *json) {
 	util_bake_settings_read_i32(m, "skew_base", &s->skew_base);
 	util_bake_settings_read_bool(m, "edge_protection", &s->edge_protection);
 	util_bake_settings_read_f32(m, "paint_value", &s->paint_value);
+	util_bake_settings_read_f32(m, "cage_range", &s->cage_range);
 	char *baked = any_map_get(m, "baked");
 	for (i32 slot = 0; baked != NULL && slot < MESH_MAP_COUNT && *baked != '\0'; ++slot) {
 		util_bake_sigs[slot] = (u32)strtoul(baked, &baked, 16);
@@ -2212,6 +2220,7 @@ void util_bake_settings_decode(char *json) {
 	s->cage           = s->cage == BAKE_CAGE_AUTO ? BAKE_CAGE_AUTO : BAKE_CAGE_DISTANCE;
 	s->skew_base      = s->skew_base == BAKE_SKEW_BASE_TRIANGLE ? BAKE_SKEW_BASE_TRIANGLE : BAKE_SKEW_BASE_MESH;
 	s->paint_value    = s->paint_value < 0.0f ? 0.0f : s->paint_value > 1.0f ? 1.0f : s->paint_value;
+	s->cage_range     = s->cage_range < 0.0f ? 0.0f : s->cage_range;
 	s->maps &= (1 << MESH_MAP_COUNT) - 1;
 	s->aa = s->aa >= 8 ? 8 : s->aa >= 4 ? 4 : s->aa >= 2 ? 2 : 1;
 }

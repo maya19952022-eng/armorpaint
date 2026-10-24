@@ -807,6 +807,7 @@ typedef struct bake_settings {
 	i32   skew_base;       // bake_skew_base_t
 	bool  edge_protection; // Rays keep the smooth normals near hard edges, where turning them would open gaps
 	f32   paint_value;     // Value painted into the skew and cage maps
+	f32   cage_range;      // Cage offset of a white texel of the cage map, relative to the size of the scene; black is the opposite
 } bake_settings_t;
 
 typedef struct bake_job bake_job_t; // util_bake.c
