@@ -122,6 +122,7 @@ typedef enum {
 	VIEWPORT_MODE_OBJECT_ID     = 13,
 	VIEWPORT_MODE_MASK          = 14,
 	VIEWPORT_MODE_PATH_TRACE    = 15,
+	VIEWPORT_MODE_MESH_MAP      = 16, // The mesh map of g_context->viewport_mesh_map
 } viewport_mode_t;
 
 // Layouts to reset the docked tabs to

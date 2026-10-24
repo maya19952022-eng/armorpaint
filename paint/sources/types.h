@@ -288,6 +288,7 @@ typedef struct context {
 	split_type_t                split_by;
 	f64                         select_time;
 	viewport_mode_t             viewport_mode;
+	i32                         viewport_mesh_map; // Slot shown by VIEWPORT_MODE_MESH_MAP, MESH_MAP_COUNT for the ray directions
 	void                       *viewport_shader;
 	bool                        hscale_was_changed;
 	mesh_format_t               export_mesh_format;

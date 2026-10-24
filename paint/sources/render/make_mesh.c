@@ -701,6 +701,12 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 				node_shader_write_frag(kong, "output[1] = float4(id_r, id_g, id_b, 1.0);");
 			}
 		}
+		else if (g_context->viewport_mode == VIEWPORT_MODE_MESH_MAP) { // In the mesh uvs, like the Mesh Map node
+			i32 slot = g_context->viewport_mesh_map;
+			texture_count++;
+			node_shader_add_texture(kong, "texview_mesh_map", slot >= 0 && slot < MESH_MAP_COUNT ? string_tmp("_texmeshmap%d", slot) : "_texraydirections");
+			node_shader_write_frag(kong, "output[1] = float4(sample_lod(texview_mesh_map, sampler_linear, tex_coord, 0.0).rgb, 1.0);");
+		}
 		else if (g_context->viewport_mode == VIEWPORT_MODE_MASK && g_context->layer->bake_role != BAKE_ROLE_NONE) {
 			// Skew map: black is no skew. Cage map: middle gray is no offset, unpainted texels show it.
 			node_shader_write_frag(kong, string_tmp("float4 role_sample = sample_lod(texpaint_view_role, sampler_linear, %s, 0.0);", tex_coord_layer));

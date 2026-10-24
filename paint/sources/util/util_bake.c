@@ -909,6 +909,15 @@ static void util_bake_skew(bake_job_t *job, i32 tri, f32 *b, f32 px, f32 py, f32
 	}
 }
 
+// Direction of the ray of a low poly sample: the ray normals turned by the skew map
+static void util_bake_ray_direction(bake_job_t *job, i32 tri, f32 *b, f32 px, f32 py, f32 *ln, f32 *rd) {
+	util_bake_raster_t *r = job->raster;
+	util_bake_interpolate(r->low.ray + tri * 9, b, rd, true);
+	if (r->skew != NULL || job->settings.skew_base == BAKE_SKEW_BASE_TRIANGLE) {
+		util_bake_skew(job, tri, b, px, py, ln, rd);
+	}
+}
+
 // True when the ray met the high poly triangle from behind, going the way its normal points
 static bool util_bake_hit_back(util_bake_raster_t *r, i32 tri, f32 *d) {
 	f32 *t     = r->high.pos + tri * 9;
@@ -960,10 +969,7 @@ static void util_bake_surface(bake_job_t *job, i32 tri, f32 px, f32 py, util_bak
 
 	// From the cage above the low poly down to the rear distance below it
 	f32 rd[3];
-	util_bake_interpolate(low->ray + tri * 9, b, rd, true);
-	if (r->skew != NULL || job->settings.skew_base == BAKE_SKEW_BASE_TRIANGLE) {
-		util_bake_skew(job, tri, b, px, py, s->ln, rd);
-	}
+	util_bake_ray_direction(job, tri, b, px, py, s->ln, rd);
 	f32       front = job->settings.front_distance * r->size;
 	f32       rear  = job->settings.rear_distance * r->size;
 	f32       d[3]  = {-rd[0], -rd[1], -rd[2]};
@@ -1392,6 +1398,7 @@ gpu_texture_t *util_bake_uv_islands_texture() {
 	return util_bake_uv_islands;
 }
 
+
 // Layers, material icons and the selected node preview that read a mesh map, whichever material is selected
 void util_bake_maps_changed() {
 	layers_update_mesh_map_layers();
@@ -1634,6 +1641,87 @@ i32 util_bake_outdated_mask() {
 
 bool util_bake_outdated(i32 slot) {
 	return slot >= 0 && slot < MESH_MAP_COUNT && ((util_bake_outdated_mask() >> slot) & 1);
+}
+
+static gpu_texture_t *util_bake_ray_dirs      = NULL;
+static u32            util_bake_ray_dirs_sig  = 0;
+static f64            util_bake_ray_dirs_time = 0.0;
+
+#define UTIL_BAKE_RAY_DIRECTIONS_RES 512
+
+// World space directions of the rays to the high poly as n * 0.5 + 0.5, for the Ray Directions viewport mode
+static void util_bake_make_ray_directions() {
+	bake_job_t          job = {.slot = MESH_MAP_NORMAL, .settings = util_bake_settings};
+	i32                 res = UTIL_BAKE_RAY_DIRECTIONS_RES;
+	util_bake_raster_t *r   = util_bake_raster_create(&job.settings, res, false, false, false);
+	job.raster              = r;
+	if (r->skew == NULL) { // Also without a high poly, the preview shows what painting does
+		r->skew = util_bake_role_values(BAKE_ROLE_SKEW, &r->role_w, &r->role_h);
+	}
+	if (r->hard == NULL && job.settings.edge_protection && (r->skew != NULL || job.settings.skew_base == BAKE_SKEW_BASE_TRIANGLE)) {
+		r->hard = util_bake_hard_edges(&r->low, r->size);
+	}
+	f32 *px = calloc((size_t)res * res * 4, sizeof(f32));
+	for (i32 y = 0; y < res; ++y) {
+		for (i32 x = 0; x < res; ++x) {
+			i32 i   = y * res + x;
+			i32 tri = r->tri[i];
+			if (tri < 0) {
+				continue;
+			}
+			f32 b[3];
+			f32 ln[3];
+			f32 rd[3];
+			util_bake_barycentrics(r->low.uv + tri * 6, x + 0.5f, y + 0.5f, b);
+			util_bake_interpolate(r->low.nor + tri * 9, b, ln, true);
+			util_bake_ray_direction(&job, tri, b, x + 0.5f, y + 0.5f, ln, rd);
+			for (i32 k = 0; k < 3; ++k) {
+				px[i * 4 + k] = rd[k] * 0.5f + 0.5f;
+			}
+			px[i * 4 + 3] = 1.0f;
+		}
+	}
+	util_bake_dilate(px, r->tri, res, 2, MESH_MAP_WORLD_NORMAL);
+	if (util_bake_ray_dirs != NULL) {
+		gpu_delete_texture(util_bake_ray_dirs);
+	}
+	util_bake_ray_dirs = util_bake_upload(MESH_MAP_WORLD_NORMAL, px, res);
+	free(px);
+	util_bake_raster_free(r);
+}
+
+gpu_texture_t *util_bake_ray_directions_texture() {
+	return util_bake_ray_dirs;
+}
+
+f32_array_t *util_bake_ray_directions_pixels() {
+	return util_bake_texture_pixels(util_bake_ray_dirs);
+}
+
+// Remakes the ray directions while they are shown and the settings, the scene or the skew map changed
+static void util_bake_ray_directions_update(f64 now) {
+	if (g_context->viewport_mode != VIEWPORT_MODE_MESH_MAP || g_context->viewport_mesh_map != MESH_MAP_COUNT ||
+	    (util_bake_ray_dirs != NULL && now - util_bake_ray_dirs_time < 0.25)) {
+		return;
+	}
+	util_bake_ray_dirs_time = now;
+	bake_settings_t *s      = &util_bake_settings;
+	u32              sig    = util_bake_combine(util_bake_settings_hash(MESH_MAP_NORMAL, s), util_bake_scene_hash(s, false));
+	sig                     = util_bake_combine(sig, util_bake_roles_hash);
+	if (sig == util_bake_ray_dirs_sig && util_bake_ray_dirs != NULL) {
+		return;
+	}
+	util_bake_ray_dirs_sig = sig;
+	gpu_texture_t *current = _draw_current;
+	bool           in_use  = gpu_in_use;
+	if (in_use) {
+		draw_end();
+	}
+	util_bake_make_ray_directions();
+	if (in_use) {
+		draw_begin(current, false, 0);
+	}
+	g_context->ddirty = 2;
 }
 
 static void util_bake_set_map(i32 slot, gpu_texture_t *tex, bool history) {
@@ -1884,6 +1972,7 @@ void util_bake_auto_update() {
 	util_bake_roles_update();
 	bake_settings_t *s   = &util_bake_settings;
 	f64              now = iron_time();
+	util_bake_ray_directions_update(now);
 	if (!s->auto_rebake || now - util_bake_auto_last < 0.1) {
 		return;
 	}
@@ -2071,6 +2160,10 @@ void util_bake_reset() {
 		gpu_delete_texture(util_bake_uv_islands);
 		util_bake_uv_islands = NULL;
 	}
+	if (util_bake_ray_dirs != NULL) {
+		gpu_delete_texture(util_bake_ray_dirs);
+		util_bake_ray_dirs = NULL;
+	}
 	for (i32 i = 0; i < MESH_MAP_COUNT; ++i) {
 		if (util_bake_maps[i] != NULL) {
 			gpu_delete_texture(util_bake_maps[i]);
@@ -2085,7 +2178,11 @@ void util_bake_reset() {
 
 // Pixels of a baked slot as rgba floats in 0-1, NULL when the slot is empty
 f32_array_t *util_bake_pixels(i32 slot) {
-	gpu_texture_t *tex = util_bake_mesh_map(slot);
+	return util_bake_texture_pixels(util_bake_mesh_map(slot));
+}
+
+// Pixels of a mesh map texture as rgba floats in 0-1, NULL without a texture
+f32_array_t *util_bake_texture_pixels(gpu_texture_t *tex) {
 	if (tex == NULL) {
 		return NULL;
 	}

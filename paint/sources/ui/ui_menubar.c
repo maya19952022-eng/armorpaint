@@ -212,6 +212,8 @@ char *ui_menubar_viewport_mode_to_string(viewport_mode_t m) {
 		return "Mask";
 	if (m == VIEWPORT_MODE_PATH_TRACE)
 		return "Path Traced";
+	if (m == VIEWPORT_MODE_MESH_MAP)
+		return "Mesh Map";
 	return "Lit";
 }
 
@@ -533,6 +535,9 @@ void ui_menubar_draw_category_items() {
 		if (mode_changed) {
 			viewport_mode_t m = ui_menubar_string_to_viewport_mode(modes->buffer[mode]);
 			context_set_viewport_mode(m);
+			ui_menu_keep_open = true;
+		}
+		if (ui_base_draw_mesh_map_modes()) {
 			ui_menu_keep_open = true;
 		}
 	}

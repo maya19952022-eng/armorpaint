@@ -1517,6 +1517,25 @@ void script_bake_role_fill(i32 role, f32 value) {
 	script_gpu_end(current, in_use);
 }
 
+// Shows a mesh map in the viewport, MESH_MAP_COUNT for the directions of the rays to the high poly
+void script_set_viewport_mesh_map(i32 slot) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	context_set_viewport_mesh_map(slot);
+	script_gpu_end(current, in_use);
+}
+
+// Rgba floats of the ray directions shown by the viewport, NULL until they are made
+f32_array_t *script_bake_ray_directions_pixels(void) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	f32_array_t *pixels = util_bake_ray_directions_pixels();
+	script_gpu_end(current, in_use);
+	return pixels;
+}
+
 // Steps that undo can take back
 i32 script_history_undos(void) {
 	return history_undos;

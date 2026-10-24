@@ -295,6 +295,18 @@ void context_set_layer(slot_layer_t *l) {
 	context_update_role_view();
 }
 
+// Shows a mesh map in the viewport, MESH_MAP_COUNT for the directions of the rays to the high poly
+void context_set_viewport_mesh_map(i32 slot) {
+	g_context->viewport_mesh_map = slot < 0 ? 0 : slot > MESH_MAP_COUNT ? MESH_MAP_COUNT : slot;
+	if (g_context->viewport_mode == VIEWPORT_MODE_MESH_MAP) {
+		make_material_parse_mesh_material(); // Same mode, another texture
+		g_context->ddirty = 2;
+	}
+	else {
+		context_set_viewport_mode(VIEWPORT_MODE_MESH_MAP);
+	}
+}
+
 // Skew and cage maps are left out of the material, the mask view shows them while they are selected
 void context_update_role_view() {
 	slot_layer_t *l = g_context->layer;
