@@ -1,0 +1,60 @@
+# Smoke test headless do ArmorPaint
+
+Teste de ponta a ponta que roda dentro do app via `--background --script`:
+
+1. abre o projeto `fixtures/p0_project.arm`;
+2. confere as camadas (ordem, blending, opacidade, visibilidade, grupo/máscara) contra `fixtures/p0_project.json`;
+3. exporta as texturas (preset `generic`) e compara a média de cada canal (`_base`, `_occ`, `_rough`, `_metal`, `_nor`) com os valores gravados, tolerância de 3/255;
+4. cria uma camada, salva como `paint/build/smoke/smoke_resaved.arm`, abre um projeto novo, reabre o salvo e repete 2 e 3.
+
+Imprime `SMOKE PASS` ou `SMOKE FAIL`; o launcher sai com 0 (passou), 1 (falhou) ou 2 (erro de ambiente). Log em `paint/build/smoke/run.log`.
+
+## Como rodar
+
+Compile antes (`cd paint && ../base/make --compile`).
+
+Linux (máquina com GPU ou cloud sem GPU):
+
+```bash
+base/tests/paint_headless/run.sh
+```
+
+Sem `DISPLAY`, o script usa `xvfb-run`; sem GPU, o Vulkan roda no llvmpipe (Mesa). Pacotes: `xvfb mesa-vulkan-drivers` (veja `base/docs/building_cloud.md`). Leva cerca de 15 s no llvmpipe.
+
+Windows (Direct3D12, GPU real):
+
+```bat
+base\tests\paint_headless\run.bat
+```
+
+macOS: não testado. O app roda de dentro do bundle `.app`, então os caminhos relativos de `run.c` (que assumem `paint/build/out` como diretório de trabalho) precisam de ajuste.
+
+Os launchers guardam `paint/build/out/data/config.json` como `config.json.smoke_backup`, rodam com a config padrão e restauram a original no fim. Uma config em modo Sculpt, por exemplo, cria uma camada extra e muda o resultado.
+
+## O fixture
+
+`fixtures/p0_project.arm` foi salvo com o formato de camadas da fase P0 (antes do blend por canal da P1). Conteúdo:
+
+| Camada | Blending | Opacidade | Observação |
+|---|---|---|---|
+| `Layer 1` | Mix | 1.0 | camada padrão do projeto novo |
+| `p0_gray` | Mix | 1.0 | cinza 0x808080, roughness 0.5 |
+| `p0_multiply` | Multiply | 0.5 | 0xcc3311, metallic 1.0 |
+| `p0_group` | — | 0.8 | grupo |
+| `p0_add` (no grupo) | Add | 0.75 | 0x1144cc, occlusion 0.5 |
+| `p0_masked` | Overlay | 1.0 | 0x22cc22, escondida pela máscara preta `p0_mask` |
+| `p0_hidden` | Mix | 1.0 | branca, invisível |
+
+Base color esperado: (126, 118, 190), igual à conta manual: cinza 128 → multiply 50% → add 0.75 × 0.8.
+
+Fases futuras **não regeneram** o fixture: ele existe para provar que projetos antigos continuam abrindo com o mesmo resultado (regra 7 da seção 0 do plano). Se uma fase muda o resultado de propósito, ela atualiza `p0_project.json` e explica no PR. Para criar um fixture novo de uma fase (por exemplo `p1_project.arm`), copie `make_fixture.c`, mude os nomes e rode `run.sh make_fixture_p1.c`.
+
+Regenerar o fixture da P0 (só se ele se perder):
+
+```bash
+base/tests/paint_headless/run.sh make_fixture.c
+```
+
+## Teste de integração existente
+
+`paint/assets/plugins/dev/test.c` é um teste bem maior (82 passos, 220 checks) do upstream. Ele também roda com `--script`, mas grava em `/tmp/armorpaint`, deixa a config em modo Sculpt e é lento no llvmpipe. Veja o resultado de referência em `base/docs/building_cloud.md`.

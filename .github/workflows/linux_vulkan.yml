@@ -4,9 +4,8 @@ on:
   push:
     branches:
     - main
-  pull_request:
-    branches:
-    - main
+  pull_request: # Any base, phase PRs can stack on the previous phase
+  workflow_dispatch: # Run by hand from the Actions tab
 
 jobs:
   build:
@@ -23,3 +22,7 @@ jobs:
       run: |
         cd paint
         ../base/make --compile
+    - name: Smoke Test
+      run: |
+        sudo apt install xvfb mesa-vulkan-drivers --yes --quiet
+        base/tests/paint_headless/run.sh
