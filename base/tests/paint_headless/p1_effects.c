@@ -233,6 +233,25 @@ void step_delete() {
 	expect(128, 128, "deleted");
 }
 
+// Copy and paste of an effect: the copy has its own material
+void step_paste_effect() {
+	slot_layer_t *a  = script_layer_new_color(0xff3366cc, 1.0, 0.5, 0.0);
+	slot_layer_t *ea = script_layer_add_effect(a, EFFECT_TYPE_LEVELS);
+	set_invert(ea);
+	slot_layer_t *b = script_layer_new_color(0xff204080, 1.0, 0.5, 0.0); // On top, the composite shows it
+	script_layer_set_name(b, "fx_paste");
+	int count = script_layer_count();
+	check(script_layer_paste(ea, b) && script_layer_count() == count + 1, "paste an effect into another layer");
+	slot_layer_t *eb = script_layer_at(script_layer_index(layer_by_name("fx_paste")) - 1);
+	check(eb != NULL && eb->parent == layer_by_name("fx_paste") && eb->fill_material != NULL && eb->fill_material != ea->fill_material,
+	      "the pasted effect has a copy of the material");
+	check(!script_layer_paste(ea, script_layer_new_mask(a, 1)), "a layer effect does not go into a mask");
+}
+
+void step_paste_effect_check() {
+	expect(223, 127, "the pasted effect inverts the other layer");
+}
+
 void next_frame() {
 	if (step == 0) {
 		step_build();
@@ -275,6 +294,12 @@ void next_frame() {
 	}
 	else if (step == 13) {
 		step_delete();
+	}
+	else if (step == 14) {
+		step_paste_effect();
+	}
+	else if (step == 15) {
+		step_paste_effect_check();
 	}
 	else {
 		printf("[smoke] %d checks, %d failures", checks, failures);
