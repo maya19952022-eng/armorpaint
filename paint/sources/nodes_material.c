@@ -48,6 +48,7 @@ void nodes_material_init() {
 	gamma_node_init();
 	hue_saturation_value_node_init();
 	invert_color_node_init();
+	levels_node_init();
 	mix_color_node_init();
 	quantize_node_init();
 	rgb_curves_node_init();
