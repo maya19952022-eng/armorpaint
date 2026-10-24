@@ -1360,9 +1360,13 @@ void layers_select(slot_layer_t *l, bool toggle, bool range) {
 	context_set_layer(l);
 }
 
-// Selected layers and groups from the bottom up, the active layer included
+// Selected layers and groups from the bottom up, the active layer included, valid until the next call
 slot_layer_t_array_t *layers_get_selected() {
-	slot_layer_t_array_t *res = any_array_create_from_raw((void *[]){}, 0);
+	static slot_layer_t_array_t *res = NULL;
+	if (res == NULL) {
+		res = any_array_create_from_raw((void *[]){}, 0);
+	}
+	res->length = 0;
 	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
 		slot_layer_t *l = g_project->_->layers->buffer[i];
 		if (layers_selectable(l) && layers_is_selected(l)) {
@@ -1409,8 +1413,14 @@ static void layers_set_group_bottom(slot_layer_t *l, slot_layer_t *group) {
 	}
 	i32 from = array_index_of(g_project->_->layers, l);
 	i32 to   = from < lowest ? lowest - 1 : lowest;
-	if (slot_layer_can_move(l, to)) {
+	if (to != from && slot_layer_can_move(l, to)) {
 		slot_layer_move(l, to);
+	}
+	if (l->parent != group) { // Already right below the group: only the parent changes
+		history_order_layers_begin();
+		history_order_layers(array_index_of(g_project->_->layers, l));
+		l->parent = group;
+		history_order_layers_end();
 	}
 }
 
@@ -1462,16 +1472,36 @@ void layers_move_selected(i32 to) {
 	if (sel->length == 0) {
 		return;
 	}
-	slot_layer_t *active = g_context->layer;
-	bool          up     = to > array_index_of(g_project->_->layers, sel->buffer[sel->length - 1]);
+	slot_layer_t         *active = g_context->layer;
+	slot_layer_t_array_t *below  = any_array_create_from_raw((void *[]){}, 0); // Layers below the drop position go up
+	slot_layer_t_array_t *above  = any_array_create_from_raw((void *[]){}, 0); // The others go down
+	for (i32 k = 0; k < sel->length; ++k) {
+		any_array_push(array_index_of(g_project->_->layers, sel->buffer[k]) < to ? below : above, sel->buffer[k]);
+	}
 	history_order_layers_begin();
 	history_order_layers(to);
 	history_order_batch = true;
-	for (i32 k = 0; k < sel->length; ++k) {
-		// Up: the lowest layer goes first, each one lands on top of the previous. Down: the highest goes first.
-		slot_layer_t *l = up ? sel->buffer[k] : sel->buffer[sel->length - 1 - k];
-		if (slot_layer_can_move(l, to)) {
-			slot_layer_move(l, to);
+	// Down: the highest goes first, each one lands below the previous
+	for (i32 k = above->length - 1; k >= 0; --k) {
+		if (slot_layer_can_move(above->buffer[k], to)) {
+			slot_layer_move(above->buffer[k], to);
+		}
+	}
+	// Up: without layers going down the lowest goes first to the drop position, each one lands on top of the previous.
+	// Otherwise the highest goes first right below the layers that went down, keeping their order.
+	for (i32 k = 0; k < below->length; ++k) {
+		slot_layer_t *l      = above->length == 0 ? below->buffer[k] : below->buffer[below->length - 1 - k];
+		slot_layer_t *anchor = above->length == 0 ? NULL : k == 0 ? above->buffer[0] : below->buffer[below->length - k];
+		i32           dest   = to;
+		if (anchor != NULL) { // Right below the anchor and its masks and filters
+			dest = array_index_of(g_project->_->layers, anchor);
+			for (i32 i = dest - 1; i >= 0 && g_project->_->layers->buffer[i]->parent == anchor; --i) {
+				dest = i;
+			}
+			dest -= 1;
+		}
+		if (dest != array_index_of(g_project->_->layers, l) && slot_layer_can_move(l, dest)) {
+			slot_layer_move(l, dest);
 		}
 	}
 	history_order_batch = false;

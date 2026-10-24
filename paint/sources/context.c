@@ -270,6 +270,9 @@ void context_set_layer(slot_layer_t *l) {
 	if (l == g_context->layer) {
 		return;
 	}
+	if (layers_selected != NULL && array_index_of(layers_selected, l) < 0) {
+		layers_selected->length = 0; // A new active layer outside the multi selection ends it
+	}
 	g_context->layer          = l;
 	ui_header_handle->redraws = 2;
 
