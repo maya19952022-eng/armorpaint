@@ -557,9 +557,15 @@ void slot_layer_to_paint_layer(slot_layer_t *raw) {
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 
+// Masks and filters follow the lock of their layer, layers the lock of their group
 bool slot_layer_is_locked(slot_layer_t *raw) {
-	bool follows_parent = raw->parent != NULL && (slot_layer_is_mask(raw) || slot_layer_is_filter(raw));
-	return raw->locked || (follows_parent && raw->parent->locked);
+	return raw->locked || (raw->parent != NULL && slot_layer_is_locked(raw->parent));
+}
+
+// The active tool would change a locked layer, pickers only read it
+bool slot_layer_is_paint_locked(slot_layer_t *raw) {
+	tool_type_t t = g_context->tool;
+	return slot_layer_is_locked(raw) && t != TOOL_TYPE_PICKER && t != TOOL_TYPE_MATERIAL && t != TOOL_TYPE_COLORID && t != TOOL_TYPE_CURSOR;
 }
 
 bool slot_layer_is_visible(slot_layer_t *raw) {

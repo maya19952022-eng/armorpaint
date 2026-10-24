@@ -139,7 +139,7 @@ void brush_output_node_run() {
 		return;
 	}
 
-	if (!picking_object && slot_layer_is_locked(g_context->layer)) {
+	if (!picking_object && slot_layer_is_paint_locked(g_context->layer)) {
 		return;
 	}
 

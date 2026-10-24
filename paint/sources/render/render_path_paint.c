@@ -937,6 +937,10 @@ void render_path_paint_commands_cursor() {
 }
 
 bool render_path_paint_paint_enabled() {
+	if (slot_layer_is_paint_locked(g_context->layer)) { // Also stops bakes, particles and the undo step of a stroke
+		return false;
+	}
+
 	if (g_context->tool == TOOL_TYPE_BAKE) {
 		return true;
 	}

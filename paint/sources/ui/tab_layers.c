@@ -767,6 +767,10 @@ bool tab_layers_can_merge_down(slot_layer_t *l) {
 	if (slot_layer_is_layer(l) && slot_layer_get_filters(l, false) != NULL) {
 		return false;
 	}
+	// Merging changes the pixels of the layer below
+	if (slot_layer_is_locked(l) || slot_layer_is_locked(g_project->_->layers->buffer[index - 1])) {
+		return false;
+	}
 	// Lowest layer that has masks
 	if (slot_layer_is_layer(l) && slot_layer_is_mask(g_project->_->layers->buffer[0]) && g_project->_->layers->buffer[0]->parent == l) {
 		return false;

@@ -414,7 +414,7 @@ static bool script_paint_allowed(void) {
 	if (g_context == NULL || g_context->layer == NULL || g_context->material == NULL) {
 		return false;
 	}
-	if (slot_layer_is_group(g_context->layer) || slot_layer_is_locked(g_context->layer)) {
+	if (slot_layer_is_group(g_context->layer) || slot_layer_is_paint_locked(g_context->layer)) {
 		return false;
 	}
 	if (g_context->layer->fill_material != NULL && g_context->tool != TOOL_TYPE_PICKER && g_context->tool != TOOL_TYPE_MATERIAL &&
@@ -535,7 +535,7 @@ void script_fill_layer(void) {
 	if (g_context == NULL || g_context->layer == NULL || g_context->material == NULL) {
 		return;
 	}
-	if (slot_layer_is_group(g_context->layer)) {
+	if (slot_layer_is_group(g_context->layer) || slot_layer_is_locked(g_context->layer)) {
 		return;
 	}
 

@@ -39,6 +39,7 @@ void                  slot_layer_to_fill_layer(slot_layer_t *raw);
 void                  slot_layer_to_paint_layer(slot_layer_t *raw);
 bool                  slot_layer_is_visible(slot_layer_t *raw);
 bool                  slot_layer_is_locked(slot_layer_t *raw);
+bool                  slot_layer_is_paint_locked(slot_layer_t *raw);
 slot_layer_t_array_t *slot_layer_get_children(slot_layer_t *raw);
 slot_layer_t_array_t *slot_layer_get_recursive_children(slot_layer_t *raw);
 slot_layer_t_array_t *slot_layer_get_masks(slot_layer_t *raw, bool include_group_masks);
