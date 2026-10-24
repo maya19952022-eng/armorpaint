@@ -571,6 +571,7 @@ Normála objektu
 
 Okluze
 Posun
+
 Stará barva
 Krytí
 Režim krytí
@@ -669,6 +670,7 @@ Náhodný
 Náhodnost
 Rozsah
 Poměr
+
 
 
 Nedávné

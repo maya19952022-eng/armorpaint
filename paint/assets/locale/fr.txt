@@ -571,6 +571,7 @@ Normale objet
 
 Occlusion
 Décalage
+
 Ancienne couleur
 Opacité
 Mode d'opacité
@@ -669,6 +670,7 @@ Aléatoire
 Caractère aléatoire
 Plage
 Ratio
+
 
 
 Récent

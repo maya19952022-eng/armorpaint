@@ -571,6 +571,7 @@ Objektum Normál
 
 Okklúzió (AO)
 Eltolás
+
 Régi szín
 Átlátszatlanság
 Átlátszatlanság mód
@@ -669,6 +670,7 @@ Véletlenszerű
 Véletlenszerűség
 Tartomány
 Arány
+
 
 
 Legutóbbi

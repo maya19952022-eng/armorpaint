@@ -571,6 +571,7 @@ Normal Objek
 
 Okklusi
 Ofset
+
 Warna Lama
 Opasitas
 Mode Opasitas
@@ -669,6 +670,7 @@ Acak
 Keacakan
 Rentang
 Rasio
+
 
 
 Terbaru

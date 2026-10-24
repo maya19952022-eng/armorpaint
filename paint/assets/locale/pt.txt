@@ -571,6 +571,7 @@ Normal do Objeto
 Objetos
 Oclusão
 Deslocamento
+Deslocamento da gaiola onde o mapa da gaiola é branco, relativo ao tamanho da cena. Cinza médio não desloca, preto recolhe a gaiola
 Cor Antiga
 Opacidade
 Modo de Opacidade
@@ -669,6 +670,7 @@ Aleatório
 Aleatoriedade
 Intervalo
 Proporção
+Direções dos Raios
 Cozinhar de Novo
 Refazer Desatualizados
 Recente

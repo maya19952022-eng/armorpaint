@@ -571,6 +571,7 @@ Normalna obiektu
 
 Okluzja
 Przesunięcie
+
 Stary kolor
 Krycie
 Tryb krycia
@@ -669,6 +670,7 @@ Losowy
 Losowość
 Zakres
 Współczynnik
+
 
 
 Ostatnie

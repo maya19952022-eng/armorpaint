@@ -571,6 +571,7 @@ Object Normal
 Objects
 Occlusion
 Offset
+Offset of the cage where the cage map is white, relative to the size of the scene. Middle gray is no offset, black pulls the cage in
 Old Color
 Opacity
 Opacity Mode
@@ -669,6 +670,7 @@ Random
 Randomness
 Range
 Ratio
+Ray Directions
 Rebake
 Rebake Outdated
 Recent
