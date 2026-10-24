@@ -56,10 +56,15 @@ Axe
 B
 Arrière
 Rendu
+
 Exporter le matériau...
+
+
 
 Rendu de texture
 Rendu des textures
+
+
 Bandes
 Couleur de base
 Bent Normal
@@ -124,6 +129,7 @@ Effacer
 Effacer le calque
 
 Effacer les échantillons
+
 Fin du clip
 Début du clip
 Clonage
@@ -144,11 +150,13 @@ Carte de Color ID
 Masque de couleur
 Plage de couleur
 
+
 Espace couleur
 ID Couleur
 Combiner
 Recomposer couleur
 Recomposer XYZ
+
 
 Gizmos XYZ
 
@@ -212,6 +220,7 @@ Diagonale
 Différence
 Rayon de dilatation
 Dilater textures peintes pour éviter les coutures
+
 Dimensions
 Carte de normales DirectX
 Direction
@@ -461,6 +470,7 @@ Matériau...
 Matériaux
 Mathématique
 Max
+
 Maximum
 Fusionner vers le bas
 Fusionner la géométrie
@@ -468,6 +478,7 @@ Fusionner le groupe
 Fusionner les calques
 Maillage
 Entrée du maillage
+
 
 Sortie du maillage
 Maillage...
@@ -530,6 +541,7 @@ Carte de normales 2
 Normaliser
 
 Non disponible dans la version de débogage
+
 Non implémenté
 OK
 Objet
@@ -624,6 +636,7 @@ Projets
 Prompt
 Qualité
 Quantifier
+
 R
 
 Courbes RGB
@@ -715,12 +728,14 @@ Définir comme carte d'ID couleur
 Définir comme carte d'environnement
 Définir comme masque
 Définition de la source
+
 Configuration
 Shader
 
 Forme
 Partager le lien du lecteur
 Partagé
+
 
 Afficher la vue 2D
 Montrer les noms des assets

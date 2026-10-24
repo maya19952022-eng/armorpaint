@@ -56,10 +56,15 @@ Tengely
 B
 Hátul
 Sütés (Bake)
+
 Anyag sütése...
+
+
 
 Textúra sütése
 Sütés textúrákra
+
+
 Sávok
 Alapszín
 Hajlított normál
@@ -124,6 +129,7 @@ Törlés
 Réteg törlése
 
 Színminták törlése
+
 Vágás vége
 Vágás kezdete
 Klónozás
@@ -144,11 +150,13 @@ Szín ID térkép
 Szín maszk
 Színátmenet (Ramp)
 
+
 Színtér
 SzínID
 Kombinálás
 Szín egyesítése
 XYZ egyesítése
+
 
 Iránytű
 
@@ -212,6 +220,7 @@ Részletesség méretezése
 Különbség
 Tágítás sugara
 Festett textúrák tágítása az illesztési hibák elkerülésére
+
 Méretek
 DirectX Normal Map
 Irány
@@ -461,6 +470,7 @@ Anyag...
 Anyagok
 Matematika
 Max
+
 Maximum
 Egyesítés lefelé
 Geometria összevonása
@@ -468,6 +478,7 @@ Csoport egyesítése
 Rétegek egyesítése
 Háló
 Háló bemenet
+
 
 Háló kimenet
 Háló...
@@ -530,6 +541,7 @@ Normal Map 2
 Normalizálás
 
 Nem elérhető hibakereső változatban
+
 Nincs megvalósítva
 OK
 Objektum
@@ -624,6 +636,7 @@ Projektek
 Prompt
 Minőség
 Kvantálás
+
 R
 
 RGB görbék
@@ -715,12 +728,14 @@ Beállítás Szín ID térképként
 Beállítás környezeti térképként
 Beállítás maszkként
 Forrás beállítása...
+
 Beállítás
 Shader
 
 Alakzat
 Player hivatkozás megosztása
 Megosztott
+
 
 2D Nézet megjelenítése
 Asset nevek mutatása

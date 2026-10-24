@@ -56,10 +56,15 @@ Oś
 B
 Tył
 Wypalanie
+
 Wypalanie materiału...
+
+
 
 Wypalanie tekstury
 Wypal do tekstur
+
+
 Pasma
 Kolor bazowy
 Wygięta normalna
@@ -124,6 +129,7 @@ Wyczyść
 Wyczyść warstwę
 
 Wyczyść próbki kolorów
+
 Koniec clipu
 Początek clipu
 Klonowanie
@@ -144,11 +150,13 @@ Mapa ID koloru
 Maska koloru
 Rampa koloru
 
+
 Przestrzeń kolorów
 IDKoloru
 Łączenie
 Połącz kolor
 Połącz XYZ
+
 
 Kompas
 
@@ -212,6 +220,7 @@ Ukośny
 Różnica
 Promień rozszerzenia
 Rozszerz malowane tekstury, aby zapobiec szwom
+
 Wymiary
 Mapa normalnych DirectX
 Kierunek
@@ -461,6 +470,7 @@ Materiał...
 Materiały
 Matematyka
 Maks
+
 Maksimum
 Połącz w dół
 Scal geometrię
@@ -468,6 +478,7 @@ Połącz grupy
 Połącz warstwy
 Model
 Wejście modelu
+
 
 Wyjście modelu
 Model...
@@ -530,6 +541,7 @@ Mapa normalnych 2
 Normalizuj
 
 Niedostępne w kompilacji debugowania
+
 Nie zaimplementowano
 OK
 Obiekt
@@ -624,6 +636,7 @@ Projekty
 Prompt
 Jakość
 Kwantyzuj
+
 R
 
 Krzywe RGB
@@ -715,12 +728,14 @@ Ustaw jako mapę ID koloru
 Ustaw jako Envmapę
 Ustaw jako maskę
 Ustawianie źródła
+
 Ustawienia
 Shader
 
 Kształt
 Udostępnij link do odtwarzacza
 Współdzielone
+
 
 Pokaż podgląd 2D
 Pokaż nazwy zasobów

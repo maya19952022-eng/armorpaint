@@ -56,10 +56,15 @@ Osa
 B
 Zadní
 Zapékat
+
 Zapékat materiál...
+
+
 
 Zapékání textury
 Zapékat do textur
+
+
 Pásy
 Základní barva
 Ohnutá normála
@@ -124,6 +129,7 @@ Vyčistit
 Vyčistit vrstvu
 
 Vyčistit vzorky
+
 Konec ořezu
 Začátek ořezu
 Klonovat
@@ -144,11 +150,13 @@ Mapa ID barev
 Maska barvy
 Barevný přechod
 
+
 Barevný prostor
 ID barvy
 Kombinovat
 Kombinovat barvu
 Kombinovat XYZ
+
 
 Kompas
 
@@ -212,6 +220,7 @@ Diagonála
 Rozdíl
 Rozšířit poloměr
 Rozšířit malované textury pro prevenci švů
+
 Rozměry
 DirectX normálová mapa
 Směr
@@ -461,6 +470,7 @@ Materiál...
 Materiály
 Matematika
 Max
+
 Maximum
 Sloučit dolů
 Sloučit geometrii
@@ -468,6 +478,7 @@ Sloučit skupinu
 Sloučit vrstvy
 Síť
 Vstup sítě
+
 
 Výstup sítě
 Síť...
@@ -530,6 +541,7 @@ Normálová mapa 2
 Normalizovat
 
 Není dostupné v ladicím buildu
+
 Neimplementováno
 OK
 Objekt
@@ -624,6 +636,7 @@ Projekty
 Prompt
 Kvalita
 Kvantizovat
+
 R
 
 Křivky RGB
@@ -715,12 +728,14 @@ Nastavit jako mapu ID barev
 Nastavit jako mapu okolí
 Nastavit jako masku
 Nastavování zdroje
+
 Nastavení
 Shader
 
 Tvar
 Sdílet odkaz na přehrávač
 Sdílené
+
 
 Zobrazit 2D pohled
 Zobrazit názvy assetů

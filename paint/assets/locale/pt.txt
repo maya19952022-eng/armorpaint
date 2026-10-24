@@ -56,10 +56,15 @@ Eixo
 B
 Costas
 Cozinhar
+Cozinhar Todos
 Cozinhar Material
 Cozinhar Mapa da Malha
+Cozinhar Mapas da Malha...
+Cozinhar Selecionados
 Cozinhar Textura
 Cozinhar para Texturas
+Cozimento
+Cozinhando...
 Faixas
 Cor Base
 Normal Dobrada
@@ -124,6 +129,7 @@ Limpar Máscara Geométrica
 Limpar Camada
 Limpar Mapa da Malha
 Limpar Amostras
+Clique para cancelar
 Fim do Recorte
 Início do Recorte
 Clonar
@@ -144,11 +150,13 @@ Mapa de ID de Cor
 Máscara de Cor
 Rampa de Cores
 Seleção de Cor
+Origem da Cor
 Espaço de Cor
 ID de Cor
 Combinar
 Combinar Cor
 Combinar XYZ
+Ajustes Comuns
 Máscara de Comparação
 Bússola
 Cone
@@ -212,6 +220,7 @@ Diagonal
 Diferença
 Dilatar Raio
 Dilatar texturas pintadas para evitar costuras
+Dilatação
 Dimensões
 Mapa de Normais DirectX
 Direção
@@ -461,6 +470,7 @@ Material...
 Materiais
 Matemática
 Máximo
+Distância Máxima
 Máximo
 Mesclar para Baixo
 Mesclar Geometria
@@ -469,6 +479,7 @@ Mesclar Camadas
 Malha
 Entrada de Malha
 Mapa da Malha
+Mapas da Malha
 Saída de Malha
 Malha...
 Malhas
@@ -530,6 +541,7 @@ Mapa de Normais 2
 Normalizar
 Diferente
 Não disponível na compilação de depuração
+Não cozido
 Não implementado
 OK
 Objeto
@@ -624,6 +636,7 @@ Projetos
 Prompt
 Qualidade
 Quantizar
+Na fila
 R
 RGB
 Curvas RGB
@@ -715,12 +728,14 @@ Definir como Mapa de ID de Cor
 Definir como Mapa de Ambiente
 Definir como Máscara
 Definindo Origem
+Ajustes
 Configuração
 Shader
 Sombras
 Forma
 Compartilhar Link do Player
 Compartilhado
+Compartilhado com a Oclusão de Ambiente
 Nitidez
 Mostrar Visualização 2D
 Mostrar Nomes dos Ativos

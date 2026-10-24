@@ -56,10 +56,15 @@ Achse
 B
 Hinten
 Baken
+
 Material baken...
+
+
 
 Textur baken
 Auf Textur backen
+
+
 Bänder
 Base Color
 Gekrümmte Normalen
@@ -124,6 +129,7 @@ Leeren
 Ebene leeren
 
 Farbfelder leeren
+
 Clip Ende
 Clip Start
 Klonen
@@ -144,11 +150,13 @@ Color ID Map
 Farbmaske
 Farbgradient
 
+
 Farbraum
 FarbID
 Kombinieren
 Farbe zusammenführen
 XYZ zusammenführen
+
 
 Kompass
 
@@ -212,6 +220,7 @@ Diagonal
 Unterschied
 Radius erweitern
 Gemalte Texturen ausweiten, um Seams zu vermeiden
+
 Abmessungen
 DirectX Normal Map
 Richtung
@@ -461,6 +470,7 @@ Material...
 Materialien
 Mathematik
 Max
+
 Maximum
 Nach unten vereinen
 Geometrie vereinen
@@ -468,6 +478,7 @@ Gruppe vereinigen
 Ebenen zusammenfassen
 Mesh
 Mesh-Eingabe
+
 
 Mesh-Ausgabe
 Mesh...
@@ -530,6 +541,7 @@ Normal Map 2
 Normieren
 
 Nicht verfügbar im Debug Build
+
 Nicht implementiert
 OK
 Objekt
@@ -624,6 +636,7 @@ Projekte
 Prompt
 Qualität
 Quantisieren
+
 R
 
 RGB Kurven
@@ -715,12 +728,14 @@ Farbe als ID Map setzen
 Als Hintergrundbild setzen
 Als Maske setzen
 Quelle wird gesetzt
+
 Einrichtung
 Shader
 
 Form
 Player-Link teilen
 Geteilt
+
 
 2D Ansicht anzeigen
 Namen der Assets anzeigen

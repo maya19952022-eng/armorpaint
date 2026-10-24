@@ -56,10 +56,15 @@ Axis
 B
 Back
 Bake
+Bake All
 Bake Material...
 Bake Mesh Map
+Bake Mesh Maps...
+Bake Selected
 Bake Texture
 Bake to Textures
+Baking
+Baking...
 Bands
 Base Color
 Bent Normal
@@ -124,6 +129,7 @@ Clear Geometry Mask
 Clear Layer
 Clear Mesh Map
 Clear Swatches
+Click to cancel
 Clip End
 Clip Start
 Clone
@@ -144,11 +150,13 @@ Color ID Map
 Color Mask
 Color Ramp
 Color Selection
+Color Source
 Color Space
 ColorID
 Combine
 Combine Color
 Combine XYZ
+Common Settings
 Compare Mask
 Compass
 Cone
@@ -212,6 +220,7 @@ Diagonal
 Difference
 Dilate Radius
 Dilate painted textures to prevent seams
+Dilation
 Dimensions
 DirectX Normal Map
 Direction
@@ -461,6 +470,7 @@ Material...
 Materials
 Math
 Max
+Max Distance
 Maximum
 Merge Down
 Merge Geometry
@@ -469,6 +479,7 @@ Merge Layers
 Mesh
 Mesh Input
 Mesh Map
+Mesh Maps
 Mesh Output
 Mesh...
 Meshes
@@ -530,6 +541,7 @@ Normal Map 2
 Normalize
 Not Equal
 Not available in debug build
+Not baked
 Not implemented
 OK
 Object
@@ -624,6 +636,7 @@ Projects
 Prompt
 Quality
 Quantize
+Queued
 R
 RGB
 RGB Curves
@@ -715,12 +728,14 @@ Set as Color ID Map
 Set as Envmap
 Set as Mask
 Setting Source
+Settings
 Setup
 Shader
 Shadows
 Shape
 Share Player Link
 Shared
+Shared with Ambient Occlusion
 Sharpen
 Show 2D View
 Show Asset Names

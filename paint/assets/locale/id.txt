@@ -56,10 +56,15 @@ Sumbu
 B
 Belakang
 Bake
+
 Bake Material...
+
+
 
 Bake Tekstur
 Bake ke Tekstur
+
+
 Pita
 Warna Dasar
 Normal Bengkok
@@ -124,6 +129,7 @@ Bersihkan
 Bersihkan Lapisan
 
 Bersihkan Contoh Warna
+
 Akhir Klip
 Awal Klip
 Klon
@@ -144,11 +150,13 @@ Peta ID Warna
 Masker Warna
 Rampe Warna
 
+
 Ruang Warna
 IDWarna
 Gabungkan
 Gabung Warna
 Gabung XYZ
+
 
 Kompas
 
@@ -212,6 +220,7 @@ Diagonal
 Perbedaan
 Perluas Radius
 Perluas tekstur yang dilukis untuk mencegah celah
+
 Dimensi
 Peta Normal DirectX
 Arah
@@ -461,6 +470,7 @@ Material...
 Material
 Matematika
 Maks
+
 Maksimum
 Gabung ke Bawah
 Gabung Geometri
@@ -468,6 +478,7 @@ Gabung Grup
 Gabung Lapisan
 Mesh
 Masukan Mesh
+
 
 Keluaran Mesh
 Mesh...
@@ -530,6 +541,7 @@ Peta Normal 2
 Normalisasi
 
 Tidak tersedia di build debug
+
 Belum diimplementasikan
 OK
 Objek
@@ -624,6 +636,7 @@ Proyek
 Prompt
 Kualitas
 Kuantisasi
+
 R
 
 Kurva RGB
@@ -715,12 +728,14 @@ Atur sebagai Peta ID Warna
 Atur sebagai Peta Lingkungan
 Atur sebagai Masker
 Mengatur Sumber
+
 Pengaturan
 Shader
 
 Bentuk
 Bagikan Tautan Pemutar
 Berbagi
+
 
 Tampilkan Tampilan 2D
 Tampilkan Nama Aset

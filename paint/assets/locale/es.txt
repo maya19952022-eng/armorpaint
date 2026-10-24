@@ -56,10 +56,15 @@ Ejes
 A
 Trasera
 Hornear
+
 Hornear material...
+
+
 
 Hornear textura
 Hornear a texturas
+
+
 Bandas
 Color base
 Bent Normal
@@ -124,6 +129,7 @@ Limpiar
 Limpiar capa
 
 Limpiar muestras
+
 Finalizar recorte
 Comenzar a recortar
 Clonar
@@ -144,11 +150,13 @@ Mapa de ID de colores
 Máscara de color
 Rampa de color
 
+
 Espacio de color
 Color ID
 Combinar
 Combinar color
 Combinar XYZ
+
 
 Gizmo orientación
 
@@ -212,6 +220,7 @@ Diagonal
 Diferencia
 Expandir radio
 Expandir texturas pintadas para evitar costuras
+
 Dimensiones
 DirectX Mapa de normales
 Dirección
@@ -461,6 +470,7 @@ Material...
 Materiales
 Matemática
 Máx
+
 Máximo
 Fusionar hacia abajo
 Combinar geometría
@@ -468,6 +478,7 @@ Fusionar grupo
 Fusionar capas
 Malla
 Entrada de malla
+
 
 Salida de malla
 Malla...
@@ -530,6 +541,7 @@ Mapa de normales 2
 Normalizar
 
 No disponible en la compilación de depuración
+
 No implementado
 OK
 Objeto
@@ -624,6 +636,7 @@ Proyectos
 Prompt
 Calidad
 Cuantificar
+
 R
 
 Curvas RGB
@@ -715,12 +728,14 @@ Establecer como mapa de ID de color
 Establecer como mapa de entorno
 Establecer como máscara
 Estableciendo origen
+
 Configuración
 Sombreador
 
 Forma
 Compartir enlace del reproductor
 Compartido
+
 
 Mostrar vista 2D
 Mostrar nombres de recursos
