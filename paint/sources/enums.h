@@ -31,6 +31,8 @@ typedef enum {
 	BAKE_TYPE_LIGHTMAP      = 11,
 	BAKE_TYPE_BENT_NORMAL   = 12,
 	BAKE_TYPE_THICKNESS     = 13,
+	BAKE_TYPE_OPACITY       = 14,
+	BAKE_TYPE_UV_ISLAND     = 15,
 } bake_type_t;
 
 typedef enum {
@@ -72,7 +74,13 @@ typedef enum {
 typedef enum {
 	MESH_MAP_ID_OBJECT       = 0,
 	MESH_MAP_ID_VERTEX_COLOR = 1,
+	MESH_MAP_ID_UV_ISLAND    = 2,
 } mesh_map_id_source_t;
+
+typedef enum {
+	MESH_MAP_CURVATURE_NORMALS = 0, // From the normals of the neighbouring texels
+	MESH_MAP_CURVATURE_MESH    = 1, // From the vertices, across uv seams
+} mesh_map_curvature_t;
 
 typedef enum {
 	BAKE_STATE_IDLE    = 0,

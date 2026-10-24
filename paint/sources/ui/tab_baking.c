@@ -119,6 +119,16 @@ static bool tab_baking_map_settings(bake_settings_t *s, i32 slot) {
 		return true;
 	}
 	if (slot == MESH_MAP_CURVATURE) {
+		string_array_t *sources = any_array_create_from_raw_tmp(
+		    (void *[]){
+		        tr("Normals"),
+		        tr("Mesh"),
+		    },
+		    2);
+		ui_combo(&s->curvature_mode, sources, tr("Source"), true, UI_ALIGN_LEFT, true);
+		if (g_ui->is_hovered) {
+			ui_tooltip(tr("Mesh measures the bend of the geometry, also across uv seams"));
+		}
 		ui_slider(&s->curvature_strength, tr("Strength"), 0.0, 4.0, true, 100, true, UI_ALIGN_RIGHT, true);
 		return true;
 	}
@@ -127,8 +137,9 @@ static bool tab_baking_map_settings(bake_settings_t *s, i32 slot) {
 		    (void *[]){
 		        tr("Object"),
 		        tr("Vertex Color"),
+		        tr("UV Island"),
 		    },
-		    2);
+		    3);
 		ui_combo(&s->id_source, sources, tr("Color Source"), true, UI_ALIGN_LEFT, true);
 		return true;
 	}

@@ -14,6 +14,8 @@ typedef struct util_bake_mesh {
 	i32 *object; // Paint object index per triangle
 	i32 *group;  // Per triangle, objects with the same name without _low or _high share a group
 	u8  *col;    // 12 bytes per triangle, vertex colors, NULL when not needed
+	i32 *island; // UV island per triangle, low poly only
+	f32 *curv;   // 3 per triangle, vertex curvature, NULL when not needed
 } util_bake_mesh_t;
 
 typedef struct util_bake_raster {
@@ -34,6 +36,7 @@ typedef struct util_bake_surface {
 	f32  col[3];
 	i32  object; // Paint object index
 	i32  tri;    // Triangle of the low or high mesh
+	f32  b[3];   // Barycentrics in it
 	bool high;   // On the high poly
 	bool hit;    // False where the ray finds no high poly
 	f32  lp[3];  // Low poly point and normal
@@ -76,7 +79,8 @@ struct bake_job {
 	.average_normals    = true,         \
 	.ignore_backface    = true,         \
 	.match_by_name      = false,        \
-	.high_polys         = ""            \
+	.high_polys         = "",           \
+	.curvature_mode     = MESH_MAP_CURVATURE_NORMALS \
 }
 // clang-format on
 
@@ -220,6 +224,8 @@ static void util_bake_mesh_free(util_bake_mesh_t *m) {
 	free(m->object);
 	free(m->group);
 	free(m->col);
+	free(m->island);
+	free(m->curv);
 	*m = (util_bake_mesh_t){0};
 }
 
@@ -330,42 +336,157 @@ static int util_bake_corner_compare(const void *a, const void *b) {
 	return 0;
 }
 
-// Ray directions: the normals of all vertices at the same place in one object averaged, so the rays leave no gap
-// at hard edges where the vertex normals split
-static void util_bake_average_normals(util_bake_mesh_t *m, f32 size) {
+// Welds the corners of the triangles: corners of one object at the same place, or at the same uv with by_uv, share
+// an id. Returns the id of each corner (count * 3, free() it) and the number of ids in welds.
+static i32 *util_bake_weld(util_bake_mesh_t *m, bool by_uv, f32 step, i32 *welds) {
 	i32                 n       = m->count * 3;
 	util_bake_corner_t *corners = malloc(sizeof(util_bake_corner_t) * (n > 0 ? n : 1));
-	f32                 step    = size * 1e-5f;
+	i32                *ids     = malloc(sizeof(i32) * (n > 0 ? n : 1));
 	for (i32 i = 0; i < n; ++i) {
-		f32 *p     = m->pos + i * 3;
+		f32 *p     = by_uv ? m->uv + i * 2 : m->pos + i * 3;
 		corners[i] = (util_bake_corner_t){.object = m->object[i / 3],
-		                                  .q      = {(i32)lroundf(p[0] / step), (i32)lroundf(p[1] / step), (i32)lroundf(p[2] / step)},
+		                                  .q      = {(i32)lroundf(p[0] / step), (i32)lroundf(p[1] / step), by_uv ? 0 : (i32)lroundf(p[2] / step)},
 		                                  .index  = i};
 	}
 	qsort(corners, n, sizeof(util_bake_corner_t), util_bake_corner_compare);
-	for (i32 start = 0; start < n;) {
-		i32 end = start + 1;
-		while (end < n && util_bake_corner_compare(&corners[start], &corners[end]) == 0) {
-			end++;
+	i32 count = 0;
+	for (i32 i = 0; i < n; ++i) {
+		if (i > 0 && util_bake_corner_compare(&corners[i - 1], &corners[i]) != 0) {
+			count++;
 		}
-		f32 sum[3] = {0.0, 0.0, 0.0};
-		for (i32 i = start; i < end; ++i) {
-			f32 *nn = m->nor + corners[i].index * 3;
-			sum[0] += nn[0];
-			sum[1] += nn[1];
-			sum[2] += nn[2];
-		}
-		f32 len = sqrtf(sum[0] * sum[0] + sum[1] * sum[1] + sum[2] * sum[2]);
-		for (i32 i = start; i < end; ++i) {
-			f32 *dst = m->ray + corners[i].index * 3;
-			f32 *nn  = m->nor + corners[i].index * 3;
-			for (i32 k = 0; k < 3; ++k) {
-				dst[k] = len > 1e-6f ? sum[k] / len : nn[k];
-			}
-		}
-		start = end;
+		ids[corners[i].index] = count;
 	}
+	*welds = n > 0 ? count + 1 : 0;
 	free(corners);
+	return ids;
+}
+
+// Ray directions: the normals of all vertices at the same place in one object averaged, so the rays leave no gap
+// at hard edges where the vertex normals split
+static void util_bake_average_normals(util_bake_mesh_t *m, f32 size) {
+	i32  welds;
+	i32 *ids = util_bake_weld(m, false, size * 1e-5f, &welds);
+	f32 *sum = calloc((size_t)(welds > 0 ? welds : 1) * 3, sizeof(f32));
+	for (i32 i = 0; i < m->count * 3; ++i) {
+		for (i32 k = 0; k < 3; ++k) {
+			sum[ids[i] * 3 + k] += m->nor[i * 3 + k];
+		}
+	}
+	for (i32 i = 0; i < m->count * 3; ++i) {
+		f32 *s   = sum + ids[i] * 3;
+		f32  len = sqrtf(s[0] * s[0] + s[1] * s[1] + s[2] * s[2]);
+		for (i32 k = 0; k < 3; ++k) {
+			m->ray[i * 3 + k] = len > 1e-6f ? s[k] / len : m->nor[i * 3 + k];
+		}
+	}
+	free(sum);
+	free(ids);
+}
+
+static i32 util_bake_find(i32 *parent, i32 i) {
+	while (parent[i] != i) {
+		parent[i] = parent[parent[i]];
+		i         = parent[i];
+	}
+	return i;
+}
+
+// UV islands: triangles of one object joined by a shared uv, numbered from 0
+static void util_bake_islands(util_bake_mesh_t *m) {
+	i32  welds;
+	i32 *ids    = util_bake_weld(m, true, 1e-3f, &welds); // Uvs are in texels
+	i32 *first  = malloc(sizeof(i32) * (welds > 0 ? welds : 1));
+	i32 *parent = malloc(sizeof(i32) * (m->count > 0 ? m->count : 1));
+	for (i32 i = 0; i < welds; ++i) {
+		first[i] = -1;
+	}
+	for (i32 t = 0; t < m->count; ++t) {
+		parent[t] = t;
+	}
+	for (i32 i = 0; i < m->count * 3; ++i) {
+		i32 t = i / 3;
+		i32 w = ids[i];
+		if (first[w] < 0) {
+			first[w] = t;
+		}
+		else {
+			parent[util_bake_find(parent, t)] = util_bake_find(parent, first[w]);
+		}
+	}
+	// Roots are numbered 0, 1, 2... in triangle order
+	m->island   = malloc(sizeof(i32) * (m->count > 0 ? m->count : 1));
+	i32 *number = malloc(sizeof(i32) * (m->count > 0 ? m->count : 1));
+	i32  count  = 0;
+	for (i32 t = 0; t < m->count; ++t) {
+		number[t] = -1;
+	}
+	for (i32 t = 0; t < m->count; ++t) {
+		i32 root = util_bake_find(parent, t);
+		if (number[root] < 0) {
+			number[root] = count++;
+		}
+		m->island[t] = number[root];
+	}
+	free(number);
+	free(ids);
+	free(first);
+	free(parent);
+}
+
+// Curvature of each vertex from its neighbours along the edges, normals averaged over the vertices at the same place:
+// convex is positive. Unlike the normals of a texel and its neighbours, it sees the edges across uv seams.
+static void util_bake_vertex_curvature(util_bake_mesh_t *m, f32 size) {
+	i32  welds;
+	i32 *ids   = util_bake_weld(m, false, size * 1e-5f, &welds);
+	i32  wc    = welds > 0 ? welds : 1;
+	f32 *pos   = calloc((size_t)wc * 3, sizeof(f32));
+	f32 *nor   = calloc((size_t)wc * 3, sizeof(f32));
+	f32 *sum   = calloc((size_t)wc, sizeof(f32));
+	i32 *count = calloc((size_t)wc, sizeof(i32));
+	for (i32 i = 0; i < m->count * 3; ++i) {
+		for (i32 k = 0; k < 3; ++k) {
+			pos[ids[i] * 3 + k] = m->pos[i * 3 + k];
+			nor[ids[i] * 3 + k] += m->nor[i * 3 + k];
+		}
+	}
+	for (i32 w = 0; w < welds; ++w) {
+		f32 *n   = nor + w * 3;
+		f32  len = sqrtf(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+		if (len > 1e-6f) {
+			n[0] /= len;
+			n[1] /= len;
+			n[2] /= len;
+		}
+	}
+	for (i32 t = 0; t < m->count; ++t) {
+		for (i32 k = 0; k < 3; ++k) {
+			i32  a     = ids[t * 3 + k];
+			i32  b     = ids[t * 3 + (k + 1) % 3];
+			f32 *pa    = pos + a * 3;
+			f32 *pb    = pos + b * 3;
+			f32 *na    = nor + a * 3;
+			f32 *nb    = nor + b * 3;
+			f32  dp[3] = {pb[0] - pa[0], pb[1] - pa[1], pb[2] - pa[2]};
+			f32  len2  = dp[0] * dp[0] + dp[1] * dp[1] + dp[2] * dp[2];
+			if (a == b || len2 < 1e-20f) {
+				continue;
+			}
+			f32 c = ((nb[0] - na[0]) * dp[0] + (nb[1] - na[1]) * dp[1] + (nb[2] - na[2]) * dp[2]) / len2;
+			sum[a] += c;
+			sum[b] += c;
+			count[a]++;
+			count[b]++;
+		}
+	}
+	m->curv = malloc(sizeof(f32) * 3 * (m->count > 0 ? m->count : 1));
+	for (i32 i = 0; i < m->count * 3; ++i) {
+		m->curv[i] = count[ids[i]] > 0 ? sum[ids[i]] / count[ids[i]] : 0.0f;
+	}
+	free(pos);
+	free(nor);
+	free(sum);
+	free(count);
+	free(ids);
 }
 
 // Triangles of the objects in world space, uvs in texels of a res sized map
@@ -485,7 +606,7 @@ static void util_bake_raster_low(util_bake_raster_t *r) {
 }
 
 // Low poly triangles in uv space, and the high poly or the low poly in a bvh when rays are cast
-static util_bake_raster_t *util_bake_raster_create(bake_settings_t *s, i32 res, bool colors, bool rays) {
+static util_bake_raster_t *util_bake_raster_create(bake_settings_t *s, i32 res, bool colors, bool rays, bool vertex_curvature) {
 	util_bake_raster_t *r = calloc(1, sizeof(util_bake_raster_t));
 	r->res                = res;
 	r->tri                = malloc((size_t)res * res * sizeof(i32));
@@ -531,6 +652,11 @@ static util_bake_raster_t *util_bake_raster_create(bake_settings_t *s, i32 res, 
 	}
 	if (s->average_normals) {
 		util_bake_average_normals(&r->low, r->size);
+	}
+	util_bake_islands(&r->low);
+	if (vertex_curvature) {
+		util_bake_vertex_curvature(&r->low, r->size);
+		util_bake_vertex_curvature(&r->high, r->size);
 	}
 	util_bake_raster_low(r);
 
@@ -583,6 +709,7 @@ static void util_bake_surface(bake_job_t *job, i32 tri, f32 px, f32 py, util_bak
 	s->hit    = true;
 	s->object = low->object[tri];
 	s->tri    = tri;
+	memcpy(s->b, b, sizeof(s->b));
 	memcpy(s->p, s->lp, sizeof(s->p));
 	memcpy(s->n, s->ln, sizeof(s->n));
 	for (i32 k = 0; k < 3; ++k) {
@@ -609,7 +736,8 @@ static void util_bake_surface(bake_job_t *job, i32 tri, f32 px, f32 py, util_bak
 	f32               hb[3] = {1.0f - h.u - h.v, h.u, h.v};
 	s->high                 = true;
 	s->tri                  = h.tri;
-	s->object               = high->object[h.tri];
+	memcpy(s->b, hb, sizeof(s->b));
+	s->object = high->object[h.tri];
 	util_bake_interpolate(high->pos + h.tri * 9, hb, s->p, false);
 	util_bake_interpolate(high->nor + h.tri * 9, hb, s->n, true);
 	for (i32 k = 0; k < 3; ++k) {
@@ -812,6 +940,9 @@ static void util_bake_sample(bake_job_t *job, util_bake_surface_t *s, u32 seed, 
 		if (job->settings.id_source == MESH_MAP_ID_VERTEX_COLOR) {
 			memcpy(out, s->col, sizeof(f32) * 3);
 		}
+		else if (job->settings.id_source == MESH_MAP_ID_UV_ISLAND) {
+			util_bake_id_color(r->low.island[s->ltri], out);
+		}
 		else {
 			util_bake_id_color(s->object, out);
 		}
@@ -825,6 +956,13 @@ static void util_bake_sample(bake_job_t *job, util_bake_surface_t *s, u32 seed, 
 	case MESH_MAP_OPACITY:
 		out[0] = out[1] = out[2] = s->hit ? 1.0f : 0.0f;
 		break;
+	case MESH_MAP_CURVATURE: { // Mesh mode, from the curvature of the vertices
+		f32 *c = (s->high ? r->high.curv : r->low.curv) + s->tri * 3;
+		f32  k = (c[0] * s->b[0] + c[1] * s->b[1] + c[2] * s->b[2]) * r->size * job->settings.curvature_strength * 0.1f;
+		k      = k < -1.0f ? -1.0f : k > 1.0f ? 1.0f : k;
+		out[0] = out[1] = out[2] = 0.5f + 0.5f * k;
+		break;
+	}
 	}
 }
 
@@ -832,7 +970,7 @@ static void util_bake_texel(bake_job_t *job, i32 x, i32 y, f32 *out) {
 	util_bake_raster_t *r   = job->raster;
 	i32                 ti  = y * r->res + x;
 	i32                 tri = r->tri[ti];
-	if (job->slot == MESH_MAP_CURVATURE) { // From the neighbours, no antialiasing
+	if (job->slot == MESH_MAP_CURVATURE && job->settings.curvature_mode == MESH_MAP_CURVATURE_NORMALS) { // From the neighbours, no antialiasing
 		out[0] = out[1] = out[2] = util_bake_curvature(job, x, y);
 		out[3]                   = 1.0;
 		return;
@@ -896,15 +1034,13 @@ static bool util_bake_slot_casts_rays(i32 slot) {
 }
 
 // Grows the uv islands by copying the average of the filled neighbours, the rest gets the default value
-static void util_bake_dilate(bake_job_t *job) {
-	i32  res  = job->raster->res;
-	f32 *px   = job->out;
-	u8  *mask = malloc((size_t)res * res);
-	u8  *next = malloc((size_t)res * res);
+static void util_bake_dilate(f32 *px, i32 *tri, i32 res, i32 dilation, i32 slot) {
+	u8 *mask = malloc((size_t)res * res);
+	u8 *next = malloc((size_t)res * res);
 	for (i32 i = 0; i < res * res; ++i) {
-		mask[i] = job->raster->tri[i] >= 0;
+		mask[i] = tri[i] >= 0;
 	}
-	for (i32 pass = 0; pass < job->settings.dilation; ++pass) {
+	for (i32 pass = 0; pass < dilation; ++pass) {
 		memcpy(next, mask, (size_t)res * res);
 		bool grown = false;
 		for (i32 y = 0; y < res; ++y) {
@@ -944,7 +1080,7 @@ static void util_bake_dilate(bake_job_t *job) {
 		}
 	}
 	f32 def[4];
-	util_bake_default_value(job->slot, def);
+	util_bake_default_value(slot, def);
 	for (i32 i = 0; i < res * res; ++i) {
 		if (!mask[i]) {
 			memcpy(px + i * 4, def, sizeof(def));
@@ -982,6 +1118,31 @@ static gpu_texture_t *util_bake_upload(i32 slot, f32 *px, i32 res) {
 }
 
 // Materials with a Mesh Map node read the new texture
+static gpu_texture_t *util_bake_uv_islands = NULL;
+
+// A color per uv island of the objects that are not high poly, read by the UV Island type of the Bake Texture node
+void util_bake_make_uv_islands(i32 res) {
+	util_bake_raster_t *r  = util_bake_raster_create(&util_bake_settings, res, false, false, false);
+	f32                *px = calloc((size_t)res * res * 4, sizeof(f32));
+	for (i32 i = 0; i < res * res; ++i) {
+		if (r->tri[i] >= 0) {
+			util_bake_id_color(r->low.island[r->tri[i]], px + i * 4);
+			px[i * 4 + 3] = 1.0;
+		}
+	}
+	util_bake_dilate(px, r->tri, res, 2, MESH_MAP_ID);
+	if (util_bake_uv_islands != NULL) {
+		gpu_delete_texture(util_bake_uv_islands);
+	}
+	util_bake_uv_islands = util_bake_upload(MESH_MAP_ID, px, res);
+	free(px);
+	util_bake_raster_free(r);
+}
+
+gpu_texture_t *util_bake_uv_islands_texture() {
+	return util_bake_uv_islands;
+}
+
 // Layers, material icons and the selected node preview that read a mesh map, whichever material is selected
 void util_bake_maps_changed() {
 	layers_update_mesh_map_layers();
@@ -1129,9 +1290,10 @@ void util_bake_update(void *_) {
 		}
 	}
 	else if (job->raster == NULL) {
-		i32 res             = job->settings.res > 0 ? job->settings.res : 1;
-		job->raster         = util_bake_raster_create(&job->settings, res, job->slot == MESH_MAP_ID && job->settings.id_source == MESH_MAP_ID_VERTEX_COLOR,
-		                                              util_bake_slot_casts_rays(job->slot));
+		i32  res            = job->settings.res > 0 ? job->settings.res : 1;
+		bool colors         = job->slot == MESH_MAP_ID && job->settings.id_source == MESH_MAP_ID_VERTEX_COLOR;
+		bool vertex_curv    = job->slot == MESH_MAP_CURVATURE && job->settings.curvature_mode == MESH_MAP_CURVATURE_MESH;
+		job->raster         = util_bake_raster_create(&job->settings, res, colors, util_bake_slot_casts_rays(job->slot), vertex_curv);
 		job->out            = calloc((size_t)res * res * 4, sizeof(f32));
 		job->rows_per_frame = util_bake_slot_casts_rays(job->slot) || job->raster->high.count > 0 ? 1 : res;
 	}
@@ -1139,7 +1301,7 @@ void util_bake_update(void *_) {
 		util_bake_step_rows(job);
 	}
 	else {
-		util_bake_dilate(job);
+		util_bake_dilate(job->out, job->raster->tri, job->raster->res, job->settings.dilation, job->slot);
 		gpu_texture_t *tex = util_bake_upload(job->slot, job->out, job->raster->res);
 		util_bake_set_map(job->slot, tex, true);
 		util_bake_maps_changed();
@@ -1318,6 +1480,10 @@ void util_bake_cancel() {
 void util_bake_reset() {
 	util_bake_cancel();
 	util_bake_settings = (bake_settings_t)UTIL_BAKE_DEFAULT_SETTINGS;
+	if (util_bake_uv_islands != NULL) {
+		gpu_delete_texture(util_bake_uv_islands);
+		util_bake_uv_islands = NULL;
+	}
 	for (i32 i = 0; i < MESH_MAP_COUNT; ++i) {
 		if (util_bake_maps[i] != NULL) {
 			gpu_delete_texture(util_bake_maps[i]);
@@ -1379,12 +1545,12 @@ static char *util_bake_json_string(char *s) {
 char *util_bake_settings_encode() {
 	bake_settings_t *s          = &util_bake_settings;
 	char            *high_polys = util_bake_json_string(s->high_polys);
-	char            *json =
-	    string("{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,\"thickness_distance\":%f,"
-	           "\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d,\"aa\":%d,\"front_distance\":%f,\"rear_distance\":%f,\"average_normals\":%d,"
-	           "\"ignore_backface\":%d,\"match_by_name\":%d,\"high_polys\":%s}",
-	           s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength,
-	           s->id_source, s->maps, s->aa, s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys);
+	char *json = string("{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,\"thickness_distance\":%f,"
+	                    "\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d,\"aa\":%d,\"front_distance\":%f,\"rear_distance\":%f,\"average_normals\":%d,"
+	                    "\"ignore_backface\":%d,\"match_by_name\":%d,\"high_polys\":%s,\"curvature_mode\":%d}",
+	                    s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength,
+	                    s->id_source, s->maps, s->aa, s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys,
+	                    s->curvature_mode);
 	free(high_polys);
 	return json;
 }
@@ -1432,13 +1598,15 @@ void util_bake_settings_decode(char *json) {
 	util_bake_settings_read_bool(m, "average_normals", &s->average_normals);
 	util_bake_settings_read_bool(m, "ignore_backface", &s->ignore_backface);
 	util_bake_settings_read_bool(m, "match_by_name", &s->match_by_name);
+	util_bake_settings_read_i32(m, "curvature_mode", &s->curvature_mode);
 	char *high_polys = any_map_get(m, "high_polys");
 	if (high_polys != NULL) {
 		s->high_polys = high_polys;
 	}
-	s->res       = s->res < 1 ? 1 : s->res > 16384 ? 16384 : s->res;
-	s->dilation  = s->dilation < 0 ? 0 : s->dilation;
-	s->id_source = s->id_source == MESH_MAP_ID_VERTEX_COLOR ? MESH_MAP_ID_VERTEX_COLOR : MESH_MAP_ID_OBJECT;
+	s->res            = s->res < 1 ? 1 : s->res > 16384 ? 16384 : s->res;
+	s->dilation       = s->dilation < 0 ? 0 : s->dilation;
+	s->id_source      = s->id_source == MESH_MAP_ID_VERTEX_COLOR || s->id_source == MESH_MAP_ID_UV_ISLAND ? s->id_source : MESH_MAP_ID_OBJECT;
+	s->curvature_mode = s->curvature_mode == MESH_MAP_CURVATURE_MESH ? MESH_MAP_CURVATURE_MESH : MESH_MAP_CURVATURE_NORMALS;
 	s->maps &= (1 << MESH_MAP_COUNT) - 1;
 	s->aa = s->aa >= 8 ? 8 : s->aa >= 4 ? 4 : s->aa >= 2 ? 2 : 1;
 }

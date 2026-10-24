@@ -797,6 +797,7 @@ typedef struct bake_settings {
 	bool  ignore_backface; // Rays pass through high poly triangles they meet from behind
 	bool  match_by_name;   // name_low only finds name_high, and objects ending in _high are high poly
 	char *high_polys;      // Names of the high poly objects, one per line
+	i32   curvature_mode;  // mesh_map_curvature_t
 } bake_settings_t;
 
 typedef struct bake_job bake_job_t; // util_bake.c
