@@ -1179,11 +1179,14 @@ void history_merge_layers() {
 
 	history_step_t *step = history_push(HISTORY_ACTION_MERGE_LAYERS);
 	step->layer -= 1; // Merge down
-	if (slot_layer_has_masks(g_context->layer, true)) {
-		step->layer -= slot_layer_get_masks(g_context->layer, true)->length;
+	if (slot_layer_has_masks(g_context->layer, false)) {
+		// Own masks are below the layer and get applied first, group masks are above it
+		step->layer -= slot_layer_get_masks(g_context->layer, false)->length;
 	}
-	step->layer_name  = string_copy(g_context->layer->name);
-	step->layer_props = history_layer_props(g_project->_->layers->buffer[step->layer]);
+	step->layer_name = string_copy(g_context->layer->name);
+	if (step->layer >= 0 && step->layer < g_project->_->layers->length) {
+		step->layer_props = history_layer_props(g_project->_->layers->buffer[step->layer]);
+	}
 	array_shift(history_steps); // Merge consumes 2 steps
 	history_undos--;
 	// TODO: use undo layer in app_merge_down to save memory

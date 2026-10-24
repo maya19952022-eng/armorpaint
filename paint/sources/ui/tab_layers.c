@@ -641,11 +641,11 @@ void tab_layers_draw_layer_slot_full(slot_layer_t *l, i32 i) {
 			tab_layers_l         = g_context->layer;
 			sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_duplicate, NULL);
 		}
-		if (in_focus && g_ui->is_ctrl_down && g_ui->is_key_pressed && g_ui->key_code == KEY_CODE_C) {
+		if (in_focus && !g_ui->is_typing && g_ui->is_ctrl_down && g_ui->is_key_pressed && g_ui->key_code == KEY_CODE_C) {
 			g_ui->is_key_pressed = false;
 			tab_layers_clipboard = g_context->layer;
 		}
-		if (in_focus && g_ui->is_ctrl_down && g_ui->is_key_pressed && g_ui->key_code == KEY_CODE_V) {
+		if (in_focus && !g_ui->is_typing && g_ui->is_ctrl_down && g_ui->is_key_pressed && g_ui->key_code == KEY_CODE_V && tab_layers_clipboard_valid()) {
 			g_ui->is_key_pressed = false;
 			tab_layers_l         = g_context->layer;
 			sys_notify_on_next_frame(slot_layer_is_mask(tab_layers_clipboard) ? &tab_layers_draw_layer_context_menu_paste_mask
