@@ -21,13 +21,13 @@ Como atualizar:
 | Ferramentas e pincel | 28 | 8 | 14 | 6 | 29% |
 | Projeções de fill | 7 | 2 | 1 | 4 | 29% |
 | Procedural e biblioteca | 10 | 1 | 5 | 4 | 10% |
-| Baking | 12 | 5 | 1 | 6 | 42% |
+| Baking | 12 | 7 | 0 | 5 | 58% |
 | Viewport, render e shading | 12 | 2 | 5 | 5 | 17% |
 | Import e export | 13 | 1 | 10 | 2 | 8% |
 | Interface, UX e scripting | 11 | 3 | 6 | 2 | 27% |
-| **Total** | **129** | **36 (28%)** | **53** | **40** | meta: 117 ✅ |
+| **Total** | **129** | **38 (29%)** | **52** | **39** | meta: 117 ✅ |
 
-Fora de escopo nas tabelas: 2. Faltam 81 itens ✅ para a meta.
+Fora de escopo nas tabelas: 2. Faltam 79 itens ✅ para a meta.
 
 <!-- placar:fim -->
 
@@ -158,8 +158,8 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 | BAKE-05 | Auto rebake incremental e quick rebake (12.1) | ❌ falta | — | Marcar região suja (bbox UV) ao mudar parâmetro; rebake só da região; botão "rebake visível" | P2 | M |  |
 | BAKE-06 | Skew map painting (12.1): brush/eraser/polygon fill, preview shader, vetores de direção, edge protection, base normal mesh/per-triangle | ❌ falta | — | Skew map = textura RGBA por set; ferramenta de pintura reaproveita brush; bake de normal usa direção do raio = normal interpolada do skew; shader de preview | P2 | L |  |
 | BAKE-07 | Cage painting (12.2): offset de cage por pixel sobre o global, visualização, select/fill, blend, HDR slider, reset | ❌ falta | — | Textura de offset (float) por set; bake lê offset por texel; visualização do cage em wireframe translúcido | P2 | M |  |
-| BAKE-08 | Opacity bake, UV island ID bake | ❌ falta | — | `BAKE_TYPE_OPACITY`, `BAKE_TYPE_UV_ISLAND` em `make_bake.c` | P2 | S |  |
-| BAKE-09 | Curvature por geometria (não screen-space) | 🟡 parcial | — | Curvatura por vértice via adjacência (`util_geom.c`) rasterizada; opção "Mesh" vs "Normal map" | P2 | M |  |
+| BAKE-08 | Opacity bake, UV island ID bake | ✅ feito | — | `BAKE_TYPE_OPACITY`, `BAKE_TYPE_UV_ISLAND` em `make_bake.c` | P2 | S | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): tipos Opacity e UV Island no nó Bake Texture (a lista guarda o tipo, não a posição); mesh map ID com Color Source "UV Island"; o slot Opacity vem da BAKE-01. `mesh_maps.md` |
+| BAKE-09 | Curvature por geometria (não screen-space) | ✅ feito | — | Curvatura por vértice via adjacência (`util_geom.c`) rasterizada; opção "Mesh" vs "Normal map" | P2 | M | [PR 3](https://github.com/maya19952022-eng/armorpaint/pull/3): Curvature com Source "Mesh": curvatura por vértice pelas arestas (vértices no mesmo lugar soldados), interpolada no texel; enxerga quinas sobre costuras de UV. "Normals" continua o padrão. `mesh_maps.md` |
 | BAKE-10 | Export preset "Mesh maps" grayscale (11.1) | ❌ falta | — | Preset JSON lendo slots de mesh map | P8 | S |  |
 | BAKE-11 | Bakers GPU RT (AMD) | ✅ feito | (D3D12/Vulkan RT) | — | — | — |  |
 | BAKE-12 | Histórico unificado | ✅ feito | — | — | — | — |  |
