@@ -220,7 +220,7 @@ Os enums `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_
 - O skew map é amostrado no texel mais próximo da camada; a visualização dos vetores de direção dos raios ainda não existe.
 - Não há mapa de altura (Height) vindo do high poly.
 - O rebake refaz o mapa inteiro, mesmo quando só um objeto mudou; não há rebake só da região alterada.
-- A assinatura da cena olha uma amostra de até 1024 valores por array de vértices: uma edição que muda só vértices fora da amostra (raro: reimportar ou aplicar deslocamento muda muitos) não marca o mapa como desatualizado.
+- A assinatura da cena olha uma amostra de até 1024 vértices inteiros por array (posição, normal, UV, cor) e as transformações arredondadas: uma edição que muda só vértices fora da amostra (raro: reimportar ou aplicar deslocamento muda muitos) não marca o mapa como desatualizado.
 - Um slot por projeto: todos os objetos compartilham o mesmo espaço UV, como as camadas. Texture sets separados são a PRJ-05.
 - UVs fora de 0 a 1 (tiles UDIM além do 1001) não entram nos mapas.
 - Em Normals, quinas que caem numa costura de UV não aparecem; use Source Mesh.

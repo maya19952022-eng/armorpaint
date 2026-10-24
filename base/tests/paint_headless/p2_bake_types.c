@@ -154,6 +154,7 @@ void check_node_opacity() {
 	int g1 = node_gray(0.75, 0.75);
 	check(absf(g0 - 128) <= 3 && absf(g1 - 128) <= 3, string("opacity bake writes the opacity, nothing discarded: %d %d", g0, g1));
 	script_material_set_button(bake_node, 0, BAKE_TYPE_UV_ISLAND);
+	script_get_context()->brush_scale = 2.0; // The islands follow the mesh uvs, not the brush mapping
 	script_bake_node(bake_node);
 }
 
@@ -165,6 +166,7 @@ void check_node_uv_island() {
 	check(ll != lr && ll != hl && ll != hr && lr != hl && lr != hr && hl != hr, string("uv island bake: a color per island %x %x %x %x", ll, lr, hl, hr));
 	check(node_color(0.10, 0.25) == ll && node_color(0.75, 0.30) == lr, "uv island bake: one color inside an island");
 	check(ll != 0 && hr != 0, "uv island colors are not black");
+	script_get_context()->brush_scale = 1.0;
 
 	if (iron_file_exists(file_save)) {
 		iron_delete_file(file_save);

@@ -65,9 +65,11 @@ void check_rebaked() {
 	script_redo();
 	check(!script_bake_outdated(MESH_MAP_OCCLUSION), "redo brings back the up to date map");
 
-	// Moving the object changes what every map is baked from
+	// Moving the object changes what every map is baked from. The rotation must also survive save and load.
 	object_t *o         = cube();
 	o->transform->loc.x = o->transform->loc.x + 0.5;
+	o->transform->rot.z = 0.317305; // 37 degrees around z
+	o->transform->rot.w = 0.948324;
 	transform_build_matrix(o->transform);
 	check(script_bake_outdated(MESH_MAP_OCCLUSION) && script_bake_outdated(MESH_MAP_CURVATURE), "moving the object makes both maps outdated");
 
@@ -112,6 +114,22 @@ void check_cancelled() {
 
 void check_resumed() {
 	check(!script_bake_outdated(MESH_MAP_CURVATURE), "a new change starts auto rebake again");
+	script_bake_get_settings()->curvature_strength = 0.5;
+}
+
+void clear_while_auto() {
+	script_mesh_map_clear(MESH_MAP_CURVATURE); // Auto rebake is working on it
+	time0 = sys_time();
+}
+
+void check_cleared() {
+	check(script_mesh_map_get(MESH_MAP_CURVATURE) == NULL, "a map cleared while auto rebake works on it stays empty");
+	script_bake_get_settings()->curvature_strength = 1.0 / 3.0; // Saved as text, must still match after loading
+	script_bake_mesh_map(MESH_MAP_CURVATURE);
+}
+
+void save() {
+	check(!script_bake_outdated(MESH_MAP_CURVATURE), "baked again by hand");
 	if (iron_file_exists(file_save)) {
 		iron_delete_file(file_save);
 	}
@@ -125,7 +143,8 @@ void step_reopen() {
 	script_project_open(file_save);
 	bake_settings_t *s = script_bake_get_settings();
 	check(s->auto_rebake && !s->quick_rebake, "auto and quick rebake survive save and load");
-	check(script_mesh_map_get(MESH_MAP_CURVATURE) != NULL && !script_bake_outdated(MESH_MAP_CURVATURE), "a reopened map is still up to date");
+	check(script_mesh_map_get(MESH_MAP_CURVATURE) != NULL && !script_bake_outdated(MESH_MAP_CURVATURE),
+	      "a reopened map is still up to date, with a rotated object and a setting of 1/3");
 	s->curvature_strength = 1.0;
 	check(script_bake_outdated(MESH_MAP_CURVATURE), "and outdated once a setting changes");
 	s->auto_rebake = false;
@@ -154,6 +173,15 @@ int waiting() {
 	}
 	if (step == 7) {
 		return busy || script_bake_outdated(MESH_MAP_CURVATURE);
+	}
+	if (step == 8) {
+		return script_bake_state(MESH_MAP_CURVATURE) == BAKE_STATE_IDLE;
+	}
+	if (step == 9) {
+		return busy || sys_time() - time0 < 1.0;
+	}
+	if (step == 10) {
+		return busy;
 	}
 	return 0;
 }
@@ -197,9 +225,18 @@ void next_frame() {
 		check_resumed();
 	}
 	else if (step == 8) {
-		// project_save() runs on this frame
+		clear_while_auto();
 	}
 	else if (step == 9) {
+		check_cleared();
+	}
+	else if (step == 10) {
+		save();
+	}
+	else if (step == 11) {
+		// project_save() runs on this frame
+	}
+	else if (step == 12) {
 		step_reopen();
 	}
 	else {
