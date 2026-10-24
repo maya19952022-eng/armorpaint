@@ -136,6 +136,7 @@ bool                  util_bake_run(i32 slot, void (*done)(void *), void *done_d
 void                  util_bake_run_all(void (*done)(void *), void *done_data);
 void                  util_bake_run_selected(void (*done)(void *), void *done_data);
 i32                   util_bake_run_outdated();
+void                  util_bake_slot_default(i32 slot, f32 *v);
 i32                   util_bake_texels_baked();
 f32_array_t          *util_bake_texture_pixels(gpu_texture_t *tex);
 gpu_texture_t        *util_bake_ray_directions_texture();

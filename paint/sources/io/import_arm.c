@@ -1135,6 +1135,7 @@ void import_arm_run_project(char *path) {
 	// Layer
 	g_context->layer        = g_project->_->layers->buffer[0];
 	ui_view2d_hwnd->redraws = 2;
+	context_update_role_view(); // Leaves the mask view a skew map of the previous project was shown in
 	if (slot_layer_get_object_mask(g_context->layer) > 0 || g_context->layer_filter > 0) {
 		layers_set_object_mask();
 	}

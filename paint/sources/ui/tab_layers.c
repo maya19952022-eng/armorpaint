@@ -787,6 +787,10 @@ bool tab_layers_can_merge_down(slot_layer_t *l) {
 	if (slot_layer_is_locked(l) || slot_layer_is_locked(g_project->_->layers->buffer[index - 1])) {
 		return false;
 	}
+	// Skew and cage maps are read by the baker, not part of the material
+	if (l->bake_role != BAKE_ROLE_NONE || below->bake_role != BAKE_ROLE_NONE) {
+		return false;
+	}
 	// Lowest layer that has masks
 	if (slot_layer_is_layer(l) && slot_layer_is_mask(g_project->_->layers->buffer[0]) && g_project->_->layers->buffer[0]->parent == l) {
 		return false;

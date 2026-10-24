@@ -562,6 +562,7 @@ typedef struct history_layer_props {
 	i32             fill_material; // Index + 1, 0 for a paint layer
 	bool            effect;
 	geometry_mask_t geometry_mask;
+	i32             bake_role;
 } history_layer_props_t;
 
 typedef struct history_step {

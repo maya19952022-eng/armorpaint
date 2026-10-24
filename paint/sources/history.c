@@ -1223,6 +1223,7 @@ history_layer_props_t *history_layer_props(slot_layer_t *l) {
 	p->fill_material = l->fill_material != NULL ? array_index_of(g_project->_->materials, l->fill_material) + 1 : 0;
 	p->effect        = l->effect;
 	p->geometry_mask = slot_layer_geometry_mask_copy(&l->geometry_mask);
+	p->bake_role     = l->bake_role;
 	return p;
 }
 
@@ -1243,6 +1244,7 @@ void history_set_layer_props(history_layer_props_t *p, slot_layer_t *l) {
 	l->effect = p->effect;
 	slot_layer_geometry_mask_free(&l->geometry_mask);
 	l->geometry_mask = slot_layer_geometry_mask_copy(&p->geometry_mask);
+	l->bake_role     = p->bake_role; // A skew or cage map comes back as one
 }
 
 void history_merge_layers() {

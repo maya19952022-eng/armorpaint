@@ -1219,6 +1219,9 @@ void layers_create_color_layer(i32 base_color, f32 occlusion, f32 roughness, f32
 }
 
 void layers_duplicate_layer(slot_layer_t *l) {
+	if (l->bake_role != BAKE_ROLE_NONE) {
+		return; // One skew map and one cage map per project
+	}
 	if (!slot_layer_is_group(l)) {
 		slot_layer_t *new_layer = slot_layer_duplicate(l);
 		context_set_layer(new_layer);
@@ -1250,7 +1253,10 @@ void layers_duplicate_layer(slot_layer_t *l) {
 		array_insert(g_project->_->layers, array_index_of(g_project->_->layers, l) + 1, new_group);
 		// group.show_panel = true;
 		for (i32 i = 0; i < slot_layer_get_children(l)->length; ++i) {
-			slot_layer_t         *c         = slot_layer_get_children(l)->buffer[i];
+			slot_layer_t *c = slot_layer_get_children(l)->buffer[i];
+			if (c->bake_role != BAKE_ROLE_NONE) {
+				continue; // Left out of the material, also of a flattened group
+			}
 			slot_layer_t_array_t *masks     = slot_layer_get_masks(c, false);
 			slot_layer_t         *new_layer = slot_layer_duplicate(c);
 			new_layer->parent               = new_group;
@@ -1737,7 +1743,8 @@ slot_layer_t *layers_flatten_group(slot_layer_t *group) {
 }
 
 void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
-	if (!l1->visible || slot_layer_is_group(l1) || (l1->effect && !slot_layer_is_visible(l1)) || l1->bake_role != BAKE_ROLE_NONE) {
+	if (!l1->visible || slot_layer_is_group(l1) || (l1->effect && !slot_layer_is_visible(l1)) || l1->bake_role != BAKE_ROLE_NONE ||
+	    l0->bake_role != BAKE_ROLE_NONE) {
 		return;
 	}
 

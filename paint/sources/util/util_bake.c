@@ -25,10 +25,11 @@ typedef struct util_bake_raster {
 	util_bake_mesh_t high;   // Empty without high poly objects
 	f32              min[3]; // Bounds of all the geometry
 	f32              max[3];
-	f32              size; // Diagonal of the bounds
-	bvh_t            bvh;  // The high poly, or the low poly for the slots that cast rays without one
-	f32             *skew; // Skew map per texel of its layer, NULL without one or without high poly
-	f32             *cage; // Cage map per texel of its layer, -1 to 1
+	bool             overlap; // A texel is covered by triangles of two objects
+	f32              size;    // Diagonal of the bounds
+	bvh_t            bvh;     // The high poly, or the low poly for the slots that cast rays without one
+	f32             *skew;    // Skew map per texel of its layer, NULL without one or without high poly
+	f32             *cage;    // Cage map per texel of its layer, -1 to 1
 	i32              role_w;
 	i32              role_h;
 	u8              *hard; // Per low poly triangle, bit k: the edge from corner k to k + 1 is hard, NULL without edge protection
@@ -183,6 +184,11 @@ static void util_bake_default_value(i32 slot, f32 *v) {
 	else if (slot == MESH_MAP_CURVATURE) {
 		v[0] = v[1] = v[2] = 0.5;
 	}
+}
+
+// Rgba of a slot that is not baked
+void util_bake_slot_default(i32 slot, f32 *v) {
+	util_bake_default_value(slot, v);
 }
 
 gpu_texture_t *util_bake_mesh_map(i32 slot) {
@@ -617,6 +623,7 @@ static void util_bake_mesh_build(bake_settings_t *s, util_bake_mesh_t *m, bool h
 
 static bool util_bake_roles_dirty = true;
 static u32  util_bake_roles_hash  = 0;
+static u32  util_bake_role_hashes[2]; // Skew and cage map, 0 when empty or missing
 
 slot_layer_t *util_bake_role_layer(i32 role) {
 	slot_layer_t_array_t *layers = g_project->_->layers;
@@ -775,6 +782,10 @@ static void util_bake_raster_low(util_bake_raster_t *r) {
 				f32 b1 = ((x[2] - cx) * (y[0] - cy) - (x[0] - cx) * (y[2] - cy)) / area;
 				f32 b2 = 1.0f - b0 - b1;
 				if (b0 >= -1e-4f && b1 >= -1e-4f && b2 >= -1e-4f) {
+					i32 prev = r->tri[py * res + px];
+					if (prev >= 0 && m->object[prev] != m->object[t]) {
+						r->overlap = true;
+					}
 					r->tri[py * res + px] = t;
 				}
 			}
@@ -783,7 +794,8 @@ static void util_bake_raster_low(util_bake_raster_t *r) {
 }
 
 // Low poly triangles in uv space, and the high poly or the low poly in a bvh when rays are cast
-static util_bake_raster_t *util_bake_raster_create(bake_settings_t *s, i32 res, bool colors, bool rays, bool vertex_curvature) {
+// With high false the high poly objects are left out, for what needs only the low poly
+static util_bake_raster_t *util_bake_raster_create(bake_settings_t *s, i32 res, bool colors, bool rays, bool vertex_curvature, bool high) {
 	util_bake_raster_t *r = calloc(1, sizeof(util_bake_raster_t));
 	r->res                = res;
 	r->tri                = malloc((size_t)res * res * sizeof(i32));
@@ -811,7 +823,9 @@ static util_bake_raster_t *util_bake_raster_create(bake_settings_t *s, i32 res, 
 		}
 	}
 	util_bake_mesh_build(s, &r->low, false, res, colors, groups, r);
-	util_bake_mesh_build(s, &r->high, true, res, colors, groups, r);
+	if (high) {
+		util_bake_mesh_build(s, &r->high, true, res, colors, groups, r);
+	}
 	free(groups);
 
 	if (r->min[0] > r->max[0]) { // No geometry
@@ -1388,7 +1402,7 @@ static gpu_texture_t *util_bake_uv_islands = NULL;
 
 // A color per uv island of the objects that are not high poly, read by the UV Island type of the Bake Texture node
 void util_bake_make_uv_islands(i32 res) {
-	util_bake_raster_t *r  = util_bake_raster_create(&util_bake_settings, res, false, false, false);
+	util_bake_raster_t *r  = util_bake_raster_create(&util_bake_settings, res, false, false, false, false);
 	f32                *px = calloc((size_t)res * res * 4, sizeof(f32));
 	for (i32 i = 0; i < res * res; ++i) {
 		if (r->tri[i] >= 0) {
@@ -1443,20 +1457,33 @@ static void util_bake_roles_update() {
 	if (in_use) {
 		draw_end();
 	}
-	u32 h = 2166136261u;
+	// What the baker reads of every texel, an empty layer hashes like no layer
+	u32 all = 2166136261u;
 	for (i32 role = BAKE_ROLE_SKEW; role <= BAKE_ROLE_CAGE; ++role) {
-		slot_layer_t *l = util_bake_role_layer(role);
-		h               = (h ^ (u32)(l != NULL)) * 16777619u;
-		if (l == NULL || l->texpaint == NULL) {
-			continue;
+		i32  w     = 0;
+		i32  hgt   = 0;
+		f32 *v     = util_bake_role_values(role, &w, &hgt);
+		u32  h     = 0;
+		bool empty = true;
+		for (i32 i = 0; v != NULL && i < w * hgt; ++i) {
+			if (v[i] != 0.0f) {
+				empty = false;
+				break;
+			}
 		}
-		buffer_t *b    = gpu_get_texture_pixels(l->texpaint);
-		i32       step = b->length / (UTIL_BAKE_HASH_SAMPLES * 64) > 1 ? b->length / (UTIL_BAKE_HASH_SAMPLES * 64) : 1;
-		for (i32 i = 0; i < b->length; i += step) {
-			h = (h ^ b->buffer[i]) * 16777619u;
+		if (!empty) {
+			h = (2166136261u ^ (u32)w) * 16777619u;
+			for (i32 i = 0; i < w * hgt; ++i) {
+				u32 bits;
+				memcpy(&bits, &v[i], sizeof(bits));
+				h = (h ^ bits) * 16777619u;
+			}
 		}
+		free(v);
+		util_bake_role_hashes[role - BAKE_ROLE_SKEW] = h;
+		all                                          = (all ^ h) * 16777619u;
 	}
-	util_bake_roles_hash = h;
+	util_bake_roles_hash = all;
 	if (in_use) {
 		draw_begin(current, false, 0);
 	}
@@ -1475,8 +1502,11 @@ slot_layer_t *util_bake_paint_role(i32 role) {
 			return NULL;
 		}
 		history_new_layer();
-		l->bake_role = role;
-		l->name      = string_copy(role == BAKE_ROLE_SKEW ? tr("Skew Map") : tr("Cage Map"));
+		char *old_name = l->name;
+		l->bake_role   = role;
+		l->name        = string_copy(role == BAKE_ROLE_SKEW ? tr("Skew Map") : tr("Cage Map"));
+		tab_stages_rename_layer(old_name, l->name); // The stage lists the layers the Layers tab shows
+		history_keep_layer_props(l);                // Redo makes it again with its role
 		slot_layer_clear(l, 0x00000000, NULL, 1.0, layers_default_rough, 0.0);
 		util_bake_roles_changed();
 	}
@@ -1493,11 +1523,10 @@ void util_bake_role_fill(i32 role, f32 value) {
 	if (l == NULL) {
 		return;
 	}
-	slot_layer_t *_layer = g_context->layer;
-	g_context->layer     = l;
-	history_clear_layer();
-	g_context->layer = _layer;
-	i32 c            = value < 0.0f ? 0 : (i32)((value > 1.0f ? 1.0f : value) * 255.0f + 0.5f);
+	context_set_layer(l); // A paint step: undo and redo swap the pixels of the step's layer
+	history_paint();
+	history_steps->buffer[history_steps->length - 1]->name = value < 0.0f ? tr("Clear") : tr("Fill");
+	i32 c                                                  = value < 0.0f ? 0 : (i32)((value > 1.0f ? 1.0f : value) * 255.0f + 0.5f);
 	slot_layer_clear(l, value < 0.0f ? 0x00000000 : (i32)(0xff000000 | (c << 16) | (c << 8) | c), NULL, 1.0, layers_default_rough, 0.0);
 	g_context->layers_preview_dirty = true;
 	g_context->ddirty               = 2;
@@ -1678,7 +1707,7 @@ static f64            util_bake_ray_dirs_time = 0.0;
 static void util_bake_make_ray_directions() {
 	bake_job_t          job = {.slot = MESH_MAP_NORMAL, .settings = util_bake_settings};
 	i32                 res = UTIL_BAKE_RAY_DIRECTIONS_RES;
-	util_bake_raster_t *r   = util_bake_raster_create(&job.settings, res, false, false, false);
+	util_bake_raster_t *r   = util_bake_raster_create(&job.settings, res, false, false, false, false);
 	job.raster              = r;
 	if (r->skew == NULL) { // Also without a high poly, the preview shows what painting does
 		r->skew = util_bake_role_values(BAKE_ROLE_SKEW, &r->role_w, &r->role_h);
@@ -1729,10 +1758,18 @@ static void util_bake_ray_directions_update(f64 now) {
 	    (util_bake_ray_dirs != NULL && now - util_bake_ray_dirs_time < 0.25)) {
 		return;
 	}
-	util_bake_ray_dirs_time = now;
-	bake_settings_t *s      = &util_bake_settings;
-	u32              sig    = util_bake_combine(util_bake_settings_hash(MESH_MAP_NORMAL, s), util_bake_scene_hash(s, false));
-	sig                     = util_bake_combine(sig, util_bake_roles_hash);
+	util_bake_ray_dirs_time        = now;
+	bake_settings_t       *s       = &util_bake_settings; // The low poly, the ray normals and the skew map
+	mesh_object_t_array_t *objects = g_project->_->paint_objects;
+	u32                    sig     = util_bake_fnv_i32(2166136261u, s->average_normals);
+	sig                            = util_bake_fnv_i32(sig, s->skew_base);
+	sig                            = util_bake_fnv_i32(sig, s->edge_protection);
+	sig                            = util_bake_fnv_i32(sig, util_bake_role_hashes[0]);
+	for (i32 oi = 0; objects != NULL && oi < objects->length; ++oi) {
+		if (!util_bake_is_high_poly(objects->buffer[oi]->base->name)) {
+			sig = util_bake_fnv_i32(sig, util_bake_object_hash(objects->buffer[oi], false));
+		}
+	}
 	if (sig == util_bake_ray_dirs_sig && util_bake_ray_dirs != NULL) {
 		return;
 	}
@@ -1817,6 +1854,9 @@ static void util_bake_partial(bake_job_t *job) {
 	    util_bake_map_object_count[slot] != job->obj_count || util_bake_slot_casts_rays(slot) || r->high.count > 0) {
 		return;
 	}
+	if (r->overlap || (slot == MESH_MAP_ID && job->settings.id_source == MESH_MAP_ID_UV_ISLAND)) {
+		return; // Shared texels can change owner, and island colors are numbered across all objects
+	}
 	for (i32 a = 0; a < 3; ++a) {
 		if (r->min[a] != util_bake_map_bounds[slot][a] || r->max[a] != util_bake_map_bounds[slot][3 + a]) {
 			return; // Position and curvature are relative to the bounds
@@ -1834,6 +1874,8 @@ static void util_bake_partial(bake_job_t *job) {
 		return;
 	}
 	memcpy(job->out, px->buffer, sizeof(f32) * 4 * r->res * r->res);
+	array_free(px);
+	free(px);
 	job->region = malloc(r->low.count > 0 ? r->low.count : 1);
 	for (i32 t = 0; t < r->low.count; ++t) {
 		i32 o          = r->low.object[t];
@@ -1962,7 +2004,7 @@ void util_bake_update(void *_) {
 		i32  res            = job->settings.res > 0 ? job->settings.res : 1;
 		bool colors         = job->slot == MESH_MAP_ID && job->settings.id_source == MESH_MAP_ID_VERTEX_COLOR;
 		bool vertex_curv    = job->slot == MESH_MAP_CURVATURE && job->settings.curvature_mode == MESH_MAP_CURVATURE_MESH;
-		job->raster         = util_bake_raster_create(&job->settings, res, colors, util_bake_slot_casts_rays(job->slot), vertex_curv);
+		job->raster         = util_bake_raster_create(&job->settings, res, colors, util_bake_slot_casts_rays(job->slot), vertex_curv, true);
 		job->out            = calloc((size_t)res * res * 4, sizeof(f32));
 		job->rows_per_frame = util_bake_slot_casts_rays(job->slot) || job->raster->high.count > 0 ? 1 : res;
 		job->obj_hashes     = util_bake_object_hashes(colors, &job->obj_count);
@@ -2310,6 +2352,9 @@ f32_array_t *util_bake_texture_pixels(gpu_texture_t *tex) {
 			}
 		}
 	}
+	free(tex->buffer->buffer); // The floats are the copy, keep no readback of the map
+	free(tex->buffer);
+	tex->buffer = NULL;
 	return out;
 }
 

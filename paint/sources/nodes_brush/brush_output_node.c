@@ -143,7 +143,8 @@ void brush_output_node_run() {
 		return;
 	}
 
-	if (!picking_object && !slot_layer_is_visible(g_context->layer) && !g_context->paint2d) {
+	if (!picking_object && !slot_layer_is_visible(g_context->layer) && g_context->layer->bake_role == BAKE_ROLE_NONE &&
+	    !g_context->paint2d) { // Skew and cage maps are left out of the material but painted
 		return;
 	}
 

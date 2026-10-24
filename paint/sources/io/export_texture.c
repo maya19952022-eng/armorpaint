@@ -253,21 +253,27 @@ static bool export_texture_mesh_channel(char *c, i32 *slot, i32 *comp) {
 
 // A component of a mesh map resized to the export, the default value of the slot when it is not baked
 static void export_texture_copy_mesh_channel(i32 slot, i32 comp, buffer_t *to, i32 to_channel, i32 bits, bool linear, i32 width, i32 height) {
-	gpu_texture_t *tex = util_bake_texture(slot);
-	f32_array_t   *px  = util_bake_texture_pixels(tex);
-	if (px == NULL) {
-		return;
-	}
-	if (util_bake_mesh_map(slot) == NULL) {
+	gpu_texture_t *tex = util_bake_mesh_map(slot);
+	to_channel         = _export_texture_channel(to_channel, bits);
+	if (tex == NULL) {
 		console_info(string("%s: %s", tr("Mesh map not baked"), util_bake_slot_name(slot)));
-	}
-	to_channel = _export_texture_channel(to_channel, bits);
-	for (i32 y = 0; y < height; ++y) {
-		for (i32 x = 0; x < width; ++x) {
-			i32 mx = x * tex->width / width;
-			i32 my = y * tex->height / height;
-			_export_texture_set_value(to, y * width + x, to_channel, bits, px->buffer[(my * tex->width + mx) * 4 + comp]);
+		f32 def[4];
+		util_bake_slot_default(slot, def);
+		for (i32 i = 0; i < width * height; ++i) {
+			_export_texture_set_value(to, i, to_channel, bits, def[comp]);
 		}
+	}
+	else {
+		f32_array_t *px = util_bake_texture_pixels(tex);
+		for (i32 y = 0; y < height; ++y) {
+			for (i32 x = 0; x < width; ++x) {
+				i32 mx = x * tex->width / width;
+				i32 my = y * tex->height / height;
+				_export_texture_set_value(to, y * width + x, to_channel, bits, px->buffer[(my * tex->width + mx) * 4 + comp]);
+			}
+		}
+		array_free(px);
+		free(px);
 	}
 	if (!linear) {
 		export_texture_to_srgb(to, to_channel, bits);
