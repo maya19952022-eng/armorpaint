@@ -460,6 +460,14 @@ gpu_texture_t *uniforms_ext_tex_link(object_t *object, shader_data_t *mat, char 
 		}
 		return t;
 	}
+	if (string_equals(link, "_texuvislands")) { // UV Island type of the Bake Texture node
+		gpu_texture_t *t = util_bake_uv_islands_texture();
+		if (t == NULL) {
+			render_target_t *rt = any_map_get(render_path_render_targets, "empty_black");
+			return rt->_image;
+		}
+		return t;
+	}
 	if (starts_with(link, "_texmeshmap")) { // Mesh Map node, the slot follows the prefix
 		return util_bake_texture(parse_int(link + string_length("_texmeshmap")));
 	}

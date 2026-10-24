@@ -1481,6 +1481,17 @@ void script_mesh_map_clear(i32 slot) {
 	script_gpu_end(current, in_use);
 }
 
+// Queues the bake of a Bake Texture node into the selected layer, with the bake type stored in its button
+void script_bake_node(ui_node_t *node) {
+	if (node != NULL && string_equals(node->type, "TEX_BAKE")) {
+		bake_texture_node_bake(node);
+	}
+}
+
+gpu_texture_t *script_bake_node_texture(ui_node_t *node) {
+	return node != NULL && string_equals(node->type, "TEX_BAKE") ? bake_texture_node_texture(node) : NULL;
+}
+
 void script_quit(void) {
 	iron_stop();
 }

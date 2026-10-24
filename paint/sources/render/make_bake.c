@@ -91,6 +91,13 @@ void make_bake_run(node_shader_context_t *con, node_shader_t *kong) {
 		node_shader_write_frag(kong, "float id_b = frac(sin(dot(float2(obid, obid * 40.0), float2(12.9898, 78.233))) * 43758.5453);");
 		node_shader_write_frag(kong, "output[0] = float4(id_r, id_g, id_b, 1.0);");
 	}
+	else if (g_context->bake_type == BAKE_TYPE_OPACITY) { // Opacity of the material, nothing is discarded
+		node_shader_write_frag(kong, "output[0] = float4(mat_opacity, mat_opacity, mat_opacity, 1.0);");
+	}
+	else if (g_context->bake_type == BAKE_TYPE_UV_ISLAND) { // Made on the cpu by util_bake_make_uv_islands
+		node_shader_add_texture(kong, "texuvislands", "_texuvislands");
+		node_shader_write_frag(kong, "output[0] = float4(sample_lod(texuvislands, sampler_linear, tex_coord, 0.0).rgb, 1.0);");
+	}
 	else if (g_context->bake_type == BAKE_TYPE_VERTEX_COLOR) {
 		if (con->allow_vcols) {
 			node_shader_context_add_elem(con, "col", "short4norm");

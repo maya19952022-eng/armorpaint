@@ -506,7 +506,9 @@ node_shader_context_t *make_paint_run_context(material_t *data, char *context_id
 		}
 	}
 
-	node_shader_write_frag(kong, string_tmp("if (opacity <= float(%s)) { discard; }", f32_to_string(g_config->brush_alpha_discard)));
+	if (!(g_context->tool == TOOL_TYPE_BAKE && g_context->bake_type == BAKE_TYPE_OPACITY)) { // The bake writes the opacity itself
+		node_shader_write_frag(kong, string_tmp("if (opacity <= float(%s)) { discard; }", f32_to_string(g_config->brush_alpha_discard)));
+	}
 
 	if (g_context->tool == TOOL_TYPE_PARTICLE) { // Particle mask
 		make_particle_mask(kong);
