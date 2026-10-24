@@ -806,6 +806,40 @@ void layers_create_filter() {
 	sys_notify_on_next_frame(&layers_create_filter_on_next_frame, NULL);
 }
 
+// Own material for a new fill mask: white base color, so the mask starts fully visible
+slot_material_t *layers_new_mask_material(char *name) {
+	slot_material_t  *m      = slot_material_create(g_project->_->materials->buffer[0]->data, NULL);
+	ui_node_canvas_t *canvas = m->canvas;
+	canvas->name             = string_copy(slot_material_unique_name(canvas, name));
+	ui_node_t *output        = NULL;
+	for (i32 i = canvas->nodes->length - 1; i >= 0; --i) {
+		ui_node_t *n = canvas->nodes->buffer[i];
+		if (string_equals(n->type, "OUTPUT_MATERIAL_PBR")) {
+			output = n;
+		}
+		else if (string_equals(n->type, "RGB")) {
+			for (i32 j = canvas->links->length - 1; j >= 0; --j) {
+				ui_node_link_t *l = canvas->links->buffer[j];
+				if (l->from_id == n->id || l->to_id == n->id) {
+					array_remove(canvas->links, l);
+				}
+			}
+			array_remove(canvas->nodes, n);
+		}
+	}
+	if (output != NULL) {
+		f32_array_t *base = output->inputs->buffer[0]->default_value;
+		base->buffer[0]   = 1.0;
+		base->buffer[1]   = 1.0;
+		base->buffer[2]   = 1.0;
+	}
+	any_array_push(g_project->_->materials, m);
+	g_context->material = m;
+	tab_materials_update_material();
+	history_new_material();
+	return m;
+}
+
 void layers_create_image_mask(asset_t *asset) {
 	slot_layer_t *l = g_context->layer;
 	if (slot_layer_is_mask(l) || slot_layer_is_group(l)) {

@@ -695,8 +695,8 @@ i32 script_layer_index(slot_layer_t *l) {
 }
 
 slot_layer_t *script_layer_new_mask(slot_layer_t *l, i32 type) {
-	// type: 0 black, 1 white, 2 fill with the current material
-	if (!script_layer_valid(l) || type < 0 || type > 2) {
+	// type: 0 black, 1 white, 2 fill with the current material, 3 fill with a new white material like Fill Mask in the layers tab
+	if (!script_layer_valid(l) || type < 0 || type > 3) {
 		return NULL;
 	}
 	if (type == 2 && g_context->material == NULL) {
@@ -709,6 +709,9 @@ slot_layer_t *script_layer_new_mask(slot_layer_t *l, i32 type) {
 	bool           in_use;
 	script_gpu_begin(&current, &in_use);
 	base_init_undo_layers();
+	if (type == 3) {
+		layers_new_mask_material(string_tmp("%s %s", l->name, tr("Mask")));
+	}
 	context_set_layer(l);
 	slot_layer_t_array_t *pointers = tab_layers_init_layer_map();
 	slot_layer_t         *m        = layers_new_mask(false, l, -1);

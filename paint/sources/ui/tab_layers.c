@@ -1180,6 +1180,19 @@ void tab_layers_button_new_update_fill_layers(void *_) {
 	layers_update_fill_layers();
 }
 
+// The fill mask gets its own white material, edit that material to shape the mask
+void tab_layers_button_new_fill_mask(slot_layer_t *l) {
+	layers_new_mask_material(string_tmp("%s %s", l->name, tr("Mask")));
+	context_set_layer(l);
+	slot_layer_t_array_t *pointers = tab_layers_init_layer_map();
+	slot_layer_t         *m        = layers_new_mask(false, l, -1);
+	tab_layers_remap_all_layer_pointers(pointers);
+	sys_notify_on_next_frame(&tab_layers_button_new_to_fill_layer, m);
+	g_context->layer_preview_dirty = true;
+	history_new_fill_mask();
+	sys_notify_on_next_frame(&tab_layers_button_new_update_fill_layers, NULL);
+}
+
 void tab_layers_button_new_black_mask(slot_layer_t *m) {
 	slot_layer_clear(m, 0x00000000, NULL, 1.0, layers_default_rough, 0.0);
 }
@@ -1251,15 +1264,7 @@ void tab_layers_button_new_menu() {
 		if (slot_layer_is_mask(l) || slot_layer_is_filter(l)) {
 			context_set_layer(l->parent);
 		}
-		l = g_context->layer;
-
-		slot_layer_t_array_t *pointers = tab_layers_init_layer_map();
-		slot_layer_t         *m        = layers_new_mask(false, l, -1);
-		tab_layers_remap_all_layer_pointers(pointers);
-		sys_notify_on_next_frame(&tab_layers_button_new_to_fill_layer, m);
-		g_context->layer_preview_dirty = true;
-		history_new_fill_mask();
-		sys_notify_on_next_frame(&tab_layers_button_new_update_fill_layers, NULL);
+		sys_notify_on_next_frame(&tab_layers_button_new_fill_mask, g_context->layer);
 	}
 	if (ui_menu_button(tr("Filter"), "", ICON_FILTER)) {
 		if (slot_layer_is_mask(l) || slot_layer_is_filter(l)) {

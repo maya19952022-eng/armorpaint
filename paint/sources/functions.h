@@ -87,6 +87,7 @@ void layers_update_linked_layers();
 void layers_set_object_mask();
 slot_layer_t          *layers_new_layer(bool clear, i32 position, slot_layer_t *parent);
 slot_layer_t          *layers_new_mask(bool clear, slot_layer_t *parent, i32 position);
+slot_material_t       *layers_new_mask_material(char *name);
 slot_layer_t          *layers_new_group();
 slot_layer_t          *layers_new_path_layer(bool curved);
 slot_layer_t          *layers_new_text_layer();
