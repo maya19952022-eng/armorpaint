@@ -1398,6 +1398,54 @@ void script_bake_lightmap_cancel(void) {
 	render_path_raytrace_bake_lightmap_cancel();
 }
 
+// Queues a bake of the mesh map slot, see mesh_map_slot_t
+bool script_bake_mesh_map(i32 slot) {
+	return util_bake_run(slot, NULL, NULL);
+}
+
+void script_bake_mesh_maps(void) {
+	util_bake_run_all(NULL, NULL);
+}
+
+bool script_bake_busy(void) {
+	return util_bake_busy();
+}
+
+void script_bake_cancel(void) {
+	util_bake_cancel();
+}
+
+f32 script_bake_progress(void) {
+	return util_bake_progress();
+}
+
+// Settings used by the next queued bakes, saved with the project
+bake_settings_t *script_bake_get_settings(void) {
+	return util_bake_get_settings();
+}
+
+gpu_texture_t *script_mesh_map_get(i32 slot) {
+	return util_bake_mesh_map(slot);
+}
+
+// Rgba floats in 0-1 of a baked slot, NULL when it is not baked
+f32_array_t *script_mesh_map_pixels(i32 slot) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	f32_array_t *pixels = util_bake_pixels(slot);
+	script_gpu_end(current, in_use);
+	return pixels;
+}
+
+void script_mesh_map_clear(i32 slot) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	util_bake_clear(slot);
+	script_gpu_end(current, in_use);
+}
+
 void script_quit(void) {
 	iron_stop();
 }
