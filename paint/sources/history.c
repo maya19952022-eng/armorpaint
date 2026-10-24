@@ -374,7 +374,12 @@ void history_undo() {
 			slot_layer_swap(l, lay);
 			l->mask_opacity = step->layer_opacity;
 			history_set_channels(step, l);
-			l->object_mask  = step->layer_object;
+			l->object_mask = step->layer_object;
+			if (step->layer_name != NULL) {
+				l->name    = string_copy(step->layer_name);
+				l->visible = step->layer_visible;
+				l->locked  = step->layer_locked;
+			}
 			make_material_parse_mesh_material();
 
 			// Undo at least second time in order to avoid empty groups
@@ -422,6 +427,9 @@ void history_undo() {
 			history_undo_i    = history_undo_i - 1 < 0 ? g_config->undo_steps - 1 : history_undo_i - 1;
 			slot_layer_t *lay = history_undo_slot(history_undo_i);
 			slot_layer_swap(g_context->layer, lay);
+			if (step->layer_below != NULL) {
+				history_set_layer_props(step->layer_below, l);
+			}
 
 			l = slot_layer_create("", step->layer_type, parent);
 			array_insert(g_project->_->layers, step->layer + 1, l);
@@ -434,6 +442,9 @@ void history_undo() {
 			g_context->layer->mask_opacity  = step->layer_opacity;
 			history_set_channels(step, g_context->layer);
 			g_context->layer->object_mask   = step->layer_object;
+			if (step->layer_name != NULL) {
+				g_context->layer->name = string_copy(step->layer_name);
+			}
 			g_context->layers_preview_dirty = true;
 			make_material_parse_mesh_material();
 		}
@@ -1042,7 +1053,10 @@ void history_duplicate_layer() {
 
 void history_delete_layer() {
 	history_swap_active();
-	history_push(HISTORY_ACTION_DELETE_LAYER);
+	history_step_t *step = history_push(HISTORY_ACTION_DELETE_LAYER);
+	step->layer_name     = string_copy(g_context->layer->name);
+	step->layer_visible  = g_context->layer->visible;
+	step->layer_locked   = g_context->layer->locked;
 }
 
 void history_clear_layer() {
@@ -1120,6 +1134,25 @@ void history_apply_layer_order(history_step_t *step, bool undo) {
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 
+history_layer_props_t *history_layer_props(slot_layer_t *l) {
+	history_layer_props_t *p =
+	    ALLOC_INIT(history_layer_props_t,
+	               {.name = string_copy(l->name), .visible = l->visible, .locked = l->locked, .mask_opacity = l->mask_opacity, .object_mask = l->object_mask});
+	memcpy(p->blending, l->blending, sizeof(p->blending));
+	memcpy(p->opacity, l->opacity, sizeof(p->opacity));
+	return p;
+}
+
+void history_set_layer_props(history_layer_props_t *p, slot_layer_t *l) {
+	l->name         = string_copy(p->name);
+	l->visible      = p->visible;
+	l->locked       = p->locked;
+	l->mask_opacity = p->mask_opacity;
+	l->object_mask  = p->object_mask;
+	memcpy(l->blending, p->blending, sizeof(l->blending));
+	memcpy(l->opacity, p->opacity, sizeof(l->opacity));
+}
+
 void history_merge_layers() {
 	history_copy_merging_layers();
 
@@ -1128,6 +1161,8 @@ void history_merge_layers() {
 	if (slot_layer_has_masks(g_context->layer, true)) {
 		step->layer -= slot_layer_get_masks(g_context->layer, true)->length;
 	}
+	step->layer_name  = string_copy(g_context->layer->name);
+	step->layer_below = history_layer_props(g_project->_->layers->buffer[step->layer]);
 	array_shift(history_steps); // Merge consumes 2 steps
 	history_undos--;
 	// TODO: use undo layer in app_merge_down to save memory

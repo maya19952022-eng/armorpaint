@@ -431,6 +431,8 @@ void                   history_delete_layer();
 void                   history_clear_layer();
 void                   history_order_layers(i32 prev_order);
 void                   history_order_layers_begin();
+history_layer_props_t *history_layer_props(slot_layer_t *l);
+void                   history_set_layer_props(history_layer_props_t *p, slot_layer_t *l);
 void                   history_order_layers_end();
 void                   history_apply_layer_order(history_step_t *step, bool undo);
 void                   history_merge_layers();

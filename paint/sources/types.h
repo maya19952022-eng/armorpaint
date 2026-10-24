@@ -536,6 +536,17 @@ typedef struct node_shader_context {
 	struct material       *material;
 } node_shader_context_t;
 
+// Properties of a layer that a merge rebuilds from its textures
+typedef struct history_layer_props {
+	char *name;
+	bool  visible;
+	bool  locked;
+	f32   mask_opacity;
+	i32   object_mask;
+	i32   blending[LAYER_CH_COUNT];
+	f32   opacity[LAYER_CH_COUNT];
+} history_layer_props_t;
+
 typedef struct history_step {
 	char                        *name;
 	history_action_t             action;
@@ -551,7 +562,9 @@ typedef struct history_step {
 	i32                          layer_object;
 	i32                          layer_blending[LAYER_CH_COUNT];
 	f32                          layer_opacity_ch[LAYER_CH_COUNT];
-	bool                         layer_visible; // Group visibility before a flatten
+	bool                         layer_visible; // Group visibility before a flatten, layer visibility before a delete
+	bool                         layer_locked;  // Lock before a delete
+	struct history_layer_props  *layer_below;   // Merge down: the lower layer
 	i32                          prev_order;    // Previous layer position
 	struct i32_array            *layer_order;   // Layer move: position before the move of each layer after it
 	struct i32_array            *layer_parents; // Layer move: parent position + 1 of each layer before the move, then after it
