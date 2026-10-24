@@ -10,11 +10,19 @@ static void bake_texture_node_clear(gpu_texture_t *t) {
 	draw_end();
 }
 
-static void bake_texture_node_check_result(ui_node_t *node) {
+typedef struct bake_texture_node_job {
+	ui_node_t *node;
+	i32        bake_type;
+	bool       rt_bake;
+	bool       started;
+} bake_texture_node_job_t;
+
+// True once the bake is done and the layer has its texture back
+static bool bake_texture_node_check_result(ui_node_t *node) {
 	ui_nodes_hwnd->redraws = 2;
 
 	if (g_context->pdirty > 0 || render_path_paint_baking) {
-		return;
+		return false;
 	}
 
 	bool rgba128 = g_context->bake_type == BAKE_TYPE_NORMAL || g_context->bake_type == BAKE_TYPE_HEIGHT || g_context->bake_type == BAKE_TYPE_DERIVATIVE;
@@ -43,8 +51,7 @@ static void bake_texture_node_check_result(ui_node_t *node) {
 	}
 
 	layers_update_fill_layers();
-
-	sys_remove_update(bake_texture_node_check_result);
+	return true;
 }
 
 static void bake_texture_node_run(ui_node_t *node, int bake_type, bool rt_bake) {
@@ -85,9 +92,14 @@ static void bake_texture_node_run(ui_node_t *node, int bake_type, bool rt_bake) 
 		_bake_texture_node_bits = base_bits;
 		base_bits               = TEXTURE_BITS_BITS32;
 		gpu_texture_t *current  = _draw_current;
-		draw_end();
+		bool           in_use   = gpu_in_use;
+		if (in_use) {
+			draw_end();
+		}
 		layers_set_bits();
-		draw_begin(current, false, 0);
+		if (in_use) {
+			draw_begin(current, false, 0);
+		}
 
 		// Requires 2 steps
 		history_push_undo = true;
@@ -107,7 +119,37 @@ static void bake_texture_node_run(ui_node_t *node, int bake_type, bool rt_bake) 
 	bake_texture_node_baking                 = true;
 	make_material_parse_paint_material(false);
 	sys_notify_on_next_frame(bake_texture_node_clear, rt->_image);
-	sys_notify_on_update(bake_texture_node_check_result, node);
+}
+
+// Runs in the bake queue of util_bake.c, one call per frame
+static bool bake_texture_node_step(bake_job_t *job) {
+	bake_texture_node_job_t *d = util_bake_job_data(job);
+	if (!d->started) {
+		d->started = true;
+		if (slot_layer_is_paint_locked(g_context->layer)) { // Painting is off, the bake would never end
+			console_info(tr("The layer is locked"));
+			return true;
+		}
+		bake_texture_node_run(d->node, d->bake_type, d->rt_bake);
+		return false;
+	}
+	if (d->rt_bake && g_context->bake_samples > 0) {
+		f32 progress = render_path_raytrace_bake_current_sample / (float)g_context->bake_samples;
+		util_bake_set_progress(job, progress > 1.0 ? 1.0 : progress);
+	}
+	return bake_texture_node_check_result(d->node);
+}
+
+static void bake_texture_node_cancel(bake_job_t *job) {
+	g_context->pdirty = 0; // Keeps what was baked so far
+}
+
+static void bake_texture_node_queue(ui_node_t *node, int bake_type, bool rt_bake) {
+	bake_texture_node_job_t *d = calloc(1, sizeof(bake_texture_node_job_t));
+	d->node                    = node;
+	d->bake_type               = bake_type;
+	d->rt_bake                 = rt_bake;
+	util_bake_run_custom(bake_texture_node_step, bake_texture_node_cancel, d, NULL, NULL);
 }
 
 static void bake_texture_node_button(i32 node_id) {
@@ -170,7 +212,7 @@ static void bake_texture_node_button(i32 node_id) {
 		}
 	}
 	else if (ui_icon_button(tr("Bake"), ICON_PLAY, UI_ALIGN_CENTER)) {
-		bake_texture_node_run(node, bake_type, rt_bake);
+		bake_texture_node_queue(node, bake_type, rt_bake);
 	}
 	height++;
 
