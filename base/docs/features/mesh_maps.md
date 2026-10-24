@@ -1,6 +1,6 @@
 # Mesh maps
 
-IDs da matriz: BAKE-01, BAKE-02, BAKE-03, BAKE-04, BAKE-05, BAKE-08, BAKE-09 · Fase: P2
+IDs da matriz: BAKE-01, BAKE-02, BAKE-03, BAKE-04, BAKE-05, BAKE-06, BAKE-08, BAKE-09 · Fase: P2
 
 Texturas calculadas uma vez a partir da geometria do projeto (oclusão, curvatura, posição, espessura...) e lidas por qualquer material pelo nó **Mesh Map**. São a base para materiais que reagem à forma do modelo: sujeira nas cavidades, desgaste nas quinas, cor por objeto. O projeto tem um slot para cada mapa; assar de novo substitui o mapa do slot.
 
@@ -88,6 +88,23 @@ Em Common Settings, **Antialiasing** (None, 2x2, 4x4, 8x8) faz várias amostras 
 
 High polys continuam visíveis no viewport; esconda-os na aba Meshes ao pintar.
 
+## Skew map
+
+Com as normais suavizadas (Average Normals), perto de uma quina os raios se inclinam na direção dela, e detalhes do high poly (parafusos, frisos) saem deslocados ou esticados. O **skew map** diz, texel a texel, quanto o raio vira da normal suavizada para a normal do triângulo: preto deixa a normal suavizada, branco usa a do triângulo.
+
+O skew map é uma camada de pintura especial, chamada "Skew Map". Ela fica de fora do material e do export, só o bake a lê. Na aba Baking, seção **Skew Map**:
+
+| Controle | O que faz |
+|---|---|
+| **Paint** | Cria a camada no topo da pilha na primeira vez e a seleciona. Enquanto ela estiver selecionada, o viewport mostra o skew map (modo máscara) e o pincel, a borracha e o Fill pintam o cinza de **Value**, seja qual for o material. O Fill no modo Face preenche polígonos inteiros |
+| **Fill** | Preenche a camada toda com o cinza de Value (um passo de histórico) |
+| **Clear** | Deixa a camada transparente: sem skew |
+| **Value** | Cinza pintado no skew map e no cage map (0 a 1) |
+| **Base Normal** | **Mesh** (padrão): onde nada foi pintado, os raios seguem as normais suavizadas e o skew map os vira para a normal do triângulo. **Per Triangle**: o contrário |
+| **Edge Protection** (ligado por padrão) | Perto das quinas vivas (faces a mais de 30 graus, ou borda da malha), o raio volta suavemente à normal suavizada, no quarto do triângulo junto à quina: virar ali abriria buracos entre as faces |
+
+O skew map só muda os raios para o high poly; sem high poly, não muda nada. O valor de um texel é o cinza vezes a opacidade da camada. Mudar o skew map deixa os mapas desatualizados (BAKE-05). Selecionar outra camada volta ao modo de viewport anterior.
+
 ## Como o bake funciona
 
 - Todos os objetos do projeto são rasterizados no espaço UV (uma amostra no centro de cada texel); cada texel recebe posição e normal de mundo.
@@ -118,6 +135,9 @@ Ficam no projeto (`bake_settings` no `.arm`) e valem para os próximos bakes. Na
 | `front_distance` | 0.01 | Altura da cage acima do low poly, relativa à diagonal da cena |
 | `rear_distance` | 0.01 | Até onde abaixo do low poly o high poly é procurado |
 | `cage` | `BAKE_CAGE_DISTANCE` | `BAKE_CAGE_AUTO` para a cage automática |
+| `skew_base` | `BAKE_SKEW_BASE_MESH` | `BAKE_SKEW_BASE_TRIANGLE`: sem skew, os raios seguem a normal do triângulo |
+| `edge_protection` | true | Raios voltam à normal suavizada perto das quinas vivas |
+| `paint_value` | 1.0 | Cinza pintado no skew map e no cage map |
 | `average_normals` | true | Raios pela média das normais nos vértices no mesmo lugar |
 | `ignore_backface` | true | Raios atravessam o verso dos triângulos do high poly |
 | `match_by_name` | false | `nome_low` só acha `nome_high`; objetos terminados em `_high` são high poly |
@@ -142,6 +162,7 @@ Nenhum atalho novo. Ctrl+Z/Ctrl+Y desfazem e refazem cada bake e cada limpeza de
 
 ## Projeto e export
 
+- O skew map é salvo como as outras camadas, com o campo opcional `bake_role` em cada camada (projetos sem ele abrem com todas as camadas normais).
 - O formato do `.arm` sobe para a versão 23, com dois campos no fim do projeto: `mesh_maps` (por slot: `slot`, `set`, `res`, `bpp` e os pixels RGBA comprimidos com LZ4) e `bake_settings` (JSON com os ajustes acima e, em `baked`, a assinatura de cada slot, para o projeto reaberto saber o que está desatualizado; sem `baked`, os mapas contam como atualizados).
 - Projetos da versão 22 ou anterior abrem sem mesh maps e com os ajustes padrão.
 - Export as .arm de um grupo (LAY-14) não leva os mesh maps.
@@ -163,6 +184,8 @@ s->front_distance = 0.02;  // relativas à diagonal da cena
 s->rear_distance  = 0.02;
 s->aa             = 4;     // 4x4 amostras por texel
 s->cage           = BAKE_CAGE_AUTO; // cage automática
+slot_layer_t *skew = script_bake_paint_role(BAKE_ROLE_SKEW); // cria e seleciona o skew map
+script_bake_role_fill(BAKE_ROLE_SKEW, 1.0);                  // tudo branco; -1 limpa
 s->curvature_mode = MESH_MAP_CURVATURE_MESH; // curvatura pela malha
 s->id_source      = MESH_MAP_ID_UV_ISLAND;   // uma cor por ilha UV
 // A cada frame:
@@ -189,11 +212,12 @@ script_bake_node(n);
 gpu_texture_t *assado = script_bake_node_texture(n);
 ```
 
-Os enums `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_COUNT`), `mesh_map_id_source_t`, `mesh_map_curvature_t`, `bake_type_t`, `bake_state_t` e `tab_id_t` estão disponíveis nos scripts.
+Os enums `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_COUNT`), `mesh_map_id_source_t`, `mesh_map_curvature_t`, `bake_cage_t`, `bake_role_t`, `bake_skew_base_t`, `bake_type_t`, `bake_state_t`, `viewport_mode_t` e `tab_id_t` estão disponíveis nos scripts. `slot_layer_t.bake_role` diz se uma camada é o skew map.
 
 ## Limitações
 
-- Na cage Fixed Distance, a cage é a superfície do low poly deslocada pela Max Frontal Distance. A cage Auto decide por amostra pela orientação do high poly: faces com a normal para dentro, ou planos soltos virados para baixo sobre o modelo, enganam a decisão. Skew map e cage pintada chegam com a BAKE-06 e a BAKE-07.
+- Na cage Fixed Distance, a cage é a superfície do low poly deslocada pela Max Frontal Distance. A cage Auto decide por amostra pela orientação do high poly: faces com a normal para dentro, ou planos soltos virados para baixo sobre o modelo, enganam a decisão. A cage pintada chega com a BAKE-07.
+- O skew map é amostrado no texel mais próximo da camada; a visualização dos vetores de direção dos raios ainda não existe.
 - Não há mapa de altura (Height) vindo do high poly.
 - O rebake refaz o mapa inteiro, mesmo quando só um objeto mudou; não há rebake só da região alterada.
 - A assinatura da cena olha uma amostra de até 1024 valores por array de vértices: uma edição que muda só vértices fora da amostra (raro: reimportar ou aplicar deslocamento muda muitos) não marca o mapa como desatualizado.
