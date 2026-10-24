@@ -55,6 +55,25 @@ typedef enum {
 	BAKE_UP_AXIS_X = 2,
 } bake_up_axis_t;
 
+// Mesh map slots of the project, the order is saved in .arm files
+typedef enum {
+	MESH_MAP_NORMAL       = 0,
+	MESH_MAP_WORLD_NORMAL = 1,
+	MESH_MAP_ID           = 2,
+	MESH_MAP_OCCLUSION    = 3,
+	MESH_MAP_CURVATURE    = 4,
+	MESH_MAP_POSITION     = 5,
+	MESH_MAP_THICKNESS    = 6,
+	MESH_MAP_BENT_NORMAL  = 7,
+	MESH_MAP_OPACITY      = 8,
+	MESH_MAP_COUNT        = 9,
+} mesh_map_slot_t;
+
+typedef enum {
+	MESH_MAP_ID_OBJECT       = 0,
+	MESH_MAP_ID_VERTEX_COLOR = 1,
+} mesh_map_id_source_t;
+
 typedef enum {
 	VIEWPORT_MODE_NONE          = -1,
 	VIEWPORT_MODE_LIT           = 0,
@@ -616,6 +635,7 @@ typedef enum {
 	HISTORY_ACTION_FLATTEN_GROUP,
 	HISTORY_ACTION_LAYER_LOCK,
 	HISTORY_ACTION_LAYER_GEOMETRY_MASK,
+	HISTORY_ACTION_BAKE_MESH_MAP,
 } history_action_t;
 
 typedef enum {

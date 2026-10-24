@@ -204,7 +204,9 @@
 #include "ui/ui_view2d.c"
 
 #include "util/edit_uvmap.c"
+#include "util/util_bake.c"
 #include "util/util_brush.c"
+#include "util/util_bvh.c"
 #include "util/util_clone.c"
 #include "util/util_csg.c"
 #include "util/util_cursor.c"

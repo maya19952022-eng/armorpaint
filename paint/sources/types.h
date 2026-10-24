@@ -589,6 +589,8 @@ typedef struct history_step {
 	f32                          layer_angle;
 	i32                          layer_uv_type;
 	geometry_mask_t              layer_geometry; // Geometry mask before the step, swapped on undo and redo of an edit
+	i32                          mesh_map_slot;
+	struct gpu_texture          *mesh_map_tex; // The other version of the mesh map, swapped on undo and redo
 	i32                          swatch;
 	struct swatch_color         *swatch_color;
 	struct swatch_color_t_array *swatch_colors;
@@ -694,6 +696,8 @@ typedef struct project {
 	struct ui_node_canvas_t_array               *mesh_nodes;
 	struct i32_array                            *mesh_nodes_objects; // Object index for each mesh_nodes canvas
 	struct f32_array_t_array                    *mesh_paths;         // Path and curve tool points
+	struct mesh_map_data_t_array                *mesh_maps;          // Version 23, baked mesh maps
+	char                                        *bake_settings;      // Version 23, json of bake_settings_t
 	project_runtime_t                           *_;
 } project_t;
 
@@ -767,6 +771,49 @@ typedef struct layer_data {
 	i32_array_t      *geometry_mask_tiles;   // NULL when empty
 	string_array_t   *geometry_mask_objects; // Paint object names, NULL when empty
 } layer_data_t;
+
+typedef struct mesh_map_data {
+	i32            slot;    // mesh_map_slot_t
+	i32            set;     // Texture set, always 0 for now
+	i32            res;     // Width and height pixels
+	i32            bpp;     // Bits per channel, 8 or 16
+	struct buffer *texture; // Lz4 compressed rgba pixels
+} mesh_map_data_t;
+
+typedef struct bake_settings {
+	i32 res;                // Width and height of the baked maps
+	i32 dilation;           // Texels filled around the uv islands
+	i32 occlusion_samples;  // Rays per texel
+	f32 occlusion_distance; // Farthest occluder, relative to the size of the scene
+	i32 thickness_samples;
+	f32 thickness_distance;
+	f32 curvature_strength;
+	i32 id_source; // mesh_map_id_source_t
+} bake_settings_t;
+
+typedef struct bake_job bake_job_t; // util_bake.c
+
+typedef struct bvh_node {
+	f32 min[3];
+	f32 max[3];
+	i32 first; // First triangle of a leaf, left child of an inner node
+	i32 count; // Triangles of a leaf, 0 for an inner node
+} bvh_node_t;
+
+typedef struct bvh {
+	f32        *tris;    // 9 floats per triangle, world space
+	i32        *objects; // Paint object index of each triangle
+	i32         tri_count;
+	bvh_node_t *nodes;
+	i32         node_count;
+} bvh_t;
+
+typedef struct bvh_hit {
+	f32 t;
+	f32 u; // Barycentrics of the second and third vertex
+	f32 v;
+	i32 tri;
+} bvh_hit_t;
 
 typedef struct timeline_layer_keyframe_data {
 	i32               frame;
@@ -1014,6 +1061,12 @@ typedef struct layer_data_t_array {
 	int            length;
 	int            capacity;
 } layer_data_t_array_t;
+
+typedef struct mesh_map_data_t_array {
+	mesh_map_data_t **buffer;
+	int               length;
+	int               capacity;
+} mesh_map_data_t_array_t;
 
 typedef struct timeline_layer_keyframe_data_t_array {
 	timeline_layer_keyframe_data_t **buffer;
