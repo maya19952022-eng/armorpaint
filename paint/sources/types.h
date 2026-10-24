@@ -550,7 +550,8 @@ typedef struct history_step {
 	i32                          layer_object;
 	i32                          layer_blending[LAYER_CH_COUNT];
 	f32                          layer_opacity_ch[LAYER_CH_COUNT];
-	i32                          prev_order; // Previous layer position
+	bool                         layer_visible; // Group visibility before a flatten
+	i32                          prev_order;    // Previous layer position
 	i32                          canvas_type;
 	char                        *layer_name;
 	f32                          layer_scale;

@@ -142,6 +142,8 @@ static void export_arm_free_buffer(buffer_t *b) {
 	}
 }
 
+static slot_layer_t_array_t *export_arm_layers = NULL; // Saves only these layers when set
+
 buffer_t *export_arm_encode_project(char *path) {
 	// Path is where the project is imported from, asset paths are relative to it
 
@@ -230,9 +232,10 @@ buffer_t *export_arm_encode_project(char *path) {
 	i32 bits_pos = base_bits;
 	i32 bpp      = bits_pos == TEXTURE_BITS_BITS8 ? 8 : bits_pos == TEXTURE_BITS_BITS16 ? 16 : 32;
 
-	layer_data_t_array_t *ld = any_array_create_from_raw((void *[]){}, 0);
-	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
-		slot_layer_t *l = g_project->_->layers->buffer[i];
+	slot_layer_t_array_t *layers = export_arm_layers != NULL ? export_arm_layers : g_project->_->layers;
+	layer_data_t_array_t *ld     = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < layers->length; ++i) {
+		slot_layer_t *l = layers->buffer[i];
 		layer_data_t *d =
 		    ALLOC_INIT(layer_data_t, {.name               = l->name,
 		                              .res                = l->texpaint != NULL ? l->texpaint->width : g_project->_->layers->buffer[0]->texpaint->width,
@@ -247,7 +250,7 @@ buffer_t *export_arm_encode_project(char *path) {
 		                              .fill_material      = l->fill_material != NULL ? array_index_of(g_project->_->materials, l->fill_material) : -1,
 		                              .object_mask        = l->object_mask,
 		                              .blending           = l->blending[LAYER_CH_BASE],
-		                              .parent             = l->parent != NULL ? array_index_of(g_project->_->layers, l->parent) : -1,
+		                              .parent             = l->parent != NULL ? array_index_of(layers, l->parent) : -1,
 		                              .visible            = l->visible,
 		                              .texpaint_nor       = l->texpaint_nor != NULL ? lz4_encode(gpu_get_texture_pixels(l->texpaint_nor)) : NULL,
 		                              .texpaint_pack      = l->texpaint_pack != NULL ? lz4_encode(gpu_get_texture_pixels(l->texpaint_pack)) : NULL,
@@ -376,6 +379,9 @@ buffer_t *export_arm_encode_project(char *path) {
 	g_project->mesh_assets    = mesh_files;
 
 	tab_timeline_export(g_project);
+	if (export_arm_layers != NULL) {
+		tab_timeline_export_free(g_project); // Keyframes point at layers of the whole project
+	}
 
 #ifdef IRON_BGRA
 	g_project->is_bgra = true;
@@ -415,6 +421,29 @@ buffer_t *export_arm_encode_project(char *path) {
 	tab_timeline_export_free(g_project);
 	tab_timeline_finish_save();
 	return buffer;
+}
+
+// Saves a layer or group with its children and masks as a project that holds only them
+void export_arm_run_layers(char *path, slot_layer_t *root) {
+	slot_layer_t_array_t *children = slot_layer_get_recursive_children(root);
+	slot_layer_t_array_t *layers   = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		slot_layer_t *l = g_project->_->layers->buffer[i];
+		if (l == root || (children != NULL && array_index_of(children, l) >= 0)) {
+			any_array_push(layers, l);
+		}
+	}
+	if (!ends_with(path, ".arm")) {
+		path = string("%s.arm", path);
+	}
+	export_arm_layers = layers;
+	buffer_t *buffer  = export_arm_encode_project(path);
+	export_arm_layers = NULL;
+	iron_file_save_bytes(path, buffer, buffer->length + 1);
+	array_free(buffer);
+	free(buffer);
+	array_free(layers);
+	free(layers);
 }
 
 void export_arm_run_project(char *path) {

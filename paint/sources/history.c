@@ -83,6 +83,8 @@ char *history_action_to_string(history_action_t action) {
 		return tr("Edit Swatch");
 	case HISTORY_ACTION_OBJECT_TRANSFORM:
 		return tr("Transform Object");
+	case HISTORY_ACTION_FLATTEN_GROUP:
+		return tr("Flatten Group");
 	}
 	return tr("Paint");
 }
@@ -528,6 +530,14 @@ void history_undo() {
 		else if (step->action == HISTORY_ACTION_OBJECT_TRANSFORM) {
 			history_swap_object_transform(step);
 		}
+		else if (step->action == HISTORY_ACTION_FLATTEN_GROUP) {
+			// The flattened layer is right above the group
+			slot_layer_delete(g_project->_->layers->buffer[step->layer + 1]);
+			slot_layer_t *group = g_project->_->layers->buffer[step->layer];
+			group->visible      = step->layer_visible;
+			context_set_layer(group);
+			make_material_parse_mesh_material();
+		}
 		else if (step->action == HISTORY_ACTION_DELETE_NODE_GROUP) {
 			node_group_t *ng = ALLOC_INIT(node_group_t, {.canvas = NULL, .nodes = ui_nodes_create()});
 			array_insert(g_project->_->material_groups, step->canvas_group, ng);
@@ -843,6 +853,9 @@ void history_redo() {
 		else if (step->action == HISTORY_ACTION_OBJECT_TRANSFORM) {
 			history_swap_object_transform(step);
 		}
+		else if (step->action == HISTORY_ACTION_FLATTEN_GROUP) {
+			layers_flatten_group(g_project->_->layers->buffer[step->layer]);
+		}
 		else if (step->action == HISTORY_ACTION_DELETE_NODE_GROUP) {
 			history_swap_canvas(step);
 			array_remove(g_project->_->material_groups, g_project->_->material_groups->buffer[step->canvas_group]);
@@ -944,18 +957,18 @@ history_step_t *history_push(history_action_t action) {
 	i32 bpos = array_index_of(g_project->_->brushes, g_context->brush);
 
 	history_step_t *step =
-	    ALLOC_INIT(history_step_t, {.name           = name,
-	                                .action         = action,
-	                                .layer          = lpos,
-	                                .layer_type     = slot_layer_is_mask(g_context->layer)    ? LAYER_SLOT_TYPE_MASK
-	                                                  : slot_layer_is_group(g_context->layer) ? LAYER_SLOT_TYPE_GROUP
-	                                                                                          : LAYER_SLOT_TYPE_LAYER,
-	                                .layer_parent   = g_context->layer->parent == NULL ? -1 : array_index_of(g_project->_->layers, g_context->layer->parent),
-	                                .object         = opos,
-	                                .material       = mpos,
-	                                .brush          = bpos,
-	                                .layer_opacity  = g_context->layer->mask_opacity,
-	                                .layer_object   = g_context->layer->object_mask});
+	    ALLOC_INIT(history_step_t, {.name          = name,
+	                                .action        = action,
+	                                .layer         = lpos,
+	                                .layer_type    = slot_layer_is_mask(g_context->layer)    ? LAYER_SLOT_TYPE_MASK
+	                                                 : slot_layer_is_group(g_context->layer) ? LAYER_SLOT_TYPE_GROUP
+	                                                                                         : LAYER_SLOT_TYPE_LAYER,
+	                                .layer_parent  = g_context->layer->parent == NULL ? -1 : array_index_of(g_project->_->layers, g_context->layer->parent),
+	                                .object        = opos,
+	                                .material      = mpos,
+	                                .brush         = bpos,
+	                                .layer_opacity = g_context->layer->mask_opacity,
+	                                .layer_object  = g_context->layer->object_mask});
 	for (i32 i = 0; i < LAYER_CH_COUNT; ++i) {
 		step->layer_blending[i]   = g_context->layer->blending[i];
 		step->layer_opacity_ch[i] = g_context->layer->opacity[i];
@@ -1152,6 +1165,11 @@ void history_object_transform(mesh_object_t *o, vec4_t loc, quat_t rot, vec4_t s
 	step->object_loc   = loc;
 	step->object_rot   = rot;
 	step->object_scale = scale;
+}
+
+void history_flatten_group() {
+	history_step_t *step = history_push(HISTORY_ACTION_FLATTEN_GROUP);
+	step->layer_visible  = g_context->layer->visible;
 }
 
 void history_new_swatch() {

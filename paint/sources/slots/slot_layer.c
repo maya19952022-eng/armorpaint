@@ -68,26 +68,26 @@ slot_layer_t *slot_layer_create_undo(char *ext) {
 }
 
 slot_layer_t *slot_layer_create(char *ext, layer_slot_type_t type, slot_layer_t *parent) {
-	slot_layer_t *raw       = ALLOC_INIT(slot_layer_t, {0});
-	raw->id                 = 0;
-	raw->ext                = "";
-	raw->visible            = true;
-	raw->mask_opacity       = 1.0; // Opacity mask
-	raw->show_panel         = true;
-	raw->object_mask        = 0;
-	raw->scale              = 1.0;
-	raw->angle              = 0.0;
-	raw->uv_type            = UV_TYPE_UVMAP;
-	raw->paint_base         = true;
-	raw->paint_opac         = true;
-	raw->paint_occ          = true;
-	raw->paint_rough        = true;
-	raw->paint_met          = true;
-	raw->paint_nor          = true;
-	raw->paint_height       = true;
-	raw->paint_emis         = true;
-	raw->paint_subs         = true;
-	raw->decal_mat          = mat4_identity(); // Decal layer
+	slot_layer_t *raw = ALLOC_INIT(slot_layer_t, {0});
+	raw->id           = 0;
+	raw->ext          = "";
+	raw->visible      = true;
+	raw->mask_opacity = 1.0; // Opacity mask
+	raw->show_panel   = true;
+	raw->object_mask  = 0;
+	raw->scale        = 1.0;
+	raw->angle        = 0.0;
+	raw->uv_type      = UV_TYPE_UVMAP;
+	raw->paint_base   = true;
+	raw->paint_opac   = true;
+	raw->paint_occ    = true;
+	raw->paint_rough  = true;
+	raw->paint_met    = true;
+	raw->paint_nor    = true;
+	raw->paint_height = true;
+	raw->paint_emis   = true;
+	raw->paint_subs   = true;
+	raw->decal_mat    = mat4_identity(); // Decal layer
 	slot_layer_reset_channels(raw);
 
 	if (string_equals(ext, "")) {
@@ -123,9 +123,9 @@ slot_layer_t *slot_layer_create(char *ext, layer_slot_type_t type, slot_layer_t 
 	}
 
 	else { // Mask
-		i32 id        = (raw->id + 1);
-		raw->name     = string("Mask %d", id);
-		char *format  = "RGBA32"; // Full bits for undo support, R8 is used
+		i32 id       = (raw->id + 1);
+		raw->name    = string("Mask %d", id);
+		char *format = "RGBA32"; // Full bits for undo support, R8 is used
 
 		{
 			render_target_t *t = render_target_create();
@@ -394,25 +394,25 @@ slot_layer_t *slot_layer_duplicate(slot_layer_t *raw) {
 		draw_end();
 	}
 
-	l->visible            = raw->visible;
-	l->mask_opacity       = raw->mask_opacity;
-	l->fill_material      = raw->fill_material;
-	l->object_mask        = raw->object_mask;
+	l->visible       = raw->visible;
+	l->mask_opacity  = raw->mask_opacity;
+	l->fill_material = raw->fill_material;
+	l->object_mask   = raw->object_mask;
 	memcpy(l->blending, raw->blending, sizeof(raw->blending));
 	memcpy(l->opacity, raw->opacity, sizeof(raw->opacity));
-	l->uv_type            = raw->uv_type;
-	l->decal_mat          = raw->decal_mat;
-	l->scale              = raw->scale;
-	l->angle              = raw->angle;
-	l->paint_base         = raw->paint_base;
-	l->paint_opac         = raw->paint_opac;
-	l->paint_occ          = raw->paint_occ;
-	l->paint_rough        = raw->paint_rough;
-	l->paint_met          = raw->paint_met;
-	l->paint_nor          = raw->paint_nor;
-	l->paint_height       = raw->paint_height;
-	l->paint_emis         = raw->paint_emis;
-	l->paint_subs         = raw->paint_subs;
+	l->uv_type      = raw->uv_type;
+	l->decal_mat    = raw->decal_mat;
+	l->scale        = raw->scale;
+	l->angle        = raw->angle;
+	l->paint_base   = raw->paint_base;
+	l->paint_opac   = raw->paint_opac;
+	l->paint_occ    = raw->paint_occ;
+	l->paint_rough  = raw->paint_rough;
+	l->paint_met    = raw->paint_met;
+	l->paint_nor    = raw->paint_nor;
+	l->paint_height = raw->paint_height;
+	l->paint_emis   = raw->paint_emis;
+	l->paint_subs   = raw->paint_subs;
 
 	if (raw->path_points != NULL) {
 		l->path_points        = f32_array_create_from_raw(raw->path_points->buffer, raw->path_points->length);

@@ -936,6 +936,11 @@ void layers_merge_down() {
 }
 
 slot_layer_t *layers_merge_group(slot_layer_t *l) {
+	return layers_merge_group_history(l, true);
+}
+
+// Merges a group into one layer, history records each merge step when set
+slot_layer_t *layers_merge_group_history(slot_layer_t *l, bool history) {
 	if (!slot_layer_is_group(l)) {
 		return NULL;
 	}
@@ -948,7 +953,9 @@ slot_layer_t *layers_merge_group(slot_layer_t *l) {
 
 	for (i32 i = 0; i < children->length - 1; ++i) {
 		context_set_layer(children->buffer[children->length - 1 - i]);
-		history_merge_layers();
+		if (history) {
+			history_merge_layers();
+		}
 		layers_merge_down();
 	}
 
@@ -969,6 +976,21 @@ slot_layer_t *layers_merge_group(slot_layer_t *l) {
 	}
 	slot_layer_delete(l);
 	return children->buffer[0];
+}
+
+// Non destructive merge: a merged copy of the group goes right above it and the group is hidden
+slot_layer_t *layers_flatten_group(slot_layer_t *group) {
+	if (!slot_layer_is_group(group) || slot_layer_get_children(group) == NULL) {
+		return NULL;
+	}
+	layers_duplicate_layer(group);
+	slot_layer_t *flat = layers_merge_group_history(g_context->layer, false);
+	flat->name         = string_copy(slot_layer_unique_name(flat, string_tmp("%s %s", group->name, tr("Flattened"))));
+	group->visible     = false;
+	context_set_layer(flat);
+	make_material_parse_mesh_material();
+	g_context->layers_preview_dirty = true;
+	return flat;
 }
 
 void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {

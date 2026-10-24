@@ -149,24 +149,24 @@ typedef enum {
 } sculpt_type_t;
 
 typedef enum {
-	BLEND_TYPE_MIX          = 0,
-	BLEND_TYPE_DARKEN       = 1,
-	BLEND_TYPE_MULTIPLY     = 2,
-	BLEND_TYPE_BURN         = 3,
-	BLEND_TYPE_LIGHTEN      = 4,
-	BLEND_TYPE_SCREEN       = 5,
-	BLEND_TYPE_DODGE        = 6,
-	BLEND_TYPE_ADD          = 7,
-	BLEND_TYPE_OVERLAY      = 8,
-	BLEND_TYPE_SOFT_LIGHT   = 9,
-	BLEND_TYPE_LINEAR_LIGHT = 10,
-	BLEND_TYPE_DIFFERENCE   = 11,
-	BLEND_TYPE_SUBTRACT     = 12,
-	BLEND_TYPE_DIVIDE       = 13,
-	BLEND_TYPE_HUE          = 14,
-	BLEND_TYPE_SATURATION   = 15,
-	BLEND_TYPE_COLOR        = 16,
-	BLEND_TYPE_VALUE        = 17,
+	BLEND_TYPE_MIX            = 0,
+	BLEND_TYPE_DARKEN         = 1,
+	BLEND_TYPE_MULTIPLY       = 2,
+	BLEND_TYPE_BURN           = 3,
+	BLEND_TYPE_LIGHTEN        = 4,
+	BLEND_TYPE_SCREEN         = 5,
+	BLEND_TYPE_DODGE          = 6,
+	BLEND_TYPE_ADD            = 7,
+	BLEND_TYPE_OVERLAY        = 8,
+	BLEND_TYPE_SOFT_LIGHT     = 9,
+	BLEND_TYPE_LINEAR_LIGHT   = 10,
+	BLEND_TYPE_DIFFERENCE     = 11,
+	BLEND_TYPE_SUBTRACT       = 12,
+	BLEND_TYPE_DIVIDE         = 13,
+	BLEND_TYPE_HUE            = 14,
+	BLEND_TYPE_SATURATION     = 15,
+	BLEND_TYPE_COLOR          = 16,
+	BLEND_TYPE_VALUE          = 17,
 	BLEND_TYPE_NORMAL_COMBINE = 18, // Normal channel only, whiteout blend
 } blend_type_t;
 
@@ -592,6 +592,7 @@ typedef enum {
 	HISTORY_ACTION_REPLACE_SWATCHES,
 	HISTORY_ACTION_EDIT_SWATCH,
 	HISTORY_ACTION_OBJECT_TRANSFORM,
+	HISTORY_ACTION_FLATTEN_GROUP,
 } history_action_t;
 
 typedef enum {

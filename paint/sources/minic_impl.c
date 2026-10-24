@@ -823,6 +823,34 @@ void script_layer_set_channel(slot_layer_t *l, i32 channel, i32 blending, f32 op
 
 static void script_layer_op_end(gpu_texture_t *current, bool in_use);
 
+// Merged copy of the group above it, the group is hidden and kept
+slot_layer_t *script_layer_flatten_group(slot_layer_t *group) {
+	if (!script_layer_valid(group) || !slot_layer_is_group(group) || slot_layer_get_children(group) == NULL) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	context_set_layer(group);
+	history_flatten_group();
+	slot_layer_t *flat = layers_flatten_group(group);
+	script_layer_op_end(current, in_use);
+	return flat;
+}
+
+// Saves the layer or group with its children and masks as a project file
+bool script_layer_export_arm(slot_layer_t *l, char *path) {
+	if (!script_layer_valid(l) || path == NULL) {
+		return false;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	export_arm_run_layers(path, l);
+	script_gpu_end(current, in_use);
+	return true;
+}
+
 void script_undo(void) {
 	gpu_texture_t *current;
 	bool           in_use;

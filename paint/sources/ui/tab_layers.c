@@ -674,6 +674,21 @@ void tab_layers_draw_layer_context_menu_merge_group(void *_) {
 	layers_merge_group(l);
 }
 
+void tab_layers_draw_layer_context_menu_flatten(void *_) {
+	slot_layer_t *l = tab_layers_l;
+	context_set_layer(l);
+	history_flatten_group();
+	layers_flatten_group(l);
+}
+
+void tab_layers_draw_layer_context_menu_export_arm_on_file_picked(char *path) {
+	char *f = ui_files_filename;
+	if (string_equals(f, "")) {
+		f = string_copy(tab_layers_l->name);
+	}
+	export_arm_run_layers(string("%s%s%s", path, PATH_SEP, f), tab_layers_l);
+}
+
 void tab_layers_draw_layer_context_menu_apply(void *_) {
 	slot_layer_t *l  = tab_layers_l;
 	g_context->layer = l;
@@ -790,6 +805,17 @@ void tab_layers_draw_layer_context_menu_draw() {
 	}
 	if (slot_layer_is_group(l) && ui_menu_button(tr("Merge Group"), "", ICON_NONE)) {
 		sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_merge_group, NULL);
+	}
+	if (slot_layer_is_group(l)) {
+		// Merged copy above the group, the group stays editable and hidden
+		g_ui->enabled = slot_layer_get_children(l) != NULL;
+		if (ui_menu_button(tr("Flatten"), "", ICON_NONE)) {
+			sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_flatten, NULL);
+		}
+		g_ui->enabled = true;
+		if (ui_menu_button(tr("Export as .arm"), "", ICON_EXPORT)) {
+			ui_files_show("arm", true, false, &tab_layers_draw_layer_context_menu_export_arm_on_file_picked);
+		}
 	}
 
 	g_ui->enabled = tab_layers_can_merge_down(l);
