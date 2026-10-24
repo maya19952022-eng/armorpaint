@@ -677,6 +677,7 @@ void minic_register_builtins() {
 	MINIC_I(id);
 	MINIC_S(name);
 	MINIC_B(visible);
+	MINIC_B(locked);
 	MINIC_O(parent, slot_layer_t);
 	MINIC_F(mask_opacity);
 	MINIC_O(fill_material, slot_material_t);

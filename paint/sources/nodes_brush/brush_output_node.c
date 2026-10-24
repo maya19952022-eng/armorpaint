@@ -139,6 +139,10 @@ void brush_output_node_run() {
 		return;
 	}
 
+	if (!picking_object && slot_layer_is_locked(g_context->layer)) {
+		return;
+	}
+
 	if (!picking_object && !slot_layer_is_visible(g_context->layer) && !g_context->paint2d) {
 		return;
 	}

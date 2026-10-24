@@ -395,6 +395,7 @@ slot_layer_t *slot_layer_duplicate(slot_layer_t *raw) {
 	}
 
 	l->visible       = raw->visible;
+	l->locked        = raw->locked;
 	l->mask_opacity  = raw->mask_opacity;
 	l->fill_material = raw->fill_material;
 	l->object_mask   = raw->object_mask;
@@ -553,6 +554,11 @@ void slot_layer_to_paint_layer(slot_layer_t *raw) {
 	make_material_parse_paint_material(true);
 	g_context->layer_preview_dirty = true;
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
+}
+
+bool slot_layer_is_locked(slot_layer_t *raw) {
+	bool follows_parent = raw->parent != NULL && (slot_layer_is_mask(raw) || slot_layer_is_filter(raw));
+	return raw->locked || (follows_parent && raw->parent->locked);
 }
 
 bool slot_layer_is_visible(slot_layer_t *raw) {

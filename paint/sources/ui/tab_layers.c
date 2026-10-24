@@ -548,6 +548,16 @@ void tab_layers_draw_layer_slot_full(slot_layer_t *l, i32 i) {
 		}
 	}
 
+	// Lock icon at the end of the name
+	if (l->locked) {
+		rect_t *lock_rect = resource_tile50(icons, ICON_LOCK);
+		f32     icon_size = 18 * UI_SCALE();
+		g_ui->_x          = name_right - icon_size - 4 * UI_SCALE();
+		g_ui->_y          = uiy + center;
+		g_ui->_w          = icon_size;
+		ui_sub_image(icons, g_theme->LABEL_COL, icon_size, lock_rect->x, lock_rect->y, lock_rect->w, lock_rect->h);
+	}
+
 	// Blending combo
 	if (!slot_layer_is_group(l) && !slot_layer_is_mask(l) && !slot_layer_is_filter(l) && l->texpaint_sculpt == NULL) {
 		g_ui->_x = uix + uiw * 0.60;
@@ -826,6 +836,16 @@ void tab_layers_draw_layer_context_menu_draw() {
 
 	if (ui_menu_button(tr("Duplicate"), "ctrl+d", ICON_DUPLICATE)) {
 		sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_duplicate, NULL);
+	}
+
+	ui_menu_align();
+	bool locked = l->locked;
+	ui_check(&locked, tr("Locked"), "");
+	if (ui_item_changed()) {
+		history_layer_lock(l);
+		l->locked         = locked;
+		ui_menu_keep_open = true;
+		ui_dock_redraw(TAB_AREA_SIDEBAR0);
 	}
 
 	ui_menu_align();

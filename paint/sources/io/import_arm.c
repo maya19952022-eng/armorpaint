@@ -1001,6 +1001,7 @@ void import_arm_run_project(char *path) {
 			l->name = string_copy(ld->name);
 		}
 		l->visible      = ld->visible;
+		l->locked       = ld->locked;
 		l->mask_opacity = ld->opacity_mask; // Groups have an opacity too
 		any_array_push(g_project->_->layers, l);
 		if (!is_group) {

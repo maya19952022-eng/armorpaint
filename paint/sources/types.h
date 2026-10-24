@@ -49,6 +49,7 @@ typedef struct slot_layer {
 	char                 *name;
 	char                 *ext;
 	bool                  visible;
+	bool                  locked;   // Painting is blocked, masks and filters follow their layer
 	struct slot_layer    *parent;   // Group (for layers) or layer (for masks and filters)
 	struct gpu_texture   *texpaint; // Base or mask
 	struct gpu_texture   *texpaint_nor;
@@ -729,6 +730,7 @@ typedef struct layer_data {
 	bool              path_text;
 	i32_array_t      *blending_ch; // Per layer_channel_t, version 22
 	f32_array_t      *opacity_ch;
+	bool              locked;
 } layer_data_t;
 
 typedef struct timeline_layer_keyframe_data {

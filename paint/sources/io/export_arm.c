@@ -275,7 +275,8 @@ buffer_t *export_arm_encode_project(char *path) {
 		                              .path_text          = l->path_text,
 		                              .path_material      = l->path_material != NULL ? array_index_of(g_project->_->materials, l->path_material) : -1,
 		                              .blending_ch        = i32_array_create(LAYER_CH_COUNT),
-		                              .opacity_ch         = f32_array_create(LAYER_CH_COUNT)});
+		                              .opacity_ch         = f32_array_create(LAYER_CH_COUNT),
+		                              .locked             = l->locked});
 		for (i32 j = 0; j < LAYER_CH_COUNT; ++j) {
 			d->blending_ch->buffer[j] = l->blending[j];
 			d->opacity_ch->buffer[j]  = l->opacity[j];

@@ -414,7 +414,7 @@ static bool script_paint_allowed(void) {
 	if (g_context == NULL || g_context->layer == NULL || g_context->material == NULL) {
 		return false;
 	}
-	if (slot_layer_is_group(g_context->layer)) {
+	if (slot_layer_is_group(g_context->layer) || slot_layer_is_locked(g_context->layer)) {
 		return false;
 	}
 	if (g_context->layer->fill_material != NULL && g_context->tool != TOOL_TYPE_PICKER && g_context->tool != TOOL_TYPE_MATERIAL &&
@@ -836,6 +836,15 @@ slot_layer_t *script_layer_flatten_group(slot_layer_t *group) {
 	slot_layer_t *flat = layers_flatten_group(group);
 	script_layer_op_end(current, in_use);
 	return flat;
+}
+
+void script_layer_set_locked(slot_layer_t *l, bool locked) {
+	if (!script_layer_valid(l) || l->locked == locked) {
+		return;
+	}
+	history_layer_lock(l);
+	l->locked = locked;
+	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 
 // Saves the layer or group with its children and masks as a project file

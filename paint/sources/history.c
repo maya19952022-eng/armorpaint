@@ -85,6 +85,8 @@ char *history_action_to_string(history_action_t action) {
 		return tr("Transform Object");
 	case HISTORY_ACTION_FLATTEN_GROUP:
 		return tr("Flatten Group");
+	case HISTORY_ACTION_LAYER_LOCK:
+		return tr("Lock Layer");
 	}
 	return tr("Paint");
 }
@@ -145,7 +147,11 @@ static void history_set_channels(history_step_t *step, slot_layer_t *l) {
 void history_swap_layer_props(history_step_t *step) {
 	slot_layer_t *l = g_project->_->layers->buffer[step->layer];
 
-	if (step->action == HISTORY_ACTION_LAYER_VISIBLE) {
+	if (step->action == HISTORY_ACTION_LAYER_LOCK) {
+		context_set_layer(l);
+		l->locked = !l->locked;
+	}
+	else if (step->action == HISTORY_ACTION_LAYER_VISIBLE) {
 		context_set_layer(l);
 		l->visible = !l->visible;
 		make_material_parse_mesh_material();
@@ -505,8 +511,9 @@ void history_undo() {
 			history_swap_channels(step, g_context->layer, true, false);
 			make_material_parse_mesh_material();
 		}
-		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_NAME || step->action == HISTORY_ACTION_LAYER_OBJECT ||
-		         step->action == HISTORY_ACTION_LAYER_SCALE || step->action == HISTORY_ACTION_LAYER_ANGLE || step->action == HISTORY_ACTION_LAYER_UV_TYPE) {
+		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_LOCK || step->action == HISTORY_ACTION_LAYER_NAME ||
+		         step->action == HISTORY_ACTION_LAYER_OBJECT || step->action == HISTORY_ACTION_LAYER_SCALE || step->action == HISTORY_ACTION_LAYER_ANGLE ||
+		         step->action == HISTORY_ACTION_LAYER_UV_TYPE) {
 			history_swap_layer_props(step);
 		}
 		else if (step->action == HISTORY_ACTION_NEW_BRUSH || step->action == HISTORY_ACTION_DUPLICATE_BRUSH) {
@@ -828,8 +835,9 @@ void history_redo() {
 			history_swap_channels(step, g_context->layer, true, false);
 			make_material_parse_mesh_material();
 		}
-		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_NAME || step->action == HISTORY_ACTION_LAYER_OBJECT ||
-		         step->action == HISTORY_ACTION_LAYER_SCALE || step->action == HISTORY_ACTION_LAYER_ANGLE || step->action == HISTORY_ACTION_LAYER_UV_TYPE) {
+		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_LOCK || step->action == HISTORY_ACTION_LAYER_NAME ||
+		         step->action == HISTORY_ACTION_LAYER_OBJECT || step->action == HISTORY_ACTION_LAYER_SCALE || step->action == HISTORY_ACTION_LAYER_ANGLE ||
+		         step->action == HISTORY_ACTION_LAYER_UV_TYPE) {
 			history_swap_layer_props(step);
 		}
 		else if (step->action == HISTORY_ACTION_NEW_BRUSH || step->action == HISTORY_ACTION_DUPLICATE_BRUSH) {
@@ -1165,6 +1173,13 @@ void history_object_transform(mesh_object_t *o, vec4_t loc, quat_t rot, vec4_t s
 	step->object_loc   = loc;
 	step->object_rot   = rot;
 	step->object_scale = scale;
+}
+
+void history_layer_lock(slot_layer_t *l) {
+	slot_layer_t *prev = g_context->layer;
+	g_context->layer   = l;
+	history_push(HISTORY_ACTION_LAYER_LOCK);
+	g_context->layer = prev;
 }
 
 void history_flatten_group() {
