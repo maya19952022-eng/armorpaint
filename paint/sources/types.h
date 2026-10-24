@@ -570,6 +570,7 @@ typedef struct history_step {
 	i32                          prev_order;    // Previous layer position
 	struct i32_array            *layer_order;   // Layer move: position before the move of each layer after it
 	struct i32_array            *layer_parents; // Layer move: parent position + 1 of each layer before the move, then after it
+	struct slot_layer_t_array   *layer_removed; // Layer move: groups left empty and removed, in their order before the move
 	i32                          canvas_type;
 	char                        *layer_name;
 	f32                          layer_scale;
