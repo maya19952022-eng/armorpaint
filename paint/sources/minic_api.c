@@ -950,6 +950,13 @@ void minic_register_builtins() {
 	MINIC_F(curvature_strength);
 	MINIC_I(id_source);
 	MINIC_I(maps);
+	MINIC_I(aa);
+	MINIC_F(front_distance);
+	MINIC_F(rear_distance);
+	MINIC_B(average_normals);
+	MINIC_B(ignore_backface);
+	MINIC_B(match_by_name);
+	MINIC_S(high_polys);
 	MINIC_END();
 
 	MINIC_STRUCT(project_t);

@@ -16,9 +16,9 @@ static void util_bvh_swap(bvh_t *b, i32 i, i32 j) {
 	memcpy(tmp, b->tris + i * 9, sizeof(tmp));
 	memcpy(b->tris + i * 9, b->tris + j * 9, sizeof(tmp));
 	memcpy(b->tris + j * 9, tmp, sizeof(tmp));
-	i32 o         = b->objects[i];
-	b->objects[i] = b->objects[j];
-	b->objects[j] = o;
+	i32 id    = b->ids[i];
+	b->ids[i] = b->ids[j];
+	b->ids[j] = id;
 }
 
 // Partial sort of lo..hi by centroid: position k gets its sorted triangle, smaller ones end up before it
@@ -95,10 +95,10 @@ static void util_bvh_split(bvh_t *b, i32 node) {
 	util_bvh_split(b, left + 1);
 }
 
-// Takes ownership of tris (9 floats per triangle) and objects
-void util_bvh_build(bvh_t *b, f32 *tris, i32 *objects, i32 tri_count) {
+// Takes ownership of tris (9 floats per triangle) and ids (an id per triangle, given back by hits)
+void util_bvh_build(bvh_t *b, f32 *tris, i32 *ids, i32 tri_count) {
 	b->tris       = tris;
-	b->objects    = objects;
+	b->ids        = ids;
 	b->tri_count  = tri_count;
 	b->nodes      = malloc(sizeof(bvh_node_t) * (tri_count > 0 ? tri_count * 2 : 1));
 	b->node_count = 1;
@@ -116,7 +116,7 @@ void util_bvh_build(bvh_t *b, f32 *tris, i32 *objects, i32 tri_count) {
 
 void util_bvh_free(bvh_t *b) {
 	free(b->tris);
-	free(b->objects);
+	free(b->ids);
 	free(b->nodes);
 	*b = (bvh_t){0};
 }
@@ -141,13 +141,13 @@ static bool util_bvh_ray_box(bvh_node_t *n, f32 *o, f32 *inv, f32 tmax) {
 	return true;
 }
 
-// Moller-Trumbore, both faces
-static bool util_bvh_ray_tri(f32 *t, f32 *o, f32 *d, f32 tmax, bvh_hit_t *hit) {
+// Moller-Trumbore. With cull_back the ray passes through triangles it meets from behind (counter-clockwise is the front).
+static bool util_bvh_ray_tri(f32 *t, f32 *o, f32 *d, f32 tmax, bool cull_back, bvh_hit_t *hit) {
 	f32 e1[3] = {t[3] - t[0], t[4] - t[1], t[5] - t[2]};
 	f32 e2[3] = {t[6] - t[0], t[7] - t[1], t[8] - t[2]};
 	f32 p[3]  = {d[1] * e2[2] - d[2] * e2[1], d[2] * e2[0] - d[0] * e2[2], d[0] * e2[1] - d[1] * e2[0]};
 	f32 det   = e1[0] * p[0] + e1[1] * p[1] + e1[2] * p[2];
-	if (fabsf(det) < 1e-12f) {
+	if (fabsf(det) < 1e-12f || (cull_back && det < 0.0f)) {
 		return false;
 	}
 	f32 inv  = 1.0f / det;
@@ -171,8 +171,9 @@ static bool util_bvh_ray_tri(f32 *t, f32 *o, f32 *d, f32 tmax, bvh_hit_t *hit) {
 	return true;
 }
 
-// Closest hit closer than tmax, or any hit when any is set. Returns false on a miss.
-bool util_bvh_raycast(bvh_t *b, f32 *o, f32 *d, f32 tmax, bool any, bvh_hit_t *hit) {
+// Closest hit closer than tmax, or any hit when any is set. Returns false on a miss. With groups, only triangles
+// whose id maps to group are hit (group -1 hits all). hit->tri is the id of the triangle.
+bool util_bvh_raycast(bvh_t *b, f32 *o, f32 *d, f32 tmax, bool any, bool cull_back, i32 *groups, i32 group, bvh_hit_t *hit) {
 	if (b->tri_count == 0) {
 		return false;
 	}
@@ -194,9 +195,12 @@ bool util_bvh_raycast(bvh_t *b, f32 *o, f32 *d, f32 tmax, bool any, bvh_hit_t *h
 		if (n->count > 0) {
 			for (i32 i = n->first; i < n->first + n->count; ++i) {
 				bvh_hit_t h;
-				if (util_bvh_ray_tri(b->tris + i * 9, o, d, hit->t, &h)) {
+				if (groups != NULL && group >= 0 && groups[b->ids[i]] != group) {
+					continue;
+				}
+				if (util_bvh_ray_tri(b->tris + i * 9, o, d, hit->t, cull_back, &h)) {
 					*hit     = h;
-					hit->tri = i;
+					hit->tri = b->ids[i];
 					found    = true;
 					if (any) {
 						return true;

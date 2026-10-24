@@ -1432,6 +1432,17 @@ i32 script_bake_state(i32 slot) {
 	return slot >= 0 && slot < MESH_MAP_COUNT ? util_bake_state(slot, NULL) : BAKE_STATE_IDLE;
 }
 
+// Marks a mesh as high poly: mesh maps are baked from it onto the other objects
+void script_bake_set_high_poly(object_t *o, bool high) {
+	if (o != NULL) {
+		util_bake_set_high_poly(o->name, high);
+	}
+}
+
+bool script_bake_is_high_poly(object_t *o) {
+	return o != NULL && util_bake_is_high_poly(o->name);
+}
+
 // Takes one slot out of the queue, or stops it when it is running
 void script_bake_cancel_slot(i32 slot) {
 	if (slot >= 0 && slot < MESH_MAP_COUNT) {

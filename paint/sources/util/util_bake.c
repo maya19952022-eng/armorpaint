@@ -4,17 +4,42 @@
 // Baked on the cpu in uv space by a queue of jobs that run a slice of rows each frame.
 // See base/docs/features/mesh_maps.md.
 
+// Triangles of the low or the high poly objects in world space
+typedef struct util_bake_mesh {
+	i32  count;
+	f32 *pos;    // 9 floats per triangle
+	f32 *nor;    // 9 floats per triangle, vertex normals
+	f32 *ray;    // 9 floats per triangle, ray directions: the vertex normals, or averaged over vertices at the same place
+	f32 *uv;     // 6 floats per triangle, in texels of the map
+	i32 *object; // Paint object index per triangle
+	i32 *group;  // Per triangle, objects with the same name without _low or _high share a group
+	u8  *col;    // 12 bytes per triangle, vertex colors, NULL when not needed
+} util_bake_mesh_t;
+
 typedef struct util_bake_raster {
-	i32   res;
-	f32  *pos;    // 3 floats per texel, world space
-	f32  *nor;    // 3 floats per texel, world space, unit length
-	i32  *object; // Paint object index per texel, -1 outside the uv islands
-	u8   *color;  // 4 bytes per texel, vertex colors, NULL when not needed
-	f32   min[3]; // Bounds of the rasterized geometry
-	f32   max[3];
-	f32   size; // Diagonal of the bounds
-	bvh_t bvh;  // All paint objects, built for the slots that cast rays
+	i32              res;
+	i32             *tri;    // Low poly triangle at each texel center, -1 outside the uv islands
+	util_bake_mesh_t low;    // The objects that are not high poly
+	util_bake_mesh_t high;   // Empty without high poly objects
+	f32              min[3]; // Bounds of all the geometry
+	f32              max[3];
+	f32              size; // Diagonal of the bounds
+	bvh_t            bvh;  // The high poly, or the low poly for the slots that cast rays without one
 } util_bake_raster_t;
+
+// What one sample of a map sees
+typedef struct util_bake_surface {
+	f32  p[3];
+	f32  n[3];
+	f32  col[3];
+	i32  object; // Paint object index
+	i32  tri;    // Triangle of the low or high mesh
+	bool high;   // On the high poly
+	bool hit;    // False where the ray finds no high poly
+	f32  lp[3];  // Low poly point and normal
+	f32  ln[3];
+	i32  ltri;
+} util_bake_surface_t;
 
 struct bake_job {
 	i32                 slot; // mesh_map_slot_t, -1 for a custom job
@@ -44,7 +69,14 @@ struct bake_job {
 	.thickness_distance = 0.5,          \
 	.curvature_strength = 1.0,          \
 	.id_source          = MESH_MAP_ID_OBJECT, \
-	.maps               = (1 << MESH_MAP_COUNT) - 1 \
+	.maps               = (1 << MESH_MAP_COUNT) - 1, \
+	.aa                 = 1,            \
+	.front_distance     = 0.01,         \
+	.rear_distance      = 0.01,         \
+	.average_normals    = true,         \
+	.ignore_backface    = true,         \
+	.match_by_name      = false,        \
+	.high_polys         = ""            \
 }
 // clang-format on
 
@@ -180,45 +212,186 @@ static vec4_t util_bake_vertex(i16 *a, i32 i, i32 stride, i32 count) {
 	return (vec4_t){p[0] / 32767.0f, p[1] / 32767.0f, count > 2 ? p[2] / 32767.0f : 0.0f, 0.0f};
 }
 
+static void util_bake_mesh_free(util_bake_mesh_t *m) {
+	free(m->pos);
+	free(m->nor);
+	free(m->ray);
+	free(m->uv);
+	free(m->object);
+	free(m->group);
+	free(m->col);
+	*m = (util_bake_mesh_t){0};
+}
+
 static void util_bake_raster_free(util_bake_raster_t *r) {
 	if (r == NULL) {
 		return;
 	}
-	free(r->pos);
-	free(r->nor);
-	free(r->object);
-	free(r->color);
+	free(r->tri);
+	util_bake_mesh_free(&r->low);
+	util_bake_mesh_free(&r->high);
 	util_bvh_free(&r->bvh);
 	free(r);
 }
 
-// World positions and normals of all paint objects in their uv space, one sample at each texel center
-static util_bake_raster_t *util_bake_raster_create(i32 res, bool colors, bool rays) {
-	util_bake_raster_t *r = calloc(1, sizeof(util_bake_raster_t));
-	r->res                = res;
-	r->pos                = calloc((size_t)res * res * 3, sizeof(f32));
-	r->nor                = calloc((size_t)res * res * 3, sizeof(f32));
-	r->object             = malloc((size_t)res * res * sizeof(i32));
-	r->color              = colors ? calloc((size_t)res * res * 4, 1) : NULL;
-	for (i32 i = 0; i < res * res; ++i) {
-		r->object[i] = -1;
+static bool util_bake_ends_with(char *s, char *suffix) {
+	i32 n = string_length(s);
+	i32 m = string_length(suffix);
+	if (n < m) {
+		return false;
 	}
-	for (i32 a = 0; a < 3; ++a) {
-		r->min[a] = FLT_MAX;
-		r->max[a] = -FLT_MAX;
+	for (i32 i = 0; i < m; ++i) {
+		char c = s[n - m + i];
+		c      = c >= 'A' && c <= 'Z' ? c + 32 : c;
+		if (c != suffix[i]) {
+			return false;
+		}
 	}
+	return true;
+}
 
-	mesh_object_t_array_t *objects   = g_project->_->paint_objects;
-	i32                    tri_count = 0;
-	for (i32 oi = 0; oi < objects->length; ++oi) {
-		tri_count += objects->buffer[oi]->data->index_array->length / 3;
+// Whether name is one of the lines of list
+static bool util_bake_list_has(char *list, char *name) {
+	i32 n = string_length(name);
+	for (char *line = list; line != NULL && *line != '\0';) {
+		char *end = strchr(line, '\n');
+		i32   len = end != NULL ? (i32)(end - line) : string_length(line);
+		if (len == n && strncmp(line, name, n) == 0) {
+			return true;
+		}
+		line = end != NULL ? end + 1 : NULL;
 	}
-	f32 *tris     = rays ? malloc(sizeof(f32) * 9 * (tri_count > 0 ? tri_count : 1)) : NULL;
-	i32 *tri_objs = rays ? malloc(sizeof(i32) * (tri_count > 0 ? tri_count : 1)) : NULL;
-	i32  tri_i    = 0;
+	return false;
+}
+
+// In the high poly list, not counting the objects that match by name
+bool util_bake_listed_high_poly(char *name) {
+	return util_bake_list_has(util_bake_settings.high_polys, name);
+}
+
+// The high poly objects: the ones listed in the settings, and with match by name the ones ending in _high
+bool util_bake_is_high_poly(char *name) {
+	bake_settings_t *s = &util_bake_settings;
+	return (s->match_by_name && util_bake_ends_with(name, "_high")) || util_bake_list_has(s->high_polys, name);
+}
+
+// Lists the object as high poly or takes it out of the list
+void util_bake_set_high_poly(char *name, bool high) {
+	bake_settings_t *s = &util_bake_settings;
+	if (util_bake_list_has(s->high_polys, name) == high) {
+		return;
+	}
+	char *list = "";
+	for (char *line = s->high_polys; line != NULL && *line != '\0';) {
+		char *end  = strchr(line, '\n');
+		char *item = end != NULL ? substring(line, 0, (i32)(end - line)) : line;
+		if (!string_equals(item, name)) {
+			list = list[0] == '\0' ? string_copy(item) : string("%s\n%s", list, item);
+		}
+		line = end != NULL ? end + 1 : NULL;
+	}
+	if (high) {
+		list = list[0] == '\0' ? string_copy(name) : string("%s\n%s", list, name);
+	}
+	s->high_polys = list; // Jobs in the queue keep the list they were given
+}
+
+// A renamed object stays in the high poly list
+void util_bake_rename_object(char *old_name, char *new_name) {
+	if (old_name != NULL && new_name != NULL && util_bake_list_has(util_bake_settings.high_polys, old_name)) {
+		util_bake_set_high_poly(old_name, false);
+		util_bake_set_high_poly(new_name, true);
+	}
+}
+
+// Length of the name without the _low or _high suffix, objects that share it are matched by name
+static i32 util_bake_base_length(char *name) {
+	i32 n = string_length(name);
+	return util_bake_ends_with(name, "_high") ? n - 5 : util_bake_ends_with(name, "_low") ? n - 4 : n;
+}
+
+typedef struct util_bake_corner {
+	i32 object;
+	i32 q[3];  // Quantized position
+	i32 index; // Triangle * 3 + vertex
+} util_bake_corner_t;
+
+static int util_bake_corner_compare(const void *a, const void *b) {
+	const util_bake_corner_t *x = a;
+	const util_bake_corner_t *y = b;
+	if (x->object != y->object) {
+		return x->object < y->object ? -1 : 1;
+	}
+	for (i32 k = 0; k < 3; ++k) {
+		if (x->q[k] != y->q[k]) {
+			return x->q[k] < y->q[k] ? -1 : 1;
+		}
+	}
+	return 0;
+}
+
+// Ray directions: the normals of all vertices at the same place in one object averaged, so the rays leave no gap
+// at hard edges where the vertex normals split
+static void util_bake_average_normals(util_bake_mesh_t *m, f32 size) {
+	i32                 n       = m->count * 3;
+	util_bake_corner_t *corners = malloc(sizeof(util_bake_corner_t) * (n > 0 ? n : 1));
+	f32                 step    = size * 1e-5f;
+	for (i32 i = 0; i < n; ++i) {
+		f32 *p     = m->pos + i * 3;
+		corners[i] = (util_bake_corner_t){.object = m->object[i / 3],
+		                                  .q      = {(i32)lroundf(p[0] / step), (i32)lroundf(p[1] / step), (i32)lroundf(p[2] / step)},
+		                                  .index  = i};
+	}
+	qsort(corners, n, sizeof(util_bake_corner_t), util_bake_corner_compare);
+	for (i32 start = 0; start < n;) {
+		i32 end = start + 1;
+		while (end < n && util_bake_corner_compare(&corners[start], &corners[end]) == 0) {
+			end++;
+		}
+		f32 sum[3] = {0.0, 0.0, 0.0};
+		for (i32 i = start; i < end; ++i) {
+			f32 *nn = m->nor + corners[i].index * 3;
+			sum[0] += nn[0];
+			sum[1] += nn[1];
+			sum[2] += nn[2];
+		}
+		f32 len = sqrtf(sum[0] * sum[0] + sum[1] * sum[1] + sum[2] * sum[2]);
+		for (i32 i = start; i < end; ++i) {
+			f32 *dst = m->ray + corners[i].index * 3;
+			f32 *nn  = m->nor + corners[i].index * 3;
+			for (i32 k = 0; k < 3; ++k) {
+				dst[k] = len > 1e-6f ? sum[k] / len : nn[k];
+			}
+		}
+		start = end;
+	}
+	free(corners);
+}
+
+// Triangles of the objects in world space, uvs in texels of a res sized map
+static void util_bake_mesh_build(util_bake_mesh_t *m, bool high, i32 res, bool colors, i32 *groups, util_bake_raster_t *r) {
+	mesh_object_t_array_t *objects = g_project->_->paint_objects;
+	i32                    count   = 0;
+	for (i32 oi = 0; oi < objects->length; ++oi) {
+		mesh_object_t *o = objects->buffer[oi];
+		if (util_bake_is_high_poly(o->base->name) == high) {
+			count += o->data->index_array->length / 3;
+		}
+	}
+	m->count  = 0;
+	m->pos    = malloc(sizeof(f32) * 9 * (count > 0 ? count : 1));
+	m->nor    = malloc(sizeof(f32) * 9 * (count > 0 ? count : 1));
+	m->ray    = malloc(sizeof(f32) * 9 * (count > 0 ? count : 1));
+	m->uv     = malloc(sizeof(f32) * 6 * (count > 0 ? count : 1));
+	m->object = malloc(sizeof(i32) * (count > 0 ? count : 1));
+	m->group  = malloc(sizeof(i32) * (count > 0 ? count : 1));
+	m->col    = colors ? malloc(12 * (count > 0 ? count : 1)) : NULL;
 
 	for (i32 oi = 0; oi < objects->length; ++oi) {
-		mesh_object_t  *o    = objects->buffer[oi];
+		mesh_object_t *o = objects->buffer[oi];
+		if (util_bake_is_high_poly(o->base->name) != high) {
+			continue;
+		}
 		mesh_data_t    *md   = o->data;
 		vertex_array_t *vpos = mesh_data_get_vertex_array(md, "pos");
 		vertex_array_t *vnor = mesh_data_get_vertex_array(md, "nor");
@@ -232,97 +405,116 @@ static util_bake_raster_t *util_bake_raster_create(i32 res, bool colors, bool ra
 		i16         *ta  = vtex != NULL ? vtex->values->buffer : NULL;
 		i16         *ca  = vcol != NULL ? vcol->values->buffer : NULL;
 		u32_array_t *ind = md->index_array;
-		mat4_t       m   = o->base->transform->world_unpack;
-		mat4_t       mn  = o->base->transform->world;
+		mat4_t       w   = o->base->transform->world_unpack;
+		mat4_t       wn  = o->base->transform->world;
 
 		for (i32 t = 0; t + 2 < ind->length; t += 3) {
-			vec4_t p[3];
-			vec4_t n[3];
-			f32    x[3];
-			f32    y[3];
+			i32 ti = m->count++;
 			for (i32 k = 0; k < 3; ++k) {
-				i32    i  = ind->buffer[t + k];
-				vec4_t v  = util_bake_vertex(pa, i, 4, 3);
-				v.w       = 1.0;
-				p[k]      = vec4_apply_mat4(v, m);
-				vec4_t w  = util_bake_vertex(na, i, 2, 2);
-				w.z       = pa[i * 4 + 3] / 32767.0f;
-				w.w       = 0.0;
-				n[k]      = vec4_apply_mat4(w, mn);
-				x[k]      = ta != NULL ? ta[i * 2] / 32767.0f * md->scale_tex * res : 0.0f;
-				y[k]      = ta != NULL ? ta[i * 2 + 1] / 32767.0f * md->scale_tex * res : 0.0f;
-				r->min[0] = fminf(r->min[0], p[k].x);
-				r->min[1] = fminf(r->min[1], p[k].y);
-				r->min[2] = fminf(r->min[2], p[k].z);
-				r->max[0] = fmaxf(r->max[0], p[k].x);
-				r->max[1] = fmaxf(r->max[1], p[k].y);
-				r->max[2] = fmaxf(r->max[2], p[k].z);
-			}
-			if (rays) {
-				f32 *dst = tris + tri_i * 9;
-				for (i32 k = 0; k < 3; ++k) {
-					dst[k * 3 + 0] = p[k].x;
-					dst[k * 3 + 1] = p[k].y;
-					dst[k * 3 + 2] = p[k].z;
+				i32    i = ind->buffer[t + k];
+				vec4_t v = util_bake_vertex(pa, i, 4, 3);
+				v.w      = 1.0;
+				v        = vec4_apply_mat4(v, w);
+				vec4_t n = util_bake_vertex(na, i, 2, 2);
+				n.z      = pa[i * 4 + 3] / 32767.0f;
+				n.w      = 0.0;
+				n        = vec4_norm(vec4_apply_mat4(n, wn));
+				f32 *p   = m->pos + ti * 9 + k * 3;
+				f32 *nn  = m->nor + ti * 9 + k * 3;
+				p[0]     = v.x;
+				p[1]     = v.y;
+				p[2]     = v.z;
+				nn[0]    = n.x;
+				nn[1]    = n.y;
+				nn[2]    = n.z;
+				memcpy(m->ray + ti * 9 + k * 3, nn, sizeof(f32) * 3);
+				m->uv[ti * 6 + k * 2]     = ta != NULL ? ta[i * 2] / 32767.0f * md->scale_tex * res : 0.0f;
+				m->uv[ti * 6 + k * 2 + 1] = ta != NULL ? ta[i * 2 + 1] / 32767.0f * md->scale_tex * res : 0.0f;
+				if (m->col != NULL) {
+					for (i32 c = 0; c < 3; ++c) {
+						f32 cv                      = ca != NULL ? ca[i * 4 + c] / 32767.0f : 1.0f;
+						cv                          = cv < 0.0f ? 0.0f : cv > 1.0f ? 1.0f : cv;
+						m->col[ti * 12 + k * 4 + c] = (u8)(cv * 255.0f + 0.5f);
+					}
+					m->col[ti * 12 + k * 4 + 3] = 255;
 				}
-				tri_objs[tri_i] = oi;
-				tri_i++;
+				for (i32 a = 0; a < 3; ++a) {
+					r->min[a] = fminf(r->min[a], p[a]);
+					r->max[a] = fmaxf(r->max[a], p[a]);
+				}
 			}
+			m->object[ti] = oi;
+			m->group[ti]  = groups[oi];
+		}
+	}
+}
 
-			f32 area = (x[1] - x[0]) * (y[2] - y[0]) - (x[2] - x[0]) * (y[1] - y[0]);
-			if (fabsf(area) < 1e-12f) {
-				continue;
-			}
-			i32 x0 = (i32)floorf(fminf(x[0], fminf(x[1], x[2])));
-			i32 x1 = (i32)ceilf(fmaxf(x[0], fmaxf(x[1], x[2])));
-			i32 y0 = (i32)floorf(fminf(y[0], fminf(y[1], y[2])));
-			i32 y1 = (i32)ceilf(fmaxf(y[0], fmaxf(y[1], y[2])));
-			x0     = x0 < 0 ? 0 : x0;
-			y0     = y0 < 0 ? 0 : y0;
-			x1     = x1 > res - 1 ? res - 1 : x1;
-			y1     = y1 > res - 1 ? res - 1 : y1;
-			for (i32 py = y0; py <= y1; ++py) {
-				for (i32 px = x0; px <= x1; ++px) {
-					f32 cx = px + 0.5f;
-					f32 cy = py + 0.5f;
-					f32 b0 = ((x[1] - cx) * (y[2] - cy) - (x[2] - cx) * (y[1] - cy)) / area;
-					f32 b1 = ((x[2] - cx) * (y[0] - cy) - (x[0] - cx) * (y[2] - cy)) / area;
-					f32 b2 = 1.0f - b0 - b1;
-					if (b0 < -1e-4f || b1 < -1e-4f || b2 < -1e-4f) {
-						continue;
-					}
-					i32  ti       = py * res + px;
-					f32 *pp       = r->pos + ti * 3;
-					pp[0]         = p[0].x * b0 + p[1].x * b1 + p[2].x * b2;
-					pp[1]         = p[0].y * b0 + p[1].y * b1 + p[2].y * b2;
-					pp[2]         = p[0].z * b0 + p[1].z * b1 + p[2].z * b2;
-					vec4_t nn     = vec4_norm((vec4_t){n[0].x * b0 + n[1].x * b1 + n[2].x * b2, n[0].y * b0 + n[1].y * b1 + n[2].y * b2,
-					                                   n[0].z * b0 + n[1].z * b1 + n[2].z * b2, 0.0});
-					f32   *np     = r->nor + ti * 3;
-					np[0]         = nn.x;
-					np[1]         = nn.y;
-					np[2]         = nn.z;
-					r->object[ti] = oi;
-					if (r->color != NULL) {
-						u8 *c = r->color + ti * 4;
-						if (ca != NULL) {
-							i32 i0 = ind->buffer[t];
-							i32 i1 = ind->buffer[t + 1];
-							i32 i2 = ind->buffer[t + 2];
-							for (i32 k = 0; k < 4; ++k) {
-								f32 v = (ca[i0 * 4 + k] * b0 + ca[i1 * 4 + k] * b1 + ca[i2 * 4 + k] * b2) / 32767.0f;
-								v     = v < 0.0f ? 0.0f : v > 1.0f ? 1.0f : v;
-								c[k]  = (u8)(v * 255.0f + 0.5f);
-							}
-						}
-						else {
-							c[0] = c[1] = c[2] = c[3] = 255;
-						}
-					}
+// One sample of the low poly per texel center: the triangle that covers it
+static void util_bake_raster_low(util_bake_raster_t *r) {
+	i32               res = r->res;
+	util_bake_mesh_t *m   = &r->low;
+	for (i32 t = 0; t < m->count; ++t) {
+		f32 *uv   = m->uv + t * 6;
+		f32  x[3] = {uv[0], uv[2], uv[4]};
+		f32  y[3] = {uv[1], uv[3], uv[5]};
+		f32  area = (x[1] - x[0]) * (y[2] - y[0]) - (x[2] - x[0]) * (y[1] - y[0]);
+		if (fabsf(area) < 1e-12f) {
+			continue;
+		}
+		i32 x0 = (i32)floorf(fminf(x[0], fminf(x[1], x[2])));
+		i32 x1 = (i32)ceilf(fmaxf(x[0], fmaxf(x[1], x[2])));
+		i32 y0 = (i32)floorf(fminf(y[0], fminf(y[1], y[2])));
+		i32 y1 = (i32)ceilf(fmaxf(y[0], fmaxf(y[1], y[2])));
+		x0     = x0 < 0 ? 0 : x0;
+		y0     = y0 < 0 ? 0 : y0;
+		x1     = x1 > res - 1 ? res - 1 : x1;
+		y1     = y1 > res - 1 ? res - 1 : y1;
+		for (i32 py = y0; py <= y1; ++py) {
+			for (i32 px = x0; px <= x1; ++px) {
+				f32 cx = px + 0.5f;
+				f32 cy = py + 0.5f;
+				f32 b0 = ((x[1] - cx) * (y[2] - cy) - (x[2] - cx) * (y[1] - cy)) / area;
+				f32 b1 = ((x[2] - cx) * (y[0] - cy) - (x[0] - cx) * (y[2] - cy)) / area;
+				f32 b2 = 1.0f - b0 - b1;
+				if (b0 >= -1e-4f && b1 >= -1e-4f && b2 >= -1e-4f) {
+					r->tri[py * res + px] = t;
 				}
 			}
 		}
 	}
+}
+
+// Low poly triangles in uv space, and the high poly or the low poly in a bvh when rays are cast
+static util_bake_raster_t *util_bake_raster_create(bake_settings_t *s, i32 res, bool colors, bool rays) {
+	util_bake_raster_t *r = calloc(1, sizeof(util_bake_raster_t));
+	r->res                = res;
+	r->tri                = malloc((size_t)res * res * sizeof(i32));
+	for (i32 i = 0; i < res * res; ++i) {
+		r->tri[i] = -1;
+	}
+	for (i32 a = 0; a < 3; ++a) {
+		r->min[a] = FLT_MAX;
+		r->max[a] = -FLT_MAX;
+	}
+
+	// Match by name: objects that share the name without _low and _high share a group
+	mesh_object_t_array_t *objects = g_project->_->paint_objects;
+	i32                   *groups  = malloc(sizeof(i32) * (objects->length > 0 ? objects->length : 1));
+	for (i32 i = 0; i < objects->length; ++i) {
+		groups[i]  = i;
+		char *name = objects->buffer[i]->base->name;
+		i32   n    = util_bake_base_length(name);
+		for (i32 j = 0; j < i; ++j) {
+			char *other = objects->buffer[j]->base->name;
+			if (util_bake_base_length(other) == n && strncmp(other, name, n) == 0) {
+				groups[i] = groups[j];
+				break;
+			}
+		}
+	}
+	util_bake_mesh_build(&r->low, false, res, colors, groups, r);
+	util_bake_mesh_build(&r->high, true, res, colors, groups, r);
+	free(groups);
 
 	if (r->min[0] > r->max[0]) { // No geometry
 		for (i32 a = 0; a < 3; ++a) {
@@ -337,10 +529,149 @@ static util_bake_raster_t *util_bake_raster_create(i32 res, bool colors, bool ra
 	if (r->size < 1e-6f) {
 		r->size = 1.0;
 	}
-	if (rays) {
-		util_bvh_build(&r->bvh, tris, tri_objs, tri_i);
+	if (s->average_normals) {
+		util_bake_average_normals(&r->low, r->size);
+	}
+	util_bake_raster_low(r);
+
+	// The high poly is cast at for every slot, the low poly only for occlusion, bent normals and thickness
+	util_bake_mesh_t *traced = r->high.count > 0 ? &r->high : rays ? &r->low : NULL;
+	if (traced != NULL) {
+		f32 *tris = malloc(sizeof(f32) * 9 * (traced->count > 0 ? traced->count : 1));
+		i32 *ids  = malloc(sizeof(i32) * (traced->count > 0 ? traced->count : 1));
+		memcpy(tris, traced->pos, sizeof(f32) * 9 * traced->count);
+		for (i32 i = 0; i < traced->count; ++i) {
+			ids[i] = i;
+		}
+		util_bvh_build(&r->bvh, tris, ids, traced->count);
 	}
 	return r;
+}
+
+// Barycentrics of a point of the uv space in a triangle, outside of it they extrapolate
+static void util_bake_barycentrics(f32 *uv, f32 px, f32 py, f32 *b) {
+	f32 area = (uv[2] - uv[0]) * (uv[5] - uv[1]) - (uv[4] - uv[0]) * (uv[3] - uv[1]);
+	b[0]     = ((uv[2] - px) * (uv[5] - py) - (uv[4] - px) * (uv[3] - py)) / area;
+	b[1]     = ((uv[4] - px) * (uv[1] - py) - (uv[0] - px) * (uv[5] - py)) / area;
+	b[2]     = 1.0f - b[0] - b[1];
+}
+
+static void util_bake_interpolate(f32 *v, f32 *b, f32 *out, bool normalize) {
+	for (i32 k = 0; k < 3; ++k) {
+		out[k] = v[k] * b[0] + v[3 + k] * b[1] + v[6 + k] * b[2];
+	}
+	if (normalize) {
+		f32 len = sqrtf(out[0] * out[0] + out[1] * out[1] + out[2] * out[2]);
+		if (len > 1e-12f) {
+			out[0] /= len;
+			out[1] /= len;
+			out[2] /= len;
+		}
+	}
+}
+
+// What a sample of the map sees: the low poly at a point of its uv space, or the high poly found by a ray from there
+static void util_bake_surface(bake_job_t *job, i32 tri, f32 px, f32 py, util_bake_surface_t *s) {
+	util_bake_raster_t *r   = job->raster;
+	util_bake_mesh_t   *low = &r->low;
+	f32                 b[3];
+	util_bake_barycentrics(low->uv + tri * 6, px, py, b);
+	util_bake_interpolate(low->pos + tri * 9, b, s->lp, false);
+	util_bake_interpolate(low->nor + tri * 9, b, s->ln, true);
+	s->ltri   = tri;
+	s->high   = false;
+	s->hit    = true;
+	s->object = low->object[tri];
+	s->tri    = tri;
+	memcpy(s->p, s->lp, sizeof(s->p));
+	memcpy(s->n, s->ln, sizeof(s->n));
+	for (i32 k = 0; k < 3; ++k) {
+		s->col[k] = low->col != NULL ? (low->col[tri * 12 + k] * b[0] + low->col[tri * 12 + 4 + k] * b[1] + low->col[tri * 12 + 8 + k] * b[2]) / 255.0f : 1.0f;
+	}
+	if (r->high.count == 0) {
+		return;
+	}
+
+	// From the cage above the low poly down to the rear distance below it
+	f32 rd[3];
+	util_bake_interpolate(low->ray + tri * 9, b, rd, true);
+	f32       front = job->settings.front_distance * r->size;
+	f32       rear  = job->settings.rear_distance * r->size;
+	f32       o[3]  = {s->lp[0] + rd[0] * front, s->lp[1] + rd[1] * front, s->lp[2] + rd[2] * front};
+	f32       d[3]  = {-rd[0], -rd[1], -rd[2]};
+	i32       group = job->settings.match_by_name ? low->group[tri] : -1;
+	bvh_hit_t h;
+	if (!util_bvh_raycast(&r->bvh, o, d, front + rear, false, job->settings.ignore_backface, r->high.group, group, &h)) {
+		s->hit = false;
+		return;
+	}
+	util_bake_mesh_t *high  = &r->high;
+	f32               hb[3] = {1.0f - h.u - h.v, h.u, h.v};
+	s->high                 = true;
+	s->tri                  = h.tri;
+	s->object               = high->object[h.tri];
+	util_bake_interpolate(high->pos + h.tri * 9, hb, s->p, false);
+	util_bake_interpolate(high->nor + h.tri * 9, hb, s->n, true);
+	for (i32 k = 0; k < 3; ++k) {
+		s->col[k] = high->col != NULL
+		                ? (high->col[h.tri * 12 + k] * hb[0] + high->col[h.tri * 12 + 4 + k] * hb[1] + high->col[h.tri * 12 + 8 + k] * hb[2]) / 255.0f
+		                : 1.0f;
+	}
+}
+
+static f32 util_bake_det3(f32 *a, f32 *b, f32 *c) {
+	return a[0] * (b[1] * c[2] - b[2] * c[1]) - b[0] * (a[1] * c[2] - a[2] * c[1]) + c[0] * (a[1] * b[2] - a[2] * b[1]);
+}
+
+// Tangent space normal, OpenGL convention: x along the gradient of u, y along the gradient of v going up the image,
+// z along the low poly normal. The frame is the one of cotangent_frame in make_mesh.c: the gradients of u and v on
+// the low poly triangle, scaled together by the longest one, and y flipped like the viewport does
+static void util_bake_tangent_normal(util_bake_raster_t *r, util_bake_surface_t *s, f32 *out) {
+	util_bake_mesh_t *low    = &r->low;
+	f32              *p      = low->pos + s->ltri * 9;
+	f32              *uv     = low->uv + s->ltri * 6;
+	f32              *n      = s->ln;
+	f32               e1[3]  = {p[3] - p[0], p[4] - p[1], p[5] - p[2]};
+	f32               e2[3]  = {p[6] - p[0], p[7] - p[1], p[8] - p[2]};
+	f32               du1    = uv[2] - uv[0];
+	f32               dv1    = uv[3] - uv[1];
+	f32               du2    = uv[4] - uv[0];
+	f32               dv2    = uv[5] - uv[1];
+	f32               e2n[3] = {e2[1] * n[2] - e2[2] * n[1], e2[2] * n[0] - e2[0] * n[2], e2[0] * n[1] - e2[1] * n[0]};
+	f32               ne1[3] = {n[1] * e1[2] - n[2] * e1[1], n[2] * e1[0] - n[0] * e1[2], n[0] * e1[1] - n[1] * e1[0]};
+	f32               det    = n[0] * (e1[1] * e2[2] - e1[2] * e2[1]) + n[1] * (e1[2] * e2[0] - e1[0] * e2[2]) + n[2] * (e1[0] * e2[1] - e1[1] * e2[0]);
+	f32               t[3];
+	f32               bt[3];
+	for (i32 k = 0; k < 3; ++k) {
+		t[k]  = (e2n[k] * du1 + ne1[k] * du2) * (det < 0.0f ? -1.0f : 1.0f);
+		bt[k] = (e2n[k] * dv1 + ne1[k] * dv2) * (det < 0.0f ? -1.0f : 1.0f);
+	}
+	f32 tl = t[0] * t[0] + t[1] * t[1] + t[2] * t[2];
+	f32 bl = bt[0] * bt[0] + bt[1] * bt[1] + bt[2] * bt[2];
+	f32 m  = sqrtf(tl > bl ? tl : bl);
+	if (m < 1e-12f) {
+		out[0] = 0.5;
+		out[1] = 0.5;
+		out[2] = 1.0;
+		return;
+	}
+	f32 by[3] = {-bt[0] / m, -bt[1] / m, -bt[2] / m}; // The viewport flips y
+	for (i32 k = 0; k < 3; ++k) {
+		t[k] /= m;
+	}
+	// Solve t x + by y + n z = high normal
+	f32 d = util_bake_det3(t, by, n);
+	if (fabsf(d) < 1e-9f) {
+		out[0] = 0.5;
+		out[1] = 0.5;
+		out[2] = 1.0;
+		return;
+	}
+	f32 v[3] = {util_bake_det3(s->n, by, n) / d, util_bake_det3(t, s->n, n) / d, util_bake_det3(t, by, s->n) / d};
+	f32 len  = sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+	for (i32 k = 0; k < 3; ++k) {
+		out[k] = (len > 1e-12f ? v[k] / len : (k == 2 ? 1.0f : 0.0f)) * 0.5f + 0.5f;
+	}
 }
 
 static void util_bake_id_color(i32 index, f32 *c) {
@@ -361,33 +692,39 @@ static void util_bake_id_color(i32 index, f32 *c) {
 	c[2]          = rgb[hi][2];
 }
 
+// Change of the normal along the surface between the texel and its neighbours of the same object
 static f32 util_bake_curvature(bake_job_t *job, i32 x, i32 y) {
-	util_bake_raster_t *r     = job->raster;
-	i32                 res   = r->res;
-	i32                 ti    = y * res + x;
-	f32                *pa    = r->pos + ti * 3;
-	f32                *na    = r->nor + ti * 3;
-	f32                 sum   = 0.0;
-	i32                 count = 0;
-	i32                 nx[4] = {x - 1, x + 1, x, x};
-	i32                 ny[4] = {y, y, y - 1, y + 1};
+	util_bake_raster_t *r   = job->raster;
+	i32                 res = r->res;
+	util_bake_surface_t a;
+	util_bake_surface(job, r->tri[y * res + x], x + 0.5f, y + 0.5f, &a);
+	if (!a.hit) {
+		return 0.5;
+	}
+	f32 sum   = 0.0;
+	i32 count = 0;
+	i32 nx[4] = {x - 1, x + 1, x, x};
+	i32 ny[4] = {y, y, y - 1, y + 1};
 	for (i32 k = 0; k < 4; ++k) {
 		if (nx[k] < 0 || ny[k] < 0 || nx[k] >= res || ny[k] >= res) {
 			continue;
 		}
-		i32 tj = ny[k] * res + nx[k];
-		if (r->object[tj] != r->object[ti]) {
+		i32 tj = r->tri[ny[k] * res + nx[k]];
+		if (tj < 0) {
 			continue;
 		}
-		f32 *pb    = r->pos + tj * 3;
-		f32 *nb    = r->nor + tj * 3;
-		f32  dp[3] = {pb[0] - pa[0], pb[1] - pa[1], pb[2] - pa[2]};
-		f32  len2  = dp[0] * dp[0] + dp[1] * dp[1] + dp[2] * dp[2];
+		util_bake_surface_t b;
+		util_bake_surface(job, tj, nx[k] + 0.5f, ny[k] + 0.5f, &b);
+		if (!b.hit || b.object != a.object || b.high != a.high) {
+			continue;
+		}
+		f32 dp[3] = {b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]};
+		f32 len2  = dp[0] * dp[0] + dp[1] * dp[1] + dp[2] * dp[2];
 		if (len2 < 1e-20f) {
 			continue;
 		}
 		// Normals that spread apart along the surface are convex, positive
-		sum += ((nb[0] - na[0]) * dp[0] + (nb[1] - na[1]) * dp[1] + (nb[2] - na[2]) * dp[2]) / len2;
+		sum += ((b.n[0] - a.n[0]) * dp[0] + (b.n[1] - a.n[1]) * dp[1] + (b.n[2] - a.n[2]) * dp[2]) / len2;
 		count++;
 	}
 	if (count == 0) {
@@ -398,19 +735,23 @@ static f32 util_bake_curvature(bake_job_t *job, i32 x, i32 y) {
 	return 0.5f + 0.5f * k;
 }
 
-static void util_bake_texel(bake_job_t *job, i32 x, i32 y, f32 *out) {
-	util_bake_raster_t *r   = job->raster;
-	i32                 ti  = y * r->res + x;
-	f32                *p   = r->pos + ti * 3;
-	f32                *n   = r->nor + ti * 3;
-	i32                 obj = r->object[ti];
-	out[3]                  = 1.0;
+// One sample of a slot, seed spreads the ray patterns of the samples of a texel
+static void util_bake_sample(bake_job_t *job, util_bake_surface_t *s, u32 seed, i32 rays, f32 *out) {
+	util_bake_raster_t *r = job->raster;
+	f32                *p = s->p;
+	f32                *n = s->n;
+	out[3]                = 1.0;
 
 	switch (job->slot) {
-	case MESH_MAP_NORMAL: // Flat until a high poly is baked into it
-		out[0] = 0.5;
-		out[1] = 0.5;
-		out[2] = 1.0;
+	case MESH_MAP_NORMAL:
+		if (s->high) {
+			util_bake_tangent_normal(r, s, out);
+		}
+		else { // Flat without a high poly under the sample
+			out[0] = 0.5;
+			out[1] = 0.5;
+			out[2] = 1.0;
+		}
 		break;
 	case MESH_MAP_WORLD_NORMAL:
 		for (i32 k = 0; k < 3; ++k) {
@@ -419,19 +760,18 @@ static void util_bake_texel(bake_job_t *job, i32 x, i32 y, f32 *out) {
 		break;
 	case MESH_MAP_OCCLUSION:
 	case MESH_MAP_BENT_NORMAL: { // Unoccluded directions of the occlusion rays average to the bent normal
-		i32 count   = job->settings.occlusion_samples > 0 ? job->settings.occlusion_samples : 1;
 		f32 dist    = job->settings.occlusion_distance * r->size;
 		f32 eps     = r->size * 2e-4f;
 		f32 o[3]    = {p[0] + n[0] * eps, p[1] + n[1] * eps, p[2] + n[2] * eps};
-		f32 r1      = util_bake_hash((u32)ti * 2 + 1);
-		f32 r2      = util_bake_hash((u32)ti * 2 + 2);
+		f32 r1      = util_bake_hash(seed * 2 + 1);
+		f32 r2      = util_bake_hash(seed * 2 + 2);
 		i32 hits    = 0;
 		f32 bent[3] = {0.0, 0.0, 0.0};
-		for (i32 i = 0; i < count; ++i) {
+		for (i32 i = 0; i < rays; ++i) {
 			f32       d[3];
 			bvh_hit_t hit;
-			util_bake_hemisphere(n, i, count, r1, r2, d);
-			if (util_bvh_raycast(&r->bvh, o, d, dist, true, &hit)) {
+			util_bake_hemisphere(n, i, rays, r1, r2, d);
+			if (util_bvh_raycast(&r->bvh, o, d, dist, true, false, NULL, -1, &hit)) {
 				hits++;
 			}
 			else {
@@ -441,7 +781,7 @@ static void util_bake_texel(bake_job_t *job, i32 x, i32 y, f32 *out) {
 			}
 		}
 		if (job->slot == MESH_MAP_OCCLUSION) {
-			out[0] = out[1] = out[2] = 1.0f - (f32)hits / count;
+			out[0] = out[1] = out[2] = 1.0f - (f32)hits / rays;
 		}
 		else {
 			f32 len = sqrtf(bent[0] * bent[0] + bent[1] * bent[1] + bent[2] * bent[2]);
@@ -452,36 +792,29 @@ static void util_bake_texel(bake_job_t *job, i32 x, i32 y, f32 *out) {
 		break;
 	}
 	case MESH_MAP_THICKNESS: {
-		i32 count = job->settings.thickness_samples > 0 ? job->settings.thickness_samples : 1;
 		f32 dist  = job->settings.thickness_distance * r->size;
 		f32 eps   = r->size * 2e-4f;
 		f32 in[3] = {-n[0], -n[1], -n[2]};
 		f32 o[3]  = {p[0] + in[0] * eps, p[1] + in[1] * eps, p[2] + in[2] * eps};
-		f32 r1    = util_bake_hash((u32)ti * 2 + 1);
-		f32 r2    = util_bake_hash((u32)ti * 2 + 2);
+		f32 r1    = util_bake_hash(seed * 2 + 1);
+		f32 r2    = util_bake_hash(seed * 2 + 2);
 		f32 sum   = 0.0;
-		for (i32 i = 0; i < count; ++i) {
+		for (i32 i = 0; i < rays; ++i) {
 			f32       d[3];
 			bvh_hit_t hit;
-			util_bake_hemisphere(in, i, count, r1, r2, d);
-			sum += util_bvh_raycast(&r->bvh, o, d, dist, false, &hit) ? hit.t : dist;
+			util_bake_hemisphere(in, i, rays, r1, r2, d);
+			sum += util_bvh_raycast(&r->bvh, o, d, dist, false, false, NULL, -1, &hit) ? hit.t : dist;
 		}
-		out[0] = out[1] = out[2] = sum / count / dist; // White is thick
+		out[0] = out[1] = out[2] = sum / rays / dist; // White is thick
 		break;
 	}
 	case MESH_MAP_ID:
-		if (job->settings.id_source == MESH_MAP_ID_VERTEX_COLOR && r->color != NULL) {
-			u8 *c  = r->color + ti * 4;
-			out[0] = c[0] / 255.0f;
-			out[1] = c[1] / 255.0f;
-			out[2] = c[2] / 255.0f;
+		if (job->settings.id_source == MESH_MAP_ID_VERTEX_COLOR) {
+			memcpy(out, s->col, sizeof(f32) * 3);
 		}
 		else {
-			util_bake_id_color(obj, out);
+			util_bake_id_color(s->object, out);
 		}
-		break;
-	case MESH_MAP_CURVATURE:
-		out[0] = out[1] = out[2] = util_bake_curvature(job, x, y);
 		break;
 	case MESH_MAP_POSITION:
 		for (i32 k = 0; k < 3; ++k) {
@@ -490,8 +823,52 @@ static void util_bake_texel(bake_job_t *job, i32 x, i32 y, f32 *out) {
 		}
 		break;
 	case MESH_MAP_OPACITY:
-		out[0] = out[1] = out[2] = 1.0;
+		out[0] = out[1] = out[2] = s->hit ? 1.0f : 0.0f;
 		break;
+	}
+}
+
+static void util_bake_texel(bake_job_t *job, i32 x, i32 y, f32 *out) {
+	util_bake_raster_t *r   = job->raster;
+	i32                 ti  = y * r->res + x;
+	i32                 tri = r->tri[ti];
+	if (job->slot == MESH_MAP_CURVATURE) { // From the neighbours, no antialiasing
+		out[0] = out[1] = out[2] = util_bake_curvature(job, x, y);
+		out[3]                   = 1.0;
+		return;
+	}
+
+	// Antialiasing: aa x aa samples spread over the texel, the rays of a texel shared among them
+	i32 aa      = job->settings.aa < 1 ? 1 : job->settings.aa > 8 ? 8 : job->settings.aa;
+	i32 samples = aa * aa;
+	i32 rays    = job->slot == MESH_MAP_THICKNESS ? job->settings.thickness_samples : job->settings.occlusion_samples;
+	rays        = rays / samples > 0 ? rays / samples : 1;
+	f32 sum[4]  = {0.0, 0.0, 0.0, 0.0};
+	for (i32 j = 0; j < aa; ++j) {
+		for (i32 i = 0; i < aa; ++i) {
+			util_bake_surface_t s;
+			f32                 v[4];
+			util_bake_surface(job, tri, x + (i + 0.5f) / aa, y + (j + 0.5f) / aa, &s);
+			if (!s.hit && job->slot != MESH_MAP_OPACITY) {
+				s.hit = true; // The low poly stands in where the ray finds no high poly
+			}
+			util_bake_sample(job, &s, (u32)ti * 64 + j * aa + i, rays, v);
+			for (i32 k = 0; k < 4; ++k) {
+				sum[k] += v[k];
+			}
+		}
+	}
+	for (i32 k = 0; k < 4; ++k) {
+		out[k] = sum[k] / samples;
+	}
+	if (util_bake_slot_is_vector(job->slot) && job->slot != MESH_MAP_POSITION) { // Average directions stay unit length
+		f32 v[3] = {out[0] * 2.0f - 1.0f, out[1] * 2.0f - 1.0f, out[2] * 2.0f - 1.0f};
+		f32 len  = sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+		if (len > 1e-6f) {
+			for (i32 k = 0; k < 3; ++k) {
+				out[k] = v[k] / len * 0.5f + 0.5f;
+			}
+		}
 	}
 }
 
@@ -507,7 +884,7 @@ static void util_bake_rows_thread(void *param) {
 		}
 		for (i32 x = 0; x < res; ++x) {
 			i32 ti = y * res + x;
-			if (job->raster->object[ti] >= 0) {
+			if (job->raster->tri[ti] >= 0) {
 				util_bake_texel(job, x, y, job->out + ti * 4);
 			}
 		}
@@ -525,7 +902,7 @@ static void util_bake_dilate(bake_job_t *job) {
 	u8  *mask = malloc((size_t)res * res);
 	u8  *next = malloc((size_t)res * res);
 	for (i32 i = 0; i < res * res; ++i) {
-		mask[i] = job->raster->object[i] >= 0;
+		mask[i] = job->raster->tri[i] >= 0;
 	}
 	for (i32 pass = 0; pass < job->settings.dilation; ++pass) {
 		memcpy(next, mask, (size_t)res * res);
@@ -752,11 +1129,11 @@ void util_bake_update(void *_) {
 		}
 	}
 	else if (job->raster == NULL) {
-		i32 res = job->settings.res > 0 ? job->settings.res : 1;
-		job->raster =
-		    util_bake_raster_create(res, job->slot == MESH_MAP_ID && job->settings.id_source == MESH_MAP_ID_VERTEX_COLOR, util_bake_slot_casts_rays(job->slot));
+		i32 res             = job->settings.res > 0 ? job->settings.res : 1;
+		job->raster         = util_bake_raster_create(&job->settings, res, job->slot == MESH_MAP_ID && job->settings.id_source == MESH_MAP_ID_VERTEX_COLOR,
+		                                              util_bake_slot_casts_rays(job->slot));
 		job->out            = calloc((size_t)res * res * 4, sizeof(f32));
-		job->rows_per_frame = util_bake_slot_casts_rays(job->slot) ? 1 : res;
+		job->rows_per_frame = util_bake_slot_casts_rays(job->slot) || job->raster->high.count > 0 ? 1 : res;
 	}
 	else if (job->rows_done < job->raster->res) {
 		util_bake_step_rows(job);
@@ -979,18 +1356,50 @@ f32_array_t *util_bake_pixels(i32 slot) {
 	return out;
 }
 
+// A json string literal of s, free() it
+static char *util_bake_json_string(char *s) {
+	s         = s != NULL ? s : "";
+	char *out = malloc(string_length(s) * 2 + 3);
+	i32   n   = 0;
+	out[n++]  = '"';
+	for (char *c = s; *c != '\0'; ++c) {
+		if (*c == '"' || *c == '\\' || *c == '\n') {
+			out[n++] = '\\';
+			out[n++] = *c == '\n' ? 'n' : *c;
+		}
+		else {
+			out[n++] = *c;
+		}
+	}
+	out[n++] = '"';
+	out[n]   = '\0';
+	return out;
+}
+
 char *util_bake_settings_encode() {
-	bake_settings_t *s = &util_bake_settings;
-	return string("{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,\"thickness_distance\":%f,"
-	              "\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d}",
-	              s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength,
-	              s->id_source, s->maps);
+	bake_settings_t *s          = &util_bake_settings;
+	char            *high_polys = util_bake_json_string(s->high_polys);
+	char            *json =
+	    string("{\"res\":%d,\"dilation\":%d,\"occlusion_samples\":%d,\"occlusion_distance\":%f,\"thickness_samples\":%d,\"thickness_distance\":%f,"
+	           "\"curvature_strength\":%f,\"id_source\":%d,\"maps\":%d,\"aa\":%d,\"front_distance\":%f,\"rear_distance\":%f,\"average_normals\":%d,"
+	           "\"ignore_backface\":%d,\"match_by_name\":%d,\"high_polys\":%s}",
+	           s->res, s->dilation, s->occlusion_samples, s->occlusion_distance, s->thickness_samples, s->thickness_distance, s->curvature_strength,
+	           s->id_source, s->maps, s->aa, s->front_distance, s->rear_distance, s->average_normals, s->ignore_backface, s->match_by_name, high_polys);
+	free(high_polys);
+	return json;
 }
 
 static void util_bake_settings_read_i32(any_map_t *m, char *key, i32 *v) {
 	char *s = any_map_get(m, key);
 	if (s != NULL) {
 		*v = parse_int(s);
+	}
+}
+
+static void util_bake_settings_read_bool(any_map_t *m, char *key, bool *v) {
+	char *s = any_map_get(m, key);
+	if (s != NULL) {
+		*v = parse_int(s) != 0;
 	}
 }
 
@@ -1017,10 +1426,21 @@ void util_bake_settings_decode(char *json) {
 	util_bake_settings_read_f32(m, "curvature_strength", &s->curvature_strength);
 	util_bake_settings_read_i32(m, "id_source", &s->id_source);
 	util_bake_settings_read_i32(m, "maps", &s->maps);
+	util_bake_settings_read_i32(m, "aa", &s->aa);
+	util_bake_settings_read_f32(m, "front_distance", &s->front_distance);
+	util_bake_settings_read_f32(m, "rear_distance", &s->rear_distance);
+	util_bake_settings_read_bool(m, "average_normals", &s->average_normals);
+	util_bake_settings_read_bool(m, "ignore_backface", &s->ignore_backface);
+	util_bake_settings_read_bool(m, "match_by_name", &s->match_by_name);
+	char *high_polys = any_map_get(m, "high_polys");
+	if (high_polys != NULL) {
+		s->high_polys = high_polys;
+	}
 	s->res       = s->res < 1 ? 1 : s->res > 16384 ? 16384 : s->res;
 	s->dilation  = s->dilation < 0 ? 0 : s->dilation;
 	s->id_source = s->id_source == MESH_MAP_ID_VERTEX_COLOR ? MESH_MAP_ID_VERTEX_COLOR : MESH_MAP_ID_OBJECT;
 	s->maps &= (1 << MESH_MAP_COUNT) - 1;
+	s->aa = s->aa >= 8 ? 8 : s->aa >= 4 ? 4 : s->aa >= 2 ? 2 : 1;
 }
 
 // Fills the version 23 fields of the project before it is encoded
@@ -1037,7 +1457,7 @@ void util_bake_export(project_t *project) {
 #ifdef IRON_BGRA
 		if (!vector) { // Stored as rgba, the readback is a copy that the next readback overwrites
 			for (i32 i = 0; i + 3 < pixels->length; i += 4) {
-				u8 b                 = pixels->buffer[i];
+				u8 b                  = pixels->buffer[i];
 				pixels->buffer[i]     = pixels->buffer[i + 2];
 				pixels->buffer[i + 2] = b;
 			}

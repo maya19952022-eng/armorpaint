@@ -789,7 +789,14 @@ typedef struct bake_settings {
 	f32 thickness_distance;
 	f32 curvature_strength;
 	i32 id_source; // mesh_map_id_source_t
-	i32 maps;      // Bit per mesh_map_slot_t, the slots Bake Selected bakes
+	i32   maps;            // Bit per mesh_map_slot_t, the slots Bake Selected bakes
+	i32   aa;              // Samples per side of a texel: 1, 2, 4 or 8
+	f32   front_distance;  // Rays to the high poly start this far above the low poly (the cage), relative to the size of the scene
+	f32   rear_distance;   // and find it down to this far below
+	bool  average_normals; // Rays follow the normals averaged over the vertices at the same place, no gaps at hard edges
+	bool  ignore_backface; // Rays pass through high poly triangles they meet from behind
+	bool  match_by_name;   // name_low only finds name_high, and objects ending in _high are high poly
+	char *high_polys;      // Names of the high poly objects, one per line
 } bake_settings_t;
 
 typedef struct bake_job bake_job_t; // util_bake.c
@@ -802,8 +809,8 @@ typedef struct bvh_node {
 } bvh_node_t;
 
 typedef struct bvh {
-	f32        *tris;    // 9 floats per triangle, world space
-	i32        *objects; // Paint object index of each triangle
+	f32        *tris; // 9 floats per triangle, world space
+	i32        *ids;  // Id of each triangle, given back by hits
 	i32         tri_count;
 	bvh_node_t *nodes;
 	i32         node_count;
