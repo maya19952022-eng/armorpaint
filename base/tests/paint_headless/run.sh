@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Runs a headless test script in ArmorPaint, see readme.md
-# Usage: base/tests/paint_headless/run.sh [run.c|make_fixture.c]
+# Runs headless test scripts in ArmorPaint, see readme.md
+# Usage: base/tests/paint_headless/run.sh [script.c]
+#   no script: run.c and every phase test (p1_*.c, p2_*.c, ...)
 # Exit code: 0 pass, 1 fail, 2 setup error
 
 set -u
@@ -8,18 +9,26 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 OUT="$ROOT/paint/build/out"
 APP="${ARMORPAINT_APP:-$OUT/ArmorPaint}"
-SCRIPT="${1:-run.c}"
 TIMEOUT="${SMOKE_TIMEOUT:-600}"
-LOG="$ROOT/paint/build/smoke/$(basename "$SCRIPT" .c).log"
+if [ $# -gt 0 ]; then
+	SCRIPTS=("$1")
+else
+	SCRIPTS=(run.c)
+	for f in "$HERE"/p[0-9]*_*.c; do
+		[ -f "$f" ] && SCRIPTS+=("$(basename "$f")")
+	done
+fi
 
 if [ ! -x "$APP" ]; then
 	echo "ArmorPaint not found at $APP, build it first: cd paint && ../base/make --compile"
 	exit 2
 fi
-if [ ! -f "$HERE/$SCRIPT" ]; then
-	echo "Script not found: $HERE/$SCRIPT"
-	exit 2
-fi
+for SCRIPT in "${SCRIPTS[@]}"; do
+	if [ ! -f "$HERE/$SCRIPT" ]; then
+		echo "Script not found: $HERE/$SCRIPT"
+		exit 2
+	fi
+done
 
 # Start from the default config, a user config can be in sculpt mode or use another layer resolution
 CONFIG="$OUT/data/config.json"
@@ -54,12 +63,18 @@ if command -v stdbuf > /dev/null; then
 	RUN+=(stdbuf -oL -eL) # Keep the log when the app is killed by the timeout
 fi
 
-mkdir -p "$(dirname "$LOG")"
+mkdir -p "$ROOT/paint/build/smoke"
 cd "$OUT" || exit 2
-"${RUN[@]}" "$APP" --background --script "../../../base/tests/paint_headless/$SCRIPT" 2>&1 | tee "$LOG"
-
-if grep -q -e "SMOKE PASS" -e "FIXTURE DONE" "$LOG"; then
-	exit 0
-fi
-echo "Failed, log: $LOG"
-exit 1
+STATUS=0
+for SCRIPT in "${SCRIPTS[@]}"; do
+	LOG="$ROOT/paint/build/smoke/$(basename "$SCRIPT" .c).log"
+	rm -f "$CONFIG" # Each script starts from the default config
+	"${RUN[@]}" "$APP" --background --script "../../../base/tests/paint_headless/$SCRIPT" 2>&1 | tee "$LOG"
+	if grep -q -e "SMOKE PASS" -e "FIXTURE DONE" "$LOG"; then
+		echo "[$SCRIPT] passed"
+	else
+		echo "[$SCRIPT] failed, log: $LOG"
+		STATUS=1
+	fi
+done
+exit $STATUS
