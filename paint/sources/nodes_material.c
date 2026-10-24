@@ -56,6 +56,7 @@ void nodes_material_init() {
 	rgb_to_bw_node_init();
 	replace_color_node_init();
 	separate_color_node_init();
+	sharpen_node_init();
 	warp_node_init();
 
 	nodes_material_utilities = any_array_create_from_raw((void *[]){}, 0);

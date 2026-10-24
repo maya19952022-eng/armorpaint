@@ -186,6 +186,17 @@ void make_material_bake_node_preview(ui_node_t *node, ui_node_canvas_t *group, u
 			util_uv_blur_seamless(dst, tmp, image, passes);
 		}
 	}
+	else if (string_equals(node->type, "SHARPEN")) {
+		// Full resolution, sharpening works on texel detail
+		char          *id    = make_material_node_preview_id(node, parents);
+		i32            res_x = math_floor(config_get_texture_res_x());
+		i32            res_y = math_floor(config_get_texture_res_y());
+		gpu_texture_t *image = make_material_node_preview_target(id, res_x, res_y, GPU_TEXTURE_FORMAT_RGBA32);
+
+		parser_material_sharpen_passthrough = node;
+		util_render_make_node_preview(g_context->material->canvas, node, image, group, parents);
+		parser_material_sharpen_passthrough = NULL;
+	}
 	else if (string_equals(node->type, "DIRECT_WARP")) {
 		char          *id    = make_material_node_preview_id(node, parents);
 		gpu_texture_t *image = any_map_get(g_context->node_previews, id);
