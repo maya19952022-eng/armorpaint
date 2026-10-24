@@ -1088,19 +1088,30 @@ void tab_layers_draw_layer_context_menu_draw() {
 				    3);
 				ui_row(row);
 				channels_changed |= tab_layers_channel_check(enabled[i], names->buffer[i]);
-				tab_layers_combo_channel_blending(l, i, NULL);
-				tab_layers_slider_channel_opacity(l, i);
+				// Keep the menu open to pick again or drag the slider
+				if (tab_layers_combo_channel_blending(l, i, NULL)) {
+					ui_menu_keep_open = true;
+				}
+				if (tab_layers_slider_channel_opacity(l, i)) {
+					ui_menu_keep_open = true;
+				}
 			}
 			else {
 				ui_row(f32_array_create_from_raw_tmp((f32[]){1.0}, 1));
 				channels_changed |= tab_layers_channel_check(enabled[i], names->buffer[i]);
 			}
 		}
-		ui_row2();
+		// A row left open would carry its width into the next frame, sculpt shows Opacity alone
+		if (g_config->tools == TOOLS_SCULPT) {
+			ui_row(f32_array_create_from_raw_tmp((f32[]){1.0}, 1));
+		}
+		else {
+			ui_row2();
+		}
 		channels_changed |= tab_layers_channel_check(&l->paint_opac, tr("Opacity"));
 		if (g_config->tools != TOOLS_SCULPT) {
 			channels_changed |= tab_layers_channel_check(&l->paint_emis, tr("Emission"));
-			ui_row(f32_array_create_from_raw_tmp((f32[]){1.0}, 1)); // A row left open would carry its width into the next frame
+			ui_row(f32_array_create_from_raw_tmp((f32[]){1.0}, 1));
 			channels_changed |= tab_layers_channel_check(&l->paint_subs, tr("Subsurface"));
 		}
 
