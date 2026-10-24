@@ -54,6 +54,7 @@ Automático
 Rebake Automático
 O Rebake Automático mostra antes uma prévia em um quarto da resolução
 Executar Scripts Automaticamente
+Auto começa cada raio logo depois do high poly acima do low poly, até a Distância Frontal Máxima
 Média
 Média das Normais
 Eixo
@@ -106,6 +107,7 @@ Pincel...
 Pincéis
 Relevo
 Queimar
+Gaiola
 Calcular Normais
 Câmera
 Velocidade de Pan da Câmera
@@ -314,6 +316,7 @@ Máscara de Preenchimento
 Modo de Preenchimento
 Filtro
 Filtrar Texturas
+Distância Fixa
 Plano
 Achatar
 Achatar Grupo

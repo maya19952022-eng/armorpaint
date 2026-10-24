@@ -54,6 +54,7 @@ Auto
 
 
 
+
 Moyenne
 
 Axe
@@ -106,6 +107,7 @@ Pinceau...
 Brosses
 Relief
 Brûler
+
 Calculer les normales
 Caméra
 Vitesse du panorama caméra
@@ -314,6 +316,7 @@ Masque de remplissage
 Mode de remplissage
 Filtrer
 Filtrer les textures
+
 Plat
 Aplatir
 

@@ -54,6 +54,7 @@ Auto
 
 
 
+
 Átlag
 
 Tengely
@@ -106,6 +107,7 @@ Ecset...
 Ecsetek
 Bucka (Bump)
 Sötétítés (Burn)
+
 Normálok számítása
 Kamera
 Kamera pásztázási sebesség
@@ -314,6 +316,7 @@ Kitöltő maszk
 Kitöltési mód
 Szűrő
 Textúrák szűrése
+
 Lapos
 Lapítás
 

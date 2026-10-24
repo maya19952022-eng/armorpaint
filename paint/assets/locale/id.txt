@@ -54,6 +54,7 @@ Otomatis
 
 
 
+
 Rata-rata
 
 Sumbu
@@ -106,6 +107,7 @@ Kuas...
 Kuas
 Tonjolan
 Bakar
+
 Hitung Normal
 Kamera
 Kecepatan Pan Kamera
@@ -314,6 +316,7 @@ Masker Isi
 Mode Isi
 Filter
 Filter Tekstur
+
 Rata
 Ratakan
 

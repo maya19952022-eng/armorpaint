@@ -54,6 +54,7 @@ Automático
 
 
 
+
 Promedio
 
 Ejes
@@ -106,6 +107,7 @@ Pincel...
 Pinceles
 Relieve
 Quemar
+
 Calcular normales
 Cámara
 Velocidad de paneo de cámara
@@ -314,6 +316,7 @@ Máscara de relleno
 Modo de relleno
 Filtrar
 Filtrar texturas
+
 Plano
 Aplanar
 

@@ -54,6 +54,7 @@ Auto
 Auto Rebake
 Auto Rebake shows a preview at a quarter of the resolution first
 Auto Run Scripts
+Auto starts each ray just past the high poly above the low poly, up to Max Frontal Distance
 Average
 Average Normals
 Axis
@@ -106,6 +107,7 @@ Brush...
 Brushes
 Bump
 Burn
+Cage
 Calculate Normals
 Camera
 Camera Pan Speed
@@ -314,6 +316,7 @@ Fill Mask
 Fill Mode
 Filter
 Filter Textures
+Fixed Distance
 Flat
 Flatten
 Flatten Group

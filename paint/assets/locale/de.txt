@@ -54,6 +54,7 @@ Automatisch
 
 
 
+
 Mittelwert
 
 Achse
@@ -106,6 +107,7 @@ Pinsel...
 Pinsel
 Bump
 Nachbelichten
+
 Normalen berechnen
 Kamera
 Kamera Schwenkgeschwindigkeit
@@ -314,6 +316,7 @@ Füllmaske
 Füllmodus
 Filter
 Texturen filtern
+
 Flach
 Abflachen
 

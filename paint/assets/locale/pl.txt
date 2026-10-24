@@ -54,6 +54,7 @@ Automatyczny
 
 
 
+
 Średnia
 
 Oś
@@ -106,6 +107,7 @@ Pędzel...
 Pędzle
 Bump
 Wypalenie
+
 Przelicz normalne
 Kamera
 Prędkość panoramowania kamery
@@ -314,6 +316,7 @@ Maska wypełnienia
 Tryb wypełniania
 Filtr
 Filtruj tekstury
+
 Płaski
 Spłaszcz
 

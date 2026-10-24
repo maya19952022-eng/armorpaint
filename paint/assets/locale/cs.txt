@@ -54,6 +54,7 @@ Automaticky
 
 
 
+
 Průměr
 
 Osa
@@ -106,6 +107,7 @@ Poloměr štětce
 Štětce
 Výstupky
 Spálit
+
 Vypočítat normály
 Kamera
 Rychlost posunu kamery
@@ -314,6 +316,7 @@ Vyplňovací maska
 Režim vyplnění
 Filtr
 Filtrovat textury
+
 Plochý
 Zploštit
 
