@@ -286,6 +286,104 @@ void step_merge_undo() {
 	      "the upper layer keeps its channels");
 }
 
+// Fixes from review: adjacent layers in Group Selected, a drop inside the selection, a move that empties a group,
+// Merge Down in a group with a group mask, the selection after a new layer, group lock, paste as mask redo
+void step_review_group() {
+	script_project_new();
+	new_layer(0xff202020, "r1");
+	new_layer(0xff404040, "r2");
+	new_layer(0xff606060, "r3");
+	script_layer_select(layer_by_name("r1"), false, false);
+	script_layer_select(layer_by_name("r3"), false, true);
+	slot_layer_t *g = script_layer_group_selected();
+	check(g != NULL && layer_by_name("r1")->parent == g && layer_by_name("r2")->parent == g && layer_by_name("r3")->parent == g &&
+	          string_equals(order(), string("Layer 1 r1 r2 r3 %s", g->name)),
+	      string("group a contiguous range keeps every layer and the order (%s)", order()));
+	script_layer_set_name(g, "rg");
+	// Move the three out of the group to the top: the empty group is removed, undo brings it back
+	script_layer_select(layer_by_name("r1"), false, false);
+	script_layer_select(layer_by_name("r3"), false, true);
+	script_layer_move_selected(script_layer_count() - 1);
+	check(layer_by_name("rg") == NULL && layer_by_name("r1")->parent == NULL, string("moving every layer out removes the group (%s)", order()));
+	script_undo();
+	slot_layer_t *rg = layer_by_name("rg");
+	check(rg != NULL && layer_by_name("r1")->parent == rg && layer_by_name("r3")->parent == rg && string_equals(order(), "Layer 1 r1 r2 r3 rg"),
+	      string("undo brings the group back (%s)", order()));
+	script_redo();
+	check(layer_by_name("rg") == NULL && script_layer_count() == 4, string("redo (%s)", order()));
+	script_undo();
+}
+
+void step_review_drop() {
+	script_project_new();
+	new_layer(0xff202020, "d1");
+	new_layer(0xff404040, "d2");
+	new_layer(0xff606060, "d3");
+	new_layer(0xff808080, "d4");
+	script_layer_new_mask(layer_by_name("d1"), 1);
+	script_layer_set_name(script_layer_at(script_layer_index(layer_by_name("d1")) - 1), "d1m");
+	script_layer_select(layer_by_name("d1"), false, false);
+	script_layer_select(layer_by_name("d4"), true, false);
+	check(script_layer_selected_count() == 2, "d1 and d4 selected");
+	script_layer_move_selected(script_layer_index(layer_by_name("d2")));
+	check(string_equals(order(), "Layer 1 d1m d1 d4 d2 d3") || string_equals(order(), "Layer 1 d2 d1m d1 d4 d3"),
+	      string("dropping inside the selection keeps its order and the mask with its layer (%s)", order()));
+	check(layer_by_name("d1m")->parent == layer_by_name("d1"), "the mask stays on its layer");
+	script_undo();
+	check(string_equals(order(), "Layer 1 d1m d1 d2 d3 d4"), string("undo (%s)", order()));
+	new_layer(0xffa0a0a0, "d5");
+	check(script_layer_selected_count() == 1, string("a new layer ends the multi selection (%d)", script_layer_selected_count()));
+}
+
+void step_review_merge() {
+	script_project_new();
+	new_layer(0xff202020, "ma");
+	slot_layer_t *g  = script_layer_new_group(layer_by_name("ma"));
+	slot_layer_t *gm = script_layer_new_mask(g, 1);
+	check(g != NULL && gm != NULL && gm->parent == g, string("group with a group mask (%s)", order()));
+	slot_layer_t *mb = new_layer(0xff404040, "mb");
+	script_layer_set_group(mb, g);
+	int count = script_layer_count();
+	slot_layer_t *merged = script_layer_merge_down(layer_by_name("mb"));
+	check(merged != NULL, string("merge down inside a group with a group mask (%s)", order()));
+	script_undo();
+	check(layer_by_name("ma") != NULL && layer_by_name("mb") != NULL, string("undo of the merge (%s, %d layers, %d before)", order(), script_layer_count(), count));
+}
+
+// Group lock reaches the layers of the group
+void step_review_group_lock() {
+	script_project_new();
+	slot_layer_t *la = new_layer(0xffff00ff, "la");
+	slot_layer_t *g  = script_layer_new_group(la);
+	script_layer_set_locked(g, true);
+	script_layer_set(la);
+	float before = red_mean(la);
+	stroke();
+	check(g != NULL && la->parent == g && absf(red_mean(la) - before) < 0.5,
+	      string("a locked group blocks painting its layers (%.1f %.1f)", before, red_mean(la)));
+	script_layer_set_locked(g, false);
+	script_layer_set(la);
+	stroke();
+	check(red_mean(la) < before - 0.5, string("unlocked again (%.1f)", red_mean(la)));
+}
+
+void step_review_paste_mask() {
+	script_project_new();
+	slot_layer_t *a = new_layer(0xff808080, "pa");
+	slot_layer_t *b = new_layer(0xff808080, "pb");
+	slot_layer_t *m = script_layer_new_mask(a, 0);
+	m->mask_opacity = 0.4;
+	slot_layer_t *pm = script_layer_paste_mask(m, b);
+	check(pm != NULL && absf(pm->mask_opacity - 0.4) < 0.001, "pasted mask opacity");
+	script_undo();
+	script_undo();
+	script_redo();
+	script_redo();
+	slot_layer_t *again = script_layer_at(script_layer_index(layer_by_name("pb")) - 1);
+	check(again != NULL && again->parent == layer_by_name("pb") && absf(again->mask_opacity - 0.4) < 0.001,
+	      string("redo keeps the opacity of the pasted mask (%.2f)", again != NULL ? again->mask_opacity : -1.0));
+}
+
 void next_frame() {
 	if (step == 0) {
 		step_build();
@@ -328,6 +426,21 @@ void next_frame() {
 	}
 	else if (step == 13) {
 		step_merge_undo();
+	}
+	else if (step == 14) {
+		step_review_group();
+	}
+	else if (step == 15) {
+		step_review_drop();
+	}
+	else if (step == 16) {
+		step_review_merge();
+	}
+	else if (step == 17) {
+		step_review_paste_mask();
+	}
+	else if (step == 18) {
+		step_review_group_lock();
 	}
 	else {
 		printf("[smoke] %d checks, %d failures", checks, failures);
