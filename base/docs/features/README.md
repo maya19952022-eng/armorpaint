@@ -54,4 +54,4 @@ IDs da matriz: LAY-01, ... · Fase: P1 · Desde: <PR>
 
 | Página | IDs | Fase |
 |---|---|---|
-| (nenhuma ainda; a P0 só criou a infraestrutura) | | |
+| [per_channel_blending.md](per_channel_blending.md) | LAY-01 | P1 |

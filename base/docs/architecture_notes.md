@@ -225,3 +225,11 @@ O passo guarda a camada por **índice** (`step->layer`) e copia texturas para os
 - `base/tests/paint_headless/run.sh` (Linux, também no cloud com llvmpipe) e `run.bat` (Windows): abre o fixture, confere estrutura e médias dos canais exportados, salva e reabre.
 - `paint/assets/plugins/dev/test.c`: teste upstream maior, roda com `--script` (veja `base/docs/building_cloud.md`).
 - O que depende de GPU de verdade (aparência no viewport, path tracer, bakes RT) continua no roteiro manual de cada PR.
+
+---
+
+## 6. Mudanças depois da P0
+
+As seções acima descrevem o código no início da P1. O que já mudou:
+
+- **P1, LAY-01 (blend e opacidade por canal):** `slot_layer_t.blending` virou `blending[LAYER_CH_COUNT]` e ganhou `opacity[LAYER_CH_COUNT]` (`paint/sources/types.h`, canais em `layer_channel_t` de `enums.h`). `paint_nor_blend` e `paint_height_blend` saíram de `slot_layer_t`: viraram `BLEND_TYPE_NORMAL_COMBINE` no canal Normal e `BLEND_TYPE_ADD` no canal Height. Os quatro caminhos de composição usam `slot_layer_get_blending(l, ch)` e `slot_layer_get_channel_opacity(l, ch)`. O pack (oclusão, roughness, metallic, altura) passa por um único modo 105 do `layer_merge.shader`, com opacidade e blend por componente (`layers_commands_merge_pack`), o que também resolve a divergência da altura descrita em 2.2. Os blends de um valor só estão em `make_material_blend_mode_scalar` (viewport) e `blend_scalar` (shader), com as mesmas fórmulas. Formato `.arm` versão 22: `layer_data_t` ganhou `blending_ch` e `opacity_ch` no fim; arquivos da versão 21 passam por `import_arm_from_version_21` e `import_arm_layer_channels` deriva os canais dos campos antigos.
