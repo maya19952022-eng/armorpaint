@@ -1175,6 +1175,13 @@ void history_object_transform(mesh_object_t *o, vec4_t loc, quat_t rot, vec4_t s
 	step->object_scale = scale;
 }
 
+// Pixels written into the current layer outside of a stroke, undone like paint
+void history_paste_mask() {
+	history_copy_to_undo(g_context->layer->id, history_undo_i, slot_layer_is_mask(g_context->layer));
+	history_step_t *step = history_push(HISTORY_ACTION_PAINT);
+	step->name           = tr("Paste as Mask");
+}
+
 void history_layer_lock(slot_layer_t *l) {
 	slot_layer_t *prev = g_context->layer;
 	g_context->layer   = l;

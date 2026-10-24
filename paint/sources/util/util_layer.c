@@ -978,6 +978,56 @@ slot_layer_t *layers_merge_group_history(slot_layer_t *l, bool history) {
 	return children->buffer[0];
 }
 
+// Copy of src placed above target, the copy and the move are separate undo steps
+bool layers_paste(slot_layer_t *src, slot_layer_t *target) {
+	if (src == NULL || target == NULL || array_index_of(g_project->_->layers, src) < 0 || slot_layer_is_mask(src) || slot_layer_is_mask(target)) {
+		return false;
+	}
+	context_set_layer(src);
+	history_duplicate_layer();
+	layers_duplicate_layer(src);
+	slot_layer_t *copy = g_context->layer;
+	if (target != src) {
+		i32 target_index = array_index_of(g_project->_->layers, target);
+		i32 to           = array_index_of(g_project->_->layers, copy) < target_index ? target_index : target_index + 1;
+		if (slot_layer_can_move(copy, to)) {
+			slot_layer_move(copy, to);
+		}
+	}
+	context_set_layer(copy);
+	make_material_parse_mesh_material();
+	g_context->layers_preview_dirty = true;
+	return true;
+}
+
+// New mask on target holding the pixels of the mask src
+slot_layer_t *layers_paste_mask(slot_layer_t *src, slot_layer_t *target) {
+	if (src == NULL || target == NULL || array_index_of(g_project->_->layers, src) < 0 || !slot_layer_is_mask(src) || slot_layer_is_mask(target) ||
+	    slot_layer_is_filter(target)) {
+		return NULL;
+	}
+	context_set_layer(target);
+	slot_layer_t_array_t *pointers = tab_layers_init_layer_map();
+	slot_layer_t         *m        = layers_new_mask(false, target, -1);
+	if (m == NULL) {
+		return NULL;
+	}
+	tab_layers_remap_all_layer_pointers(pointers);
+	history_new_white_mask();
+	slot_layer_clear(m, 0xffffffff, NULL, 1.0, layers_default_rough, 0.0);
+	context_set_layer(m);
+	history_paste_mask();
+	draw_begin(m->texpaint, false, 0);
+	draw_set_pipeline(pipes_copy);
+	draw_scaled_image(src->texpaint, 0, 0, m->texpaint->width, m->texpaint->height);
+	draw_set_pipeline(NULL);
+	draw_end();
+	m->mask_opacity = src->mask_opacity;
+	make_material_parse_mesh_material();
+	g_context->layers_preview_dirty = true;
+	return m;
+}
+
 // Non destructive merge: a merged copy of the group goes right above it and the group is hidden
 slot_layer_t *layers_flatten_group(slot_layer_t *group) {
 	if (!slot_layer_is_group(group) || slot_layer_get_children(group) == NULL) {

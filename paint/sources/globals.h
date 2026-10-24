@@ -178,6 +178,9 @@ i32                     history_undos       = 0;     // Undos available
 i32                     history_redos       = 0;     // Redos available
 bool                    history_push_undo   = false; // Store undo on next paint
 slot_layer_t_array_t   *history_undo_layers = NULL;
+
+slot_layer_t         *tab_layers_clipboard = NULL; // Copied layer, group or mask
+
 char                   *tab_scripts_text    = "";
 i32                     tab_scripts_line; // Active line of the script text area
 bool                    tab_scripts_minimap_dirty = true;

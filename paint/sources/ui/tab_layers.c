@@ -546,6 +546,17 @@ void tab_layers_draw_layer_slot_full(slot_layer_t *l, i32 i) {
 			tab_layers_l         = g_context->layer;
 			sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_duplicate, NULL);
 		}
+		if (in_focus && g_ui->is_ctrl_down && g_ui->is_key_pressed && g_ui->key_code == KEY_CODE_C) {
+			g_ui->is_key_pressed = false;
+			tab_layers_clipboard = g_context->layer;
+		}
+		if (in_focus && g_ui->is_ctrl_down && g_ui->is_key_pressed && g_ui->key_code == KEY_CODE_V) {
+			g_ui->is_key_pressed = false;
+			tab_layers_l         = g_context->layer;
+			sys_notify_on_next_frame(slot_layer_is_mask(tab_layers_clipboard) ? &tab_layers_draw_layer_context_menu_paste_mask
+			                                                                  : &tab_layers_draw_layer_context_menu_paste,
+			                         NULL);
+		}
 	}
 
 	// Lock icon at the end of the name
@@ -682,6 +693,22 @@ void tab_layers_draw_layer_context_menu_merge_down(void *_) {
 void tab_layers_draw_layer_context_menu_merge_group(void *_) {
 	slot_layer_t *l = tab_layers_l;
 	layers_merge_group(l);
+}
+
+bool tab_layers_clipboard_valid() {
+	return tab_layers_clipboard != NULL && array_index_of(g_project->_->layers, tab_layers_clipboard) >= 0;
+}
+
+void tab_layers_draw_layer_context_menu_paste(void *_) {
+	if (tab_layers_clipboard_valid()) {
+		layers_paste(tab_layers_clipboard, tab_layers_l);
+	}
+}
+
+void tab_layers_draw_layer_context_menu_paste_mask(void *_) {
+	if (tab_layers_clipboard_valid()) {
+		layers_paste_mask(tab_layers_clipboard, tab_layers_l);
+	}
 }
 
 void tab_layers_draw_layer_context_menu_flatten(void *_) {
@@ -837,6 +864,21 @@ void tab_layers_draw_layer_context_menu_draw() {
 	if (ui_menu_button(tr("Duplicate"), "ctrl+d", ICON_DUPLICATE)) {
 		sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_duplicate, NULL);
 	}
+
+	if (ui_menu_button(tr("Copy"), "ctrl+c", ICON_COPY)) {
+		tab_layers_clipboard = l;
+	}
+	bool can_paste = tab_layers_clipboard_valid() && !slot_layer_is_mask(tab_layers_clipboard) && !slot_layer_is_mask(l);
+	g_ui->enabled  = can_paste;
+	if (ui_menu_button(tr("Paste"), can_paste ? "ctrl+v" : "", ICON_PASTE)) {
+		sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_paste, NULL);
+	}
+	bool can_paste_mask = tab_layers_clipboard_valid() && slot_layer_is_mask(tab_layers_clipboard) && !slot_layer_is_mask(l) && !slot_layer_is_filter(l);
+	g_ui->enabled       = can_paste_mask;
+	if (ui_menu_button(tr("Paste as Mask"), can_paste_mask ? "ctrl+v" : "", ICON_PASTE)) {
+		sys_notify_on_next_frame(&tab_layers_draw_layer_context_menu_paste_mask, NULL);
+	}
+	g_ui->enabled = true;
 
 	ui_menu_align();
 	bool locked = l->locked;

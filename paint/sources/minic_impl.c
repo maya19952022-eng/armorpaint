@@ -838,6 +838,34 @@ slot_layer_t *script_layer_flatten_group(slot_layer_t *group) {
 	return flat;
 }
 
+// Copy of a layer or group above target, like copy and paste in the layers tab
+bool script_layer_paste(slot_layer_t *src, slot_layer_t *target) {
+	if (!script_layer_valid(src) || !script_layer_valid(target)) {
+		return false;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	base_init_undo_layers();
+	bool ok = layers_paste(src, target);
+	script_layer_op_end(current, in_use);
+	return ok;
+}
+
+// New mask on target with the pixels of the mask src
+slot_layer_t *script_layer_paste_mask(slot_layer_t *src, slot_layer_t *target) {
+	if (!script_layer_valid(src) || !script_layer_valid(target)) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	base_init_undo_layers();
+	slot_layer_t *m = layers_paste_mask(src, target);
+	script_layer_op_end(current, in_use);
+	return m;
+}
+
 void script_layer_set_locked(slot_layer_t *l, bool locked) {
 	if (!script_layer_valid(l) || l->locked == locked) {
 		return;
