@@ -1,6 +1,6 @@
 # Mesh maps
 
-IDs da matriz: BAKE-01 · Fase: P2
+IDs da matriz: BAKE-01, BAKE-02 · Fase: P2
 
 Texturas calculadas uma vez a partir da geometria do projeto (oclusão, curvatura, posição, espessura...) e lidas por qualquer material pelo nó **Mesh Map**. São a base para materiais que reagem à forma do modelo: sujeira nas cavidades, desgaste nas quinas, cor por objeto. O projeto tem um slot para cada mapa; assar de novo substitui o mapa do slot.
 
@@ -27,11 +27,26 @@ Editor de materiais → **Input** → **Mesh Map**. O nó tem:
 | Controle | O que faz |
 |---|---|
 | **Map** (mapa) | Slot lido pelo nó |
-| **Bake** (assar) / **Rebake** | Assa o slot escolhido com os ajustes atuais do projeto. Durante o bake vira uma barra de progresso; clicar nela cancela |
+| **Bake** (assar) / **Rebake** | Assa o slot escolhido com os ajustes atuais do projeto. Durante o bake vira uma barra de progresso; clicar nela cancela só esse mapa. Se outro bake está rodando, o botão vira **Queued** (na fila) e um clique tira o mapa da fila |
 | Saída **Color** | RGB do mapa |
 | Saída **Value** | Canal vermelho, para os mapas em tons de cinza |
 
-Ao terminar um bake, as fill layers e os efeitos são refeitos e passam a usar o mapa novo. O painel de bake completo (escolher vários mapas, ajustes comuns e por mapa) vem com a BAKE-02.
+Ao terminar um bake, as fill layers e os efeitos são refeitos e passam a usar o mapa novo. Para assar vários mapas de uma vez e mudar os ajustes, use a aba **Baking**.
+
+## Aba Baking
+
+File → **Bake Mesh Maps...** abre a aba (também em Window → Tabs → Baking). Ela fica fechada por padrão, na barra lateral direita.
+
+| Controle | O que faz |
+|---|---|
+| **Bake Selected** (assar selecionados) | Assa, em fila, os mapas marcados na lista |
+| **Bake All** (assar todos) | Assa os nove mapas |
+| Barra de progresso | Aparece no lugar dos botões durante o bake, com o nome do mapa; clicar nela cancela a fila |
+| **Common Settings** (ajustes comuns) | **Resolution** (128 a 16384) e **Dilation** (texels em volta das ilhas UV), iguais para todos os mapas |
+| Lista de mapas | Uma caixa por mapa: marcada entra no Bake Selected. "(not baked)" indica slot vazio |
+| **Settings** de cada mapa | Ajustes só daquele mapa (Samples e Max Distance para Ambient Occlusion, Bent Normals e Thickness; Strength para Curvature; Color Source para ID), a miniatura do mapa assado e os botões **Bake** e **Clear** daquele slot |
+
+Ambient Occlusion e Bent Normals usam os mesmos raios, então dividem Samples e Max Distance. A seleção de mapas e todos os ajustes ficam salvos no projeto.
 
 ## Como o bake funciona
 
@@ -39,11 +54,12 @@ Ao terminar um bake, as fill layers e os efeitos são refeitos e passam a usar o
 - Oclusão, Bent Normals e Thickness disparam raios a partir de cada texel contra todos os objetos (raios na CPU, com uma BVH). Oclusão e Bent Normals usam o hemisfério acima da superfície; Thickness, o de dentro.
 - Curvature compara a normal de cada texel com a dos vizinhos na mesma ilha.
 - No fim, as ilhas UV crescem alguns texels (**dilation**) para não aparecer costura no filtro da textura.
-- O bake roda numa fila: cada frame processa algumas linhas em várias threads, então a interface continua respondendo. O nó Bake Texture usa a mesma fila, então um bake de nó e um de mesh map nunca rodam juntos.
+- O bake roda numa fila: cada frame processa algumas linhas em várias threads, então a interface continua respondendo. O nó Bake Texture usa a mesma fila, então um bake de nó e um de mesh map nunca rodam juntos; enquanto espera, o nó mostra **Queued**. Um mapa que já está na fila não entra duas vezes.
+- Ao terminar um bake, um undo ou um Clear, todas as fill layers, máscaras e efeitos cujo material lê um mesh map são refeitos (mesmo com outro material selecionado), assim como os ícones desses materiais.
 
 ## Ajustes
 
-Ficam no projeto (`bake_settings` no `.arm`) e valem para os próximos bakes. Por enquanto só pelo script (`script_bake_get_settings()`); a interface vem com a BAKE-02.
+Ficam no projeto (`bake_settings` no `.arm`) e valem para os próximos bakes. Na interface ficam na aba Baking; no script, em `script_bake_get_settings()`.
 
 | Campo | Padrão | O que faz |
 |---|---|---|
@@ -55,6 +71,7 @@ Ficam no projeto (`bake_settings` no `.arm`) e valem para os próximos bakes. Po
 | `thickness_distance` | 0.5 | Distância máxima medida, relativa à diagonal da cena |
 | `curvature_strength` | 1.0 | Multiplica o contraste da curvatura |
 | `id_source` | `MESH_MAP_ID_OBJECT` | Cor por objeto, ou `MESH_MAP_ID_VERTEX_COLOR` para a cor de vértice |
+| `maps` | todos | Um bit por slot (`1 << MESH_MAP_OCCLUSION`...): os mapas que o Bake Selected assa |
 
 ## Atalhos
 
@@ -74,17 +91,22 @@ bake_settings_t *s = script_bake_get_settings();
 s->res               = 1024;
 s->occlusion_samples = 128;
 script_bake_mesh_map(MESH_MAP_OCCLUSION); // ou script_bake_mesh_maps() para os nove
+s->maps = (1 << MESH_MAP_OCCLUSION) | (1 << MESH_MAP_CURVATURE);
+script_bake_selected();                   // os mapas marcados em s->maps
+script_show_tab(TAB_BAKING);              // abre a aba Baking
 // A cada frame:
 if (!script_bake_busy()) {
 	f32_array_t *px = script_mesh_map_pixels(MESH_MAP_OCCLUSION); // rgba 0-1, linha a linha
 	gpu_texture_t *t = script_mesh_map_get(MESH_MAP_OCCLUSION);  // NULL sem bake
 }
 float progresso = script_bake_progress();
-script_bake_cancel();
+int   estado   = script_bake_state(MESH_MAP_THICKNESS); // BAKE_STATE_IDLE, _QUEUED ou _RUNNING
+script_bake_cancel_slot(MESH_MAP_THICKNESS);           // tira um mapa da fila
+script_bake_cancel();                                   // esvazia a fila
 script_mesh_map_clear(MESH_MAP_ID);
 ```
 
-O enum `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_COUNT`) e o enum `mesh_map_id_source_t` estão disponíveis nos scripts.
+Os enums `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_COUNT`), `mesh_map_id_source_t`, `bake_state_t` e `tab_id_t` estão disponíveis nos scripts.
 
 ## Limitações
 
@@ -93,4 +115,4 @@ O enum `mesh_map_slot_t` (`MESH_MAP_NORMAL` ... `MESH_MAP_OPACITY`, `MESH_MAP_CO
 - UVs fora de 0 a 1 (tiles UDIM além do 1001) não entram nos mapas.
 - A curvatura vem da normal interpolada dentro de cada ilha UV; quinas que caem numa costura de UV não aparecem. A curvatura por geometria é a BAKE-09.
 - O bake roda na CPU. Oclusão e espessura em 4K com muitos raios levam minutos; os bakers por GPU (RT) continuam disponíveis pelo nó Bake Texture.
-- O nó Mesh Map amostra o mapa na coordenada UV da malha; camadas com projeção triplanar ou de decal leem o mapa nessas coordenadas.
+- O nó Mesh Map amostra o mapa na primeira UV da malha, mesmo em fill layers com escala, triplanar ou decal. Em camadas de sculpt (sem UV da malha no shader) ele não acompanha a malha.
