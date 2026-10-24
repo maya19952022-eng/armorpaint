@@ -411,6 +411,37 @@ void *armpack_decode(buffer_t *b) {
 	return decoded;
 }
 
+// Number of keys of the maps in the array stored under key in the root map, -1 when there is no such map.
+// armpack_decode() places values by position, the count tells which fields appended later a file has.
+int armpack_array_map_key_count(buffer_t *b, char *key) {
+	reset();
+	encoded = b->buffer;
+	if (b->length < 5 || read_u8() != 0xdf) {
+		return -1;
+	}
+	int    count   = read_i32();
+	size_t key_len = strlen(key);
+	for (int i = 0; i < count; ++i) {
+		read_u8(); // 0xdb string
+		uint32_t len   = read_u32();
+		bool     match = len == key_len && memcmp(encoded + ei, key, len) == 0;
+		ei += len;
+		if (!match) {
+			traverse(0, false); // Skip the value
+			continue;
+		}
+		if (read_u8() != 0xdd) {
+			return -1;
+		}
+		uint32_t length = read_u32();
+		if (length == 0 || read_u8() != 0xdf) {
+			return -1;
+		}
+		return read_i32();
+	}
+	return -1;
+}
+
 void armpack_encode_start(void *_encoded) {
 	encoded = _encoded;
 	ei      = 0;
