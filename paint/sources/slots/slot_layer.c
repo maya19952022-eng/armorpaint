@@ -154,6 +154,12 @@ void slot_layer_delete(slot_layer_t *raw) {
 				slot_layer_delete(m);
 			}
 		}
+		slot_layer_t_array_t *filters = slot_layer_get_filters(raw, false); // Effects go with their layer
+		if (filters != NULL) {
+			for (i32 i = 0; i < filters->length; ++i) {
+				slot_layer_delete(filters->buffer[i]);
+			}
+		}
 	}
 	else if (slot_layer_is_group(raw)) {
 		slot_layer_t_array_t *children = slot_layer_get_children(raw);
@@ -581,7 +587,22 @@ bool slot_layer_is_visible(slot_layer_t *raw) {
 			return false;
 		}
 	}
-	return raw->visible && (raw->parent == NULL || raw->parent->visible);
+	return raw->visible && (raw->parent == NULL || slot_layer_is_visible(raw->parent)); // A hidden group hides the effects of its layers
+}
+
+// The layer has filters, or the mask has effects right above it
+bool slot_layer_has_effects(slot_layer_t *raw) {
+	if (slot_layer_is_layer(raw) && !slot_layer_is_filter(raw)) {
+		return slot_layer_get_filters(raw, false) != NULL;
+	}
+	if (slot_layer_is_mask(raw)) {
+		i32 i = array_index_of(g_project->_->layers, raw) + 1;
+		if (i > 0 && i < g_project->_->layers->length) {
+			slot_layer_t *l = g_project->_->layers->buffer[i];
+			return slot_layer_is_mask(l) && l->parent == raw->parent && l->effect;
+		}
+	}
+	return false;
 }
 
 // Effect chains: the filters of a layer, oldest at the bottom right below the masks, and the masks marked as effect

@@ -3,6 +3,9 @@
 
 char *layer_node_vector(ui_node_t *node, ui_node_socket_t *socket) {
 	i32   l  = node->buttons->buffer[0]->default_value->buffer[0];
+	if (l < 0 || l >= g_project->_->layers->length) { // The layer was deleted
+		return "float3(0.0, 0.0, 0.0)";
+	}
 	char *ls = i32_to_string(l);
 	if (socket == node->outputs->buffer[0]) { // Base
 		node_shader_add_texture(parser_material_kong, string_tmp("texpaint%s", ls), string_tmp("_texpaint%s", ls));
@@ -16,6 +19,9 @@ char *layer_node_vector(ui_node_t *node, ui_node_socket_t *socket) {
 
 char *layer_node_value(ui_node_t *node, ui_node_socket_t *socket) {
 	i32   l  = node->buttons->buffer[0]->default_value->buffer[0];
+	if (l < 0 || l >= g_project->_->layers->length) { // The layer was deleted
+		return "0.0";
+	}
 	char *ls = i32_to_string(l);
 	if (socket == node->outputs->buffer[1]) { // Opac
 		node_shader_add_texture(parser_material_kong, string_tmp("texpaint%s", ls), string_tmp("_texpaint%s", ls));

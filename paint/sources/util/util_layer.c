@@ -1018,11 +1018,16 @@ static slot_layer_t *layers_add_effect_slot(slot_layer_t *target, slot_material_
 			}
 			top++;
 		}
-		e         = layers_new_mask(false, target->parent, top + 1);
-		e->effect = true;
+		e = layers_new_mask(false, target->parent, top + 1);
+		if (e != NULL) {
+			e->effect = true;
+		}
 	}
 	else {
 		e = layers_new_layer(false, -1, target); // Right below the layer, the top of its filters
+	}
+	if (e == NULL) {
+		return NULL;
 	}
 	tab_layers_remap_all_layer_pointers(pointers);
 	char *old_name = e->name;
@@ -1535,7 +1540,8 @@ slot_layer_t *layers_paste_effect(slot_layer_t *src, slot_layer_t *target) {
 	if (slot_layer_is_effect(target) && slot_layer_effect_base(target) != NULL) {
 		target = slot_layer_effect_base(target);
 	}
-	if (slot_layer_is_group(target) || slot_layer_is_mask(target) != slot_layer_is_mask(src) || target->texpaint_sculpt != NULL) {
+	if (slot_layer_is_group(target) || slot_layer_is_mask(target) != slot_layer_is_mask(src) || target->texpaint_sculpt != NULL ||
+	    g_project->_->layers->length > layers_max_layers) {
 		return NULL;
 	}
 	slot_material_t  *m      = slot_material_create(g_project->_->materials->buffer[0]->data, NULL);

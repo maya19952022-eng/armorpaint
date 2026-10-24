@@ -252,8 +252,9 @@ void tab_layers_delete_layer(slot_layer_t *l) {
 			slot_layer_delete(c);
 		}
 		if (slot_layer_has_masks(l, true)) {
-			for (i32 i = 0; i < slot_layer_get_masks(l, true)->length; ++i) {
-				slot_layer_t *m  = slot_layer_get_masks(l, true)->buffer[i];
+			slot_layer_t_array_t *group_masks = slot_layer_get_masks(l, true); // Read once, deleting changes the list
+			for (i32 i = 0; i < group_masks->length; ++i) {
+				slot_layer_t *m  = group_masks->buffer[i];
 				g_context->layer = m;
 				history_delete_layer();
 				slot_layer_delete(m);
@@ -275,8 +276,9 @@ void tab_layers_delete_layer(slot_layer_t *l) {
 		slot_layer_t *g = slot_layer_get_containing_group(l);
 		// Maybe some group masks are left
 		if (slot_layer_has_masks(g, true)) {
-			for (i32 i = 0; i < slot_layer_get_masks(g, true)->length; ++i) {
-				slot_layer_t *m  = slot_layer_get_masks(g, true)->buffer[i];
+			slot_layer_t_array_t *group_masks = slot_layer_get_masks(g, true); // Read once, deleting changes the list
+			for (i32 i = 0; i < group_masks->length; ++i) {
+				slot_layer_t *m  = group_masks->buffer[i];
 				g_context->layer = m;
 				history_delete_layer();
 				slot_layer_delete(m);

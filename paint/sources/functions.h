@@ -46,6 +46,7 @@ slot_layer_t_array_t *slot_layer_get_masks(slot_layer_t *raw, bool include_group
 bool                  slot_layer_has_masks(slot_layer_t *raw, bool include_group_masks);
 bool                  slot_layer_has_visible_filter(slot_layer_t *raw);
 bool                  slot_layer_is_effect(slot_layer_t *raw);
+bool                  slot_layer_has_effects(slot_layer_t *raw);
 slot_layer_t         *slot_layer_effect_base(slot_layer_t *raw);
 slot_layer_t         *slot_layer_effect_input(slot_layer_t *raw);
 bool                  slot_layer_is_covered(slot_layer_t *raw);
