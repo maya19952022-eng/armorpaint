@@ -25,7 +25,7 @@ Cada camada e cada máscara pode ter uma pilha de efeitos não destrutivos: ajus
 | Color Selection | não | sim | Nó Color Selection; ligue o mapa de ID (nó Image Texture) na entrada Color |
 | Anchor Point | sim | sim | Passa a entrada sem mudar. Guarda o estado da pilha naquele ponto para ser lido por outras camadas com o nó **Layer** ou **Layer Mask** |
 
-Em camadas, os efeitos mudam só a cor base; normal, oclusão, roughness, metallic, altura, emissão e subsurface passam pela pilha sem mudança. O olho de cada efeito liga e desliga o efeito: um efeito escondido é pulado e o próximo lê o que estava abaixo dele. Esconder a máscara esconde os efeitos dela. O blend, a opacidade e as máscaras da camada valem para o resultado da pilha; a opacidade da máscara vale para o resultado da pilha da máscara.
+Em camadas, os efeitos mudam só a cor base; normal, oclusão, roughness, metallic, altura, emissão, subsurface e o id de material passam pela pilha sem mudança. O olho de cada efeito liga e desliga o efeito: um efeito escondido é pulado e o próximo lê o que estava abaixo dele. Esconder a máscara esconde os efeitos dela, e esconder um grupo esconde os efeitos das camadas dele. Apagar ou arrastar um efeito refaz os de cima na hora. O blend, a opacidade e as máscaras da camada valem para o resultado da pilha; a opacidade da máscara vale para o resultado da pilha da máscara.
 
 ## Atalhos
 
@@ -36,7 +36,9 @@ Nenhum novo. Ctrl+Z/Ctrl+Y desfazem e refazem criar, apagar e esconder efeitos.
 - Efeitos de camada são salvos como filtros da camada (como antes); efeitos de máscara são máscaras com o campo opcional `effect`. Projetos antigos abrem iguais.
 - O viewport, o export de texturas e o Flatten usam o topo de cada pilha.
 - Apagar uma camada ou máscara apaga os efeitos dela; duplicar copia os efeitos.
-- **Merge Down** fica desabilitado numa camada com efeitos; **Merge Group** e **Flatten** aplicam os efeitos antes de juntar.
+- **Merge Down** fica desabilitado numa camada com efeitos, num efeito e sobre uma camada com efeitos; **Merge Group** e **Flatten** aplicam os efeitos antes de juntar.
+- **Apply** de máscara fica desabilitado numa máscara com efeitos e num efeito de máscara.
+- Projetos antigos com vários filtros na mesma camada agora mostram só o filtro de cima (os filtros viraram uma pilha), e os filtros passam a respeitar as máscaras da camada.
 - Efeitos são preenchimentos: só cobrem as ilhas UV da malha (como camadas de preenchimento).
 
 ## Script
@@ -61,3 +63,5 @@ Tipos: `EFFECT_TYPE_FILTER`, `EFFECT_TYPE_FILL`, `EFFECT_TYPE_LEVELS`, `EFFECT_T
 - Não existe efeito "Paint" (camada pintável dentro da pilha): pinte na própria camada ou máscara, que é a base da pilha, ou use um grupo.
 - Mover uma máscara para outro lugar pode separar ela dos seus efeitos; os efeitos passam a mudar a máscara que ficar logo abaixo deles.
 - Reordenar efeitos é feito arrastando, como camadas.
+- **Merge Group** e **Flatten** usam o resultado do efeito de cima sem a opacidade própria desse efeito.
+- Ao pintar, só os efeitos da camada pintada (e o que lê outras camadas por nós Layer) são refeitos a cada traço.
