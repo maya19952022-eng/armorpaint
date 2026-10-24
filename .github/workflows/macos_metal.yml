@@ -4,9 +4,7 @@ on:
   push:
     branches:
     - main
-  pull_request:
-    branches:
-    - main
+  pull_request: # Any base, phase PRs can stack on the previous phase
 
 jobs:
   build:
