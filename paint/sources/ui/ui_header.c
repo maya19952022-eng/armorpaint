@@ -155,6 +155,58 @@ static void ui_header_crop_layers() {
 	ui_view2d_hwnd->redraws = 2;
 }
 
+// Select tool with the Faces target: the layer whose geometry mask a click edits, and how
+static void ui_header_draw_select_faces() {
+	slot_layer_t *owner = slot_layer_geometry_owner(g_context->layer);
+	bool          ok    = (slot_layer_is_layer(owner) || slot_layer_is_group(owner)) && owner->texpaint_sculpt == NULL;
+	ui_text(owner->name, UI_ALIGN_LEFT, 0x00000000);
+
+	g_ui->enabled         = ok;
+	string_array_t *modes = any_array_create_from_raw_tmp(
+	    (void *[]){
+	        tr("Triangle"),
+	        tr("Polygon"),
+	        tr("Connected"),
+	        tr("UV Island"),
+	        tr("Object"),
+	    },
+	    5);
+	ui_combo(&g_context->select_faces_mode, modes, tr("Select"), true, UI_ALIGN_LEFT, false);
+
+	string_array_t *ops = any_array_create_from_raw_tmp(
+	    (void *[]){
+	        tr("Add"),
+	        tr("Remove"),
+	    },
+	    2);
+	i32 remove = g_context->select_faces_remove ? 1 : 0;
+	ui_inline_radio(&remove, ops, UI_ALIGN_LEFT);
+	if (ui_item_changed()) {
+		g_context->select_faces_remove = remove == 1;
+	}
+	if (g_ui->is_hovered) {
+		ui_tooltip(tr("Hold ctrl to switch between add and remove"));
+	}
+
+	string_array_t *include = any_array_create_from_raw_tmp(
+	    (void *[]){
+	        tr("Include"),
+	        tr("Exclude"),
+	    },
+	    2);
+	i32 mode = owner->geometry_mask.mode;
+	ui_inline_radio(&mode, include, UI_ALIGN_LEFT);
+	if (ui_item_changed()) {
+		util_geometry_mask_set_mode(owner, mode);
+	}
+
+	g_ui->enabled = ok && owner->geometry_mask.faces != NULL;
+	if (ui_icon_button(tr("Clear Faces"), ICON_ERASE, UI_ALIGN_CENTER)) {
+		util_geometry_mask_clear_faces(owner);
+	}
+	g_ui->enabled = true;
+}
+
 void ui_header_draw_tool_properties() {
 	if (g_context->tool == TOOL_TYPE_COLORID) {
 		ui_text(tr("Picked Color"), UI_ALIGN_LEFT, 0x00000000);
@@ -539,17 +591,35 @@ void ui_header_draw_tool_properties() {
 		}
 	}
 	else if (g_context->tool == TOOL_TYPE_SELECT) {
-		g_ui->enabled = g_context->select_active;
-		if (ui_icon_button(tr("Clear"), ICON_ERASE, UI_ALIGN_CENTER)) {
-			g_context->select_active = false;
-			make_material_parse_paint_material(false);
-			ui_view2d_hwnd->redraws = 2;
+		// Region masks painting, Faces edits the geometry mask of the layer
+		string_array_t *targets = any_array_create_from_raw_tmp(
+		    (void *[]){
+		        tr("Region"),
+		        tr("Faces"),
+		    },
+		    2);
+		i32 target = g_context->select_faces ? 1 : 0;
+		ui_inline_radio(&target, targets, UI_ALIGN_LEFT);
+		if (ui_item_changed()) {
+			g_context->select_faces = target == 1;
+			g_context->ddirty       = 2;
 		}
-		g_ui->enabled = g_context->select_active && g_context->select_2d;
-		if (ui_icon_button(tr("Crop"), ICON_CROP, UI_ALIGN_CENTER)) {
-			ui_header_crop_layers();
+		if (g_context->select_faces) {
+			ui_header_draw_select_faces();
 		}
-		g_ui->enabled = true;
+		else {
+			g_ui->enabled = g_context->select_active;
+			if (ui_icon_button(tr("Clear"), ICON_ERASE, UI_ALIGN_CENTER)) {
+				g_context->select_active = false;
+				make_material_parse_paint_material(false);
+				ui_view2d_hwnd->redraws = 2;
+			}
+			g_ui->enabled = g_context->select_active && g_context->select_2d;
+			if (ui_icon_button(tr("Crop"), ICON_CROP, UI_ALIGN_CENTER)) {
+				ui_header_crop_layers();
+			}
+			g_ui->enabled = true;
+		}
 	}
 
 	if (util_shape_tool_has_segments(g_context->tool)) {

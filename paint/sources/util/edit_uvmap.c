@@ -113,6 +113,7 @@ void edit_uvmap_update() {
 			util_uv_seammap_cached     = false;
 			util_uv_dilatemap_cached   = false;
 			ui_view2d_hwnd->redraws    = 2;
+			util_geometry_mask_invalidate();
 		}
 		if (_is_box_sel) {
 			_is_box_sel             = false;

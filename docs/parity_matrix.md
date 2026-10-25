@@ -17,7 +17,7 @@ Como atualizar:
 | Área | Itens em escopo | ✅ | 🟡 | ❌ | % ✅ |
 |---|---|---|---|---|---|
 | Projeto, texture sets e assets | 18 | 0 | 9 | 9 | 0% |
-| Layer stack | 18 | 15 | 1 | 2 | 83% |
+| Layer stack | 18 | 16 | 0 | 2 | 89% |
 | Ferramentas e pincel | 28 | 8 | 14 | 6 | 29% |
 | Projeções de fill | 7 | 2 | 1 | 4 | 29% |
 | Procedural e biblioteca | 10 | 1 | 5 | 4 | 10% |
@@ -25,9 +25,9 @@ Como atualizar:
 | Viewport, render e shading | 12 | 2 | 5 | 5 | 17% |
 | Import e export | 13 | 1 | 10 | 2 | 8% |
 | Interface, UX e scripting | 11 | 3 | 6 | 2 | 27% |
-| **Total** | **129** | **34 (26%)** | **54** | **41** | meta: 117 ✅ |
+| **Total** | **129** | **35 (27%)** | **53** | **41** | meta: 117 ✅ |
 
-Fora de escopo nas tabelas: 2. Faltam 83 itens ✅ para a meta.
+Fora de escopo nas tabelas: 2. Faltam 82 itens ✅ para a meta.
 
 <!-- placar:fim -->
 
@@ -38,7 +38,7 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 | Fase | PR | ✅ | 🟡 | ❌ | O que mudou |
 |---|---|---|---|---|---|
 | P0 | [PR 1](https://github.com/maya19952022-eng/armorpaint/pull/1) | 20 | 61 | 48 | Matriz criada a partir do plano; nenhum item muda de status na P0 (infraestrutura). |
-| P1 | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2) | 34 (+14) | 54 (−7) | 41 (−7) | Layer stack: LAY-01/02/03/04/05/06/07/08/09/10/14/15/16/17 ✅; LAY-11 🟡 (falta seleção por polígono). |
+| P1 | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2) | 35 (+15) | 53 (−8) | 41 (−7) | Layer stack: LAY-01 a LAY-11 e LAY-14 a LAY-18 ✅ (LAY-05 com os efeitos Paint e Generator, LAY-11 com seleção de faces). |
 
 ## 4.1 Projeto, texture sets e assets
 
@@ -78,7 +78,7 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 | LAY-08 | Compare Mask | ✅ feito | — | Nó `compare_mask_node.c` (fonte: camada abaixo/anchor, operador, threshold) | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): nó Compare Mask (Greater/Less/Equal/Not Equal, threshold, suavidade) e efeito de máscara; B lê outra camada ou Anchor Point pelo nó Layer. `effect_nodes.md` |
 | LAY-09 | Anchor points | ✅ feito | nós Layer/Layer Mask referenciam layers | Comando "Add Anchor Point" que nomeia e lista no menu de nós; nó `anchor_node.c` apontando por id | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): efeito Anchor Point (passa a entrada) lido por outras camadas com os nós Layer/Layer Mask, que acompanham reordenações. `effect_stack.md` |
 | LAY-10 | Color Selection (máscara por color ID) como efeito | ✅ feito | Color ID tool → To Mask (destrutivo) | Nó `color_selection_node.c` (lista de cores com tolerância) usável em fill mask | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): nó Color Selection (até 4 cores, tolerância, suavidade, inverter) e efeito de máscara; o mapa de ID é ligado pelo usuário. `effect_nodes.md` |
-| LAY-11 | Geometry mask (UV tile/objeto/polígonos, include/exclude) | 🟡 parcial | object mask; fill por face | Máscara geométrica por layer: lista de tiles/objetos/ids de polígono, include/exclude; aplicada no `make_paint` e `make_material` | P1 | M | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): máscara geométrica por camada/grupo com objetos e tiles UDIM, Include/Exclude, viewport/export/merge/pintura. Falta seleção por polígono. `geometry_mask.md` |
+| LAY-11 | Geometry mask (UV tile/objeto/polígonos, include/exclude) | ✅ feito | object mask; fill por face | Máscara geométrica por layer: lista de tiles/objetos/ids de polígono, include/exclude; aplicada no `make_paint` e `make_material` | P1 | M | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): máscara geométrica por camada/grupo com objetos e tiles UDIM, Include/Exclude, viewport/export/merge/pintura. Depois: seleção de faces com a ferramenta Select (triângulo, polígono, parte conectada, ilha UV, objeto), com destaque no viewport e salva no `.arm`. `geometry_mask.md` |
 | LAY-12 | Smart masks (criar, salvar, aplicar, merge/overwrite com ctrl) | ❌ falta | — | Serializar subárvore de máscara+efeitos para `.arm` (`export_arm.c`); categoria no Assets; drop em layer | P3 | M |  |
 | LAY-13 | Smart materials (criar de grupo, salvar, aplicar) | ❌ falta | — | Serializar grupo (layers, máscaras, efeitos, fill materials, blends) para `.arm`; instanciar em outro projeto/set | P3 | M |  |
 | LAY-14 | Flatten não destrutivo de grupo + export do resultado + salvar original como smart material (12.0) | ✅ feito | Merge Group destrutivo | `layers_flatten_copy(group)` cria layer "flattened" mantendo o grupo oculto; "Export flattened" chama `export_texture` com apenas esse layer; atalho ctrl+M | P1 | M | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): Flatten mantém o grupo oculto e editável; Export do grupo/camada achatada; Export as .arm do grupo. Sem ctrl+M (já usado). Smart material é LAY-13. `group_flatten.md` |

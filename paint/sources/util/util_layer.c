@@ -768,6 +768,7 @@ void layers_set_object_mask() {
 		}
 	}
 	util_uv_dilatemap_cached = false;
+	util_geometry_mask_invalidate();
 }
 
 void tab_layers_apply_filter(i32 filter) {
@@ -2329,6 +2330,7 @@ void layers_on_resized() {
 	util_uv_trianglemap_cached = false;
 	util_uv_dilatemap_cached   = false;
 	render_path_raytrace_ready = false;
+	util_geometry_mask_invalidate();
 }
 
 void tab_layers_remap_layer_pointers(ui_node_t_array_t *nodes, i32_imap_t *pointer_map) {

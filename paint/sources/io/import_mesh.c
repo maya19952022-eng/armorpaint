@@ -157,6 +157,7 @@ void import_mesh_finish_import(void *_) {
 	g_context->paint_body      = NULL;
 	tab_meshes_reset_preview_map();
 	base_update_tools();
+	util_geometry_mask_check_faces(); // Reimported with a different triangulation
 
 	if (import_mesh_needs_unwrap) {
 		import_mesh_needs_unwrap = false;
@@ -278,6 +279,7 @@ void import_mesh_make_mesh(raw_mesh_t *mesh) {
 	util_uv_trianglemap_cached                        = false;
 	util_uv_seammap_cached                            = false;
 	util_uv_dilatemap_cached                          = false;
+	util_geometry_mask_invalidate();
 
 	if (import_mesh_clear_layers) {
 		while (g_project->_->layers->length > 0) {
@@ -334,6 +336,7 @@ void import_mesh_add_mesh(raw_mesh_t *mesh) {
 	util_uv_trianglemap_cached                        = false;
 	util_uv_seammap_cached                            = false;
 	util_uv_dilatemap_cached                          = false;
+	util_geometry_mask_invalidate();
 }
 
 mesh_data_t *import_mesh_raw_mesh(raw_mesh_t *mesh) {

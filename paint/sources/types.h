@@ -44,13 +44,30 @@ typedef struct mesh_geo_image {
 	f32 *pixels; // Float rgba, rows from v 0
 } mesh_geo_image_t;
 
-// Restricts a layer to parts of the geometry (LAY-11). Geometry is selected when it matches every
-// list that is not empty, both lists empty means no mask.
+// Faces of one paint object selected in a geometry mask. Importers triangulate, a face is a triangle
+// of the index array of the object.
+typedef struct geometry_mask_faces {
+	char            *object;    // Paint object name, renamed with the object
+	i32              triangles; // index_array->length / 3 when selected, the entry is ignored when it differs
+	i32              count;     // Bits set, recomputed on load, not saved
+	struct u8_array *bits;      // Triangle t is bit (t & 7) of byte t >> 3, (triangles + 7) / 8 bytes
+} geometry_mask_faces_t;
+
+// Restricts a layer to parts of the geometry (LAY-11). Geometry is selected when it is in the tiles (or
+// there are none) and in the objects or the faces, all three lists empty means no mask.
 typedef struct geometry_mask {
-	geometry_mask_mode_t mode;    // Include keeps the layer on the selection only, exclude removes it there
-	struct i32_array    *tiles;   // UDIM tiles, 1001 for objects without a tile suffix
-	struct string_array *objects; // Paint object names
+	geometry_mask_mode_t                mode;    // Include keeps the layer on the selection only, exclude removes it there
+	struct i32_array                   *tiles;   // UDIM tiles, 1001 for objects without a tile suffix
+	struct string_array                *objects; // Paint object names, every face of them
+	struct geometry_mask_faces_t_array *faces;   // One entry per object, without empty entries, NULL when empty
 } geometry_mask_t;
+
+// Geometry masks of a layer and of its group resolved for one paint object, see slot_layer_geometry_mask_eval
+typedef struct geometry_mask_eval {
+	geometry_mask_faces_t *faces[2];   // Entries that select some of the faces of the object
+	bool                   include[2]; // A triangle applies when its bit equals this
+	i32                    count;
+} geometry_mask_eval_t;
 
 typedef struct slot_layer {
 	i32                   id;
@@ -371,7 +388,10 @@ typedef struct context {
 	f32                         decal_x;
 	f32                         decal_y;
 	bool                        brush_camera_align;
-	bool                        select_active; // Select tool
+	bool                        select_active;       // Select tool
+	bool                        select_faces;        // Select tool picks faces of the geometry mask instead of a region
+	i32                         select_faces_mode;   // geometry_select_mode_t
+	bool                        select_faces_remove; // Clicks remove faces, ctrl inverts it
 	bool                        select_dragging;
 	bool                        select_2d;
 	f32                         select_start_x;
@@ -768,10 +788,13 @@ typedef struct layer_data {
 	f32_array_t      *opacity_ch;
 	bool              locked;
 	bool              effect;
-	i32               geometry_mask_mode;    // geometry_mask_mode_t, the three geometry_mask fields are optional
-	i32_array_t      *geometry_mask_tiles;   // NULL when empty
-	string_array_t   *geometry_mask_objects; // Paint object names, NULL when empty
-	bool              effect_paint;          // Optional, the strokes of a paint effect are in texpaint*
+	i32               geometry_mask_mode;         // geometry_mask_mode_t, the geometry_mask fields are optional
+	i32_array_t      *geometry_mask_tiles;        // NULL when empty
+	string_array_t   *geometry_mask_objects;      // Paint object names, NULL when empty
+	bool              effect_paint;               // Optional, the strokes of a paint effect are in texpaint*
+	string_array_t   *geometry_mask_face_objects; // One name per entry of geometry_mask_t.faces, NULL when empty
+	i32_array_t      *geometry_mask_face_counts;  // Triangle count of each entry when selected
+	buffer_t         *geometry_mask_faces;        // Bits of each entry back to back, (count + 7) / 8 bytes each
 } layer_data_t;
 
 typedef struct timeline_layer_keyframe_data {
@@ -1014,6 +1037,12 @@ typedef struct export_preset_texture_t_array {
 	int                       length;
 	int                       capacity;
 } export_preset_texture_t_array_t;
+
+typedef struct geometry_mask_faces_t_array {
+	geometry_mask_faces_t **buffer;
+	int                     length;
+	int                     capacity;
+} geometry_mask_faces_t_array_t;
 
 typedef struct layer_data_t_array {
 	layer_data_t **buffer;

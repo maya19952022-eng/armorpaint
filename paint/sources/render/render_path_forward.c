@@ -13,6 +13,7 @@ void render_path_forward_draw_forward() {
 
 	render_path_set_target("buf", NULL, "main", GPU_CLEAR_NONE, 0, 0.0);
 	render_grid();
+	render_geometry_select();
 	render_path_set_target("buf", NULL, NULL, GPU_CLEAR_NONE, 0, 0.0);
 	render_compass();
 	render_envsphere();

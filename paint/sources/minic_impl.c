@@ -989,6 +989,114 @@ bool script_layer_geometry_applies(slot_layer_t *l, object_t *object) {
 	return script_layer_valid(l) && o != NULL && slot_layer_geometry_mask_object(l, o);
 }
 
+// Faces of the geometry mask, a face is a triangle of the index array of the object
+
+void script_layer_set_geometry_faces(slot_layer_t *l, object_t *object, i32 first, i32 count, bool selected) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL) {
+		return;
+	}
+	util_geometry_mask_set_faces(l, o->base->name, first, count, selected);
+}
+
+// The face is selected in the mask of the layer, without its mode, objects, tiles and group
+bool script_layer_get_geometry_face(slot_layer_t *l, object_t *object, i32 triangle) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL || triangle < 0) {
+		return false;
+	}
+	geometry_mask_faces_t *f = slot_layer_geometry_mask_faces(&slot_layer_geometry_owner(l)->geometry_mask, o, true);
+	return f != NULL && triangle < f->triangles && (f->bits->buffer[triangle >> 3] & (1 << (triangle & 7))) != 0;
+}
+
+// The layer contributes on the face, with every list and mode of its geometry mask and the one of its group
+bool script_layer_geometry_face_applies(slot_layer_t *l, object_t *object, i32 triangle) {
+	mesh_object_t *o = script_paint_object(object);
+	return script_layer_valid(l) && o != NULL && slot_layer_geometry_mask_triangle(l, o, triangle);
+}
+
+// Selected faces of the object, 0 when they were selected on a mesh with a different triangle count
+i32 script_layer_get_geometry_face_count(slot_layer_t *l, object_t *object) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL) {
+		return 0;
+	}
+	return util_geometry_mask_face_count(&slot_layer_geometry_owner(l)->geometry_mask, o);
+}
+
+void script_layer_clear_geometry_faces(slot_layer_t *l) {
+	if (!script_layer_valid(l)) {
+		return;
+	}
+	util_geometry_mask_clear_faces(l);
+}
+
+// Pixels of the 3D view at a world space point, like script_paint_world, false behind the camera
+static bool script_world_to_view(f32 x, f32 y, f32 z, f32 *sx, f32 *sy) {
+	vec4_t clip = vec4_apply_mat4((vec4_t){x, y, z, 1.0f}, scene_camera->vp);
+	if (clip.w <= 0.0f) {
+		return false;
+	}
+	*sx = (clip.x / clip.w + 1.0f) * 0.5f * sys_w();
+	*sy = (1.0f - clip.y / clip.w) * 0.5f * sys_h();
+	return true;
+}
+
+static bool script_layer_selects_faces(slot_layer_t *l, i32 mode) {
+	if (!script_layer_valid(l) || mode < GEOMETRY_SELECT_TRIANGLE || mode > GEOMETRY_SELECT_OBJECT) {
+		return false;
+	}
+	slot_layer_t *owner = slot_layer_geometry_owner(l);
+	return (slot_layer_is_layer(owner) || slot_layer_is_group(owner)) && owner->texpaint_sculpt == NULL;
+}
+
+// A click of the select tool with the Faces target at a world space point, one undo step. mode is a
+// geometry_select_mode_t. Returns the triangle hit or -1.
+i32 script_layer_select_faces_world(slot_layer_t *l, f32 x, f32 y, f32 z, i32 mode, bool selected) {
+	f32 sx;
+	f32 sy;
+	if (!script_layer_selects_faces(l, mode) || !script_world_to_view(x, y, z, &sx, &sy)) {
+		return -1;
+	}
+	util_geometry_mask_stroke_begin(slot_layer_geometry_owner(l), mode, selected);
+	i32 tri = util_geometry_mask_stroke_at(sx, sy);
+	util_geometry_mask_stroke_end();
+	return tri;
+}
+
+// A drag of the select tool from one world space point to another, one undo step. Returns the faces it changed.
+i32 script_layer_select_faces_drag_world(slot_layer_t *l, f32 x0, f32 y0, f32 z0, f32 x1, f32 y1, f32 z1, i32 mode, bool selected) {
+	f32 sx0;
+	f32 sy0;
+	f32 sx1;
+	f32 sy1;
+	if (!script_layer_selects_faces(l, mode) || !script_world_to_view(x0, y0, z0, &sx0, &sy0) || !script_world_to_view(x1, y1, z1, &sx1, &sy1)) {
+		return 0;
+	}
+	util_geometry_mask_stroke_begin(slot_layer_geometry_owner(l), mode, selected);
+	util_geometry_mask_stroke_at(sx0, sy0);
+	util_geometry_mask_stroke_at(sx1, sy1);
+	return util_geometry_mask_stroke_end();
+}
+
+// Triangle of the object under a world space point, -1 on a miss or when another object is in front
+i32 script_pick_face_world(object_t *object, f32 x, f32 y, f32 z) {
+	mesh_object_t *o = script_paint_object(object);
+	f32            sx;
+	f32            sy;
+	if (o == NULL || !script_world_to_view(x, y, z, &sx, &sy)) {
+		return -1;
+	}
+	mesh_object_t *hit = NULL;
+	i32            tri = util_geometry_mask_pick(sx, sy, &hit);
+	return hit == o ? tri : -1;
+}
+
+i32 script_object_triangle_count(object_t *object) {
+	mesh_object_t *o = script_paint_object(object);
+	return o != NULL ? o->data->index_array->length / 3 : 0;
+}
+
 // Selection like ctrl+click (toggle) and shift+click (range) in the layers tab, both false selects only l
 void script_layer_select(slot_layer_t *l, bool toggle, bool range) {
 	if (!script_layer_valid(l)) {

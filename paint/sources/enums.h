@@ -187,6 +187,22 @@ typedef enum {
 	GEOMETRY_MASK_EXCLUDE = 1,
 } geometry_mask_mode_t;
 
+// Part of a paint object where a layer applies with its geometry masks
+typedef enum {
+	GEOMETRY_MASK_COVER_NONE = 0,
+	GEOMETRY_MASK_COVER_SOME = 1, // Some of its faces
+	GEOMETRY_MASK_COVER_ALL  = 2,
+} geometry_mask_cover_t;
+
+// Faces a click of the select tool adds to the geometry mask or removes from it
+typedef enum {
+	GEOMETRY_SELECT_TRIANGLE  = 0,
+	GEOMETRY_SELECT_POLYGON   = 1,
+	GEOMETRY_SELECT_CONNECTED = 2,
+	GEOMETRY_SELECT_UV_ISLAND = 3,
+	GEOMETRY_SELECT_OBJECT    = 4,
+} geometry_select_mode_t;
+
 typedef enum {
 	CAMERA_CONTROLS_NONE   = -1,
 	CAMERA_CONTROLS_ORBIT  = 0,

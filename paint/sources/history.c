@@ -160,9 +160,11 @@ void history_swap_layer_props(history_step_t *step) {
 		l->geometry_mask     = step->layer_geometry;
 		step->layer_geometry = t;
 		context_set_layer(l);
+		util_geometry_mask_epoch++;
 		make_material_parse_mesh_material();
 		make_material_parse_paint_material(false);
 		g_context->layers_preview_dirty = true;
+		g_context->ddirty               = 2;
 	}
 	else if (step->action == HISTORY_ACTION_LAYER_VISIBLE) {
 		context_set_layer(l);
@@ -973,10 +975,19 @@ void history_redo() {
 	base_redraw_status();
 }
 
+// Dropped steps own copies of geometry masks, with face bits they can be large
+static void history_step_free(history_step_t *s) {
+	slot_layer_geometry_mask_free(&s->layer_geometry);
+	if (s->layer_props != NULL) {
+		slot_layer_geometry_mask_free(&s->layer_props->geometry_mask);
+	}
+	free(s);
+}
+
 void history_reset() {
 	if (history_steps != NULL) {
 		for (i32 i = 0; i < history_steps->length; ++i) {
-			free(history_steps->buffer[i]);
+			history_step_free(history_steps->buffer[i]);
 		}
 		array_free(history_steps);
 		free(history_steps);
@@ -1011,7 +1022,7 @@ history_step_t *history_push(history_action_t action) {
 	}
 	if (history_redos > 0) {
 		for (i32 i = 0; i < history_redos; ++i) {
-			free(array_pop(history_steps));
+			history_step_free(array_pop(history_steps));
 		}
 		history_redos = 0;
 	}
@@ -1043,7 +1054,7 @@ history_step_t *history_push(history_action_t action) {
 	any_array_push(history_steps, step);
 
 	while (history_steps->length > g_config->undo_steps + 1) {
-		free(array_shift(history_steps));
+		history_step_free(array_shift(history_steps));
 	}
 	return history_steps->buffer[history_steps->length - 1];
 }
@@ -1261,7 +1272,7 @@ void history_merge_layers() {
 	if (step->layer >= 0 && step->layer < g_project->_->layers->length) {
 		step->layer_props = history_layer_props(g_project->_->layers->buffer[step->layer]);
 	}
-	array_shift(history_steps); // Merge consumes 2 steps
+	history_step_free(array_shift(history_steps)); // Merge consumes 2 steps
 	history_undos--;
 	// TODO: use undo layer in app_merge_down to save memory
 }
