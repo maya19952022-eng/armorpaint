@@ -875,12 +875,27 @@ i32 slot_layer_get_object_mask(slot_layer_t *raw) {
 // Geometry mask (LAY-11)
 
 bool slot_layer_geometry_mask_is_empty(geometry_mask_t *g) {
-	return (g->tiles == NULL || g->tiles->length == 0) && (g->objects == NULL || g->objects->length == 0);
+	return (g->tiles == NULL || g->tiles->length == 0) && (g->objects == NULL || g->objects->length == 0) && (g->faces == NULL || g->faces->length == 0);
 }
 
-// Copy with its own arrays, empty lists become NULL
+static geometry_mask_faces_t *slot_layer_geometry_mask_faces_copy(geometry_mask_faces_t *f) {
+	geometry_mask_faces_t *c = ALLOC_INIT(geometry_mask_faces_t, {.object = string_copy(f->object), .triangles = f->triangles, .count = f->count});
+	c->bits                  = u8_array_create_from_array(f->bits);
+	return c;
+}
+
+void slot_layer_geometry_mask_faces_free(geometry_mask_faces_t *f) {
+	free(f->object);
+	array_delete(f->bits);
+	free(f);
+}
+
+// Copy with its own arrays, empty lists and face entries become NULL
 geometry_mask_t slot_layer_geometry_mask_copy(geometry_mask_t *g) {
-	geometry_mask_t c = {.mode = g->mode == GEOMETRY_MASK_EXCLUDE ? GEOMETRY_MASK_EXCLUDE : GEOMETRY_MASK_INCLUDE, .tiles = NULL, .objects = NULL};
+	geometry_mask_t c = {.mode    = g->mode == GEOMETRY_MASK_EXCLUDE ? GEOMETRY_MASK_EXCLUDE : GEOMETRY_MASK_INCLUDE,
+	                     .tiles   = NULL,
+	                     .objects = NULL,
+	                     .faces   = NULL};
 	if (g->tiles != NULL && g->tiles->length > 0) {
 		c.tiles = i32_array_create(0);
 		for (i32 i = 0; i < g->tiles->length; ++i) {
@@ -892,6 +907,15 @@ geometry_mask_t slot_layer_geometry_mask_copy(geometry_mask_t *g) {
 		for (i32 i = 0; i < g->objects->length; ++i) {
 			string_array_push(c.objects, string_copy(g->objects->buffer[i]));
 		}
+	}
+	for (i32 i = 0; g->faces != NULL && i < g->faces->length; ++i) {
+		if (g->faces->buffer[i]->count <= 0) {
+			continue;
+		}
+		if (c.faces == NULL) {
+			c.faces = (geometry_mask_faces_t_array_t *)any_array_create(0);
+		}
+		any_array_push((any_array_t *)c.faces, slot_layer_geometry_mask_faces_copy(g->faces->buffer[i]));
 	}
 	return c;
 }
@@ -908,6 +932,13 @@ void slot_layer_geometry_mask_free(geometry_mask_t *g) {
 		array_delete(g->objects);
 		g->objects = NULL;
 	}
+	if (g->faces != NULL) {
+		for (i32 i = 0; i < g->faces->length; ++i) {
+			slot_layer_geometry_mask_faces_free(g->faces->buffer[i]);
+		}
+		array_delete(g->faces);
+		g->faces = NULL;
+	}
 }
 
 // UDIM tile of a paint object, objects without a tile suffix are in tile 1001
@@ -916,15 +947,51 @@ i32 slot_layer_geometry_tile(mesh_object_t *o) {
 	return tile < 0 ? 1001 : tile;
 }
 
-// Geometry of the object matches every list of the mask that is not empty
-static bool slot_layer_geometry_mask_selects(geometry_mask_t *g, mesh_object_t *o) {
+// Face entry of the object, with valid_only NULL when the object has a different triangle count than when
+// its faces were selected
+geometry_mask_faces_t *slot_layer_geometry_mask_faces(geometry_mask_t *g, mesh_object_t *o, bool valid_only) {
+	for (i32 i = 0; g->faces != NULL && i < g->faces->length; ++i) {
+		geometry_mask_faces_t *f = g->faces->buffer[i];
+		if (!string_equals(f->object, o->base->name)) {
+			continue;
+		}
+		if (valid_only && (o->data == NULL || f->triangles != (i32)(o->data->index_array->length / 3))) {
+			return NULL;
+		}
+		return f;
+	}
+	return NULL;
+}
+
+// Part of the object the mask selects, before its mode. Faces and objects add up, a selected object
+// means all of its faces, and the tiles restrict both.
+static geometry_mask_cover_t slot_layer_geometry_mask_selects(geometry_mask_t *g, mesh_object_t *o) {
 	if (g->tiles != NULL && g->tiles->length > 0 && i32_array_index_of(g->tiles, slot_layer_geometry_tile(o)) < 0) {
-		return false;
+		return GEOMETRY_MASK_COVER_NONE;
 	}
-	if (g->objects != NULL && g->objects->length > 0 && string_array_index_of(g->objects, o->base->name) < 0) {
-		return false;
+	bool no_objects = g->objects == NULL || g->objects->length == 0;
+	bool no_faces   = g->faces == NULL || g->faces->length == 0;
+	if ((no_objects && no_faces) || (!no_objects && string_array_index_of(g->objects, o->base->name) >= 0)) {
+		return GEOMETRY_MASK_COVER_ALL;
 	}
-	return true;
+	geometry_mask_faces_t *f = slot_layer_geometry_mask_faces(g, o, true);
+	if (f == NULL || f->count <= 0) {
+		return GEOMETRY_MASK_COVER_NONE;
+	}
+	return f->count >= f->triangles ? GEOMETRY_MASK_COVER_ALL : GEOMETRY_MASK_COVER_SOME;
+}
+
+// Part of the object a mask selects by itself, without its mode, NONE for an empty mask
+geometry_mask_cover_t slot_layer_geometry_mask_selection(geometry_mask_t *g, mesh_object_t *o) {
+	return slot_layer_geometry_mask_is_empty(g) ? GEOMETRY_MASK_COVER_NONE : slot_layer_geometry_mask_selects(g, o);
+}
+
+// Exclude keeps the layer where the mask does not select
+static geometry_mask_cover_t slot_layer_geometry_mask_mode_cover(geometry_mask_t *g, geometry_mask_cover_t c) {
+	if (g->mode != GEOMETRY_MASK_EXCLUDE || c == GEOMETRY_MASK_COVER_SOME) {
+		return c;
+	}
+	return c == GEOMETRY_MASK_COVER_NONE ? GEOMETRY_MASK_COVER_ALL : GEOMETRY_MASK_COVER_NONE;
 }
 
 // Layer or group whose geometry mask applies, masks and filters follow their layer
@@ -946,20 +1013,67 @@ bool slot_layer_has_geometry_mask(slot_layer_t *raw) {
 	return !slot_layer_geometry_mask_is_empty(&owner->geometry_mask) || (group != NULL && !slot_layer_geometry_mask_is_empty(&group->geometry_mask));
 }
 
-// The layer contributes on the paint object, with the geometry masks of the layer and of its group
-bool slot_layer_geometry_mask_object(slot_layer_t *raw, mesh_object_t *o) {
+// Part of the paint object where the layer applies, with the geometry masks of the layer and of its group. With
+// e, the masks that select some of the faces are kept for slot_layer_geometry_mask_eval_triangle.
+geometry_mask_cover_t slot_layer_geometry_mask_eval(slot_layer_t *raw, mesh_object_t *o, geometry_mask_eval_t *e) {
 	slot_layer_t *owner   = slot_layer_geometry_owner(raw);
 	slot_layer_t *slots[] = {owner, slot_layer_geometry_group(owner)};
+	bool          all     = true;
+	if (e != NULL) {
+		e->count = 0;
+	}
 	for (i32 i = 0; i < 2; ++i) {
 		if (slots[i] == NULL || slot_layer_geometry_mask_is_empty(&slots[i]->geometry_mask)) {
 			continue;
 		}
-		geometry_mask_t *g = &slots[i]->geometry_mask;
-		if (slot_layer_geometry_mask_selects(g, o) != (g->mode == GEOMETRY_MASK_INCLUDE)) {
+		geometry_mask_t      *g = &slots[i]->geometry_mask;
+		geometry_mask_cover_t c = slot_layer_geometry_mask_mode_cover(g, slot_layer_geometry_mask_selects(g, o));
+		if (c == GEOMETRY_MASK_COVER_NONE) {
+			if (e != NULL) {
+				e->count = 0;
+			}
+			return GEOMETRY_MASK_COVER_NONE;
+		}
+		if (c == GEOMETRY_MASK_COVER_SOME) {
+			all = false;
+			if (e != NULL) {
+				e->faces[e->count]   = slot_layer_geometry_mask_faces(g, o, true);
+				e->include[e->count] = g->mode == GEOMETRY_MASK_INCLUDE;
+				e->count++;
+			}
+		}
+	}
+	return all ? GEOMETRY_MASK_COVER_ALL : GEOMETRY_MASK_COVER_SOME;
+}
+
+geometry_mask_cover_t slot_layer_geometry_mask_cover(slot_layer_t *raw, mesh_object_t *o) {
+	return slot_layer_geometry_mask_eval(raw, o, NULL);
+}
+
+// Triangle t of the object resolved by slot_layer_geometry_mask_eval is in the part where the layer applies
+bool slot_layer_geometry_mask_eval_triangle(geometry_mask_eval_t *e, i32 t) {
+	for (i32 i = 0; i < e->count; ++i) {
+		bool bit = (e->faces[i]->bits->buffer[t >> 3] >> (t & 7)) & 1;
+		if (bit != e->include[i]) {
 			return false;
 		}
 	}
 	return true;
+}
+
+// The layer applies on triangle t of the paint object
+bool slot_layer_geometry_mask_triangle(slot_layer_t *raw, mesh_object_t *o, i32 t) {
+	geometry_mask_eval_t  e;
+	geometry_mask_cover_t c = slot_layer_geometry_mask_eval(raw, o, &e);
+	if (c != GEOMETRY_MASK_COVER_SOME) {
+		return c == GEOMETRY_MASK_COVER_ALL;
+	}
+	return t >= 0 && t < (i32)(o->data->index_array->length / 3) && slot_layer_geometry_mask_eval_triangle(&e, t);
+}
+
+// The layer contributes somewhere on the paint object, with the geometry masks of the layer and of its group
+bool slot_layer_geometry_mask_object(slot_layer_t *raw, mesh_object_t *o) {
+	return slot_layer_geometry_mask_cover(raw, o) != GEOMETRY_MASK_COVER_NONE;
 }
 
 // Texels outside of every uv island keep the layer when all of its geometry masks exclude

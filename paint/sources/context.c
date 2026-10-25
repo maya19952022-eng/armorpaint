@@ -324,6 +324,7 @@ void context_select_paint_object(mesh_object_t *o) {
 	util_uv_uvmap_cached       = false;
 	util_uv_trianglemap_cached = false;
 	util_uv_dilatemap_cached   = false;
+	util_geometry_mask_invalidate();
 }
 
 // Cursor tool clicked on empty space, the paint object stays selected in the meshes tab

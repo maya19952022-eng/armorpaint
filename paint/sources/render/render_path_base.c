@@ -519,6 +519,7 @@ void render_path_base_draw_outline() {
 }
 
 void render_path_base_draw_gbuffer() {
+	util_geometry_mask_prepare_viewport(); // Textures of layers with some faces selected
 
 	if (make_material_transluc_used) {
 		render_path_set_target("gbuffer0", NULL, NULL, GPU_CLEAR_COLOR, 0x00000000, 0.0);

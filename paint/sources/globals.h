@@ -390,6 +390,7 @@ gpu_texture_t  *util_uv_uvislandmap              = NULL;
 bool            util_uv_uvislandmap_cached       = false;
 bool            util_uv_seammap_cached           = false;
 bool            util_mesh_merged_stale           = false;
+u32             util_geometry_mask_epoch         = 0; // Bumped when a geometry mask, a mesh or its uvs change
 i32             render_path_raytrace_frame       = 0;
 bool            render_path_raytrace_ready       = false;
 bool            render_path_raytrace_init_shader = true;

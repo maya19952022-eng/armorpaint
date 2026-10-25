@@ -593,6 +593,7 @@ void util_mesh_visibility_changed() {
 	util_uv_seammap_cached     = false;
 	util_uv_dilatemap_cached   = false;
 	g_context->ddirty          = 2;
+	util_geometry_mask_invalidate();
 }
 
 // Positions are transformed from their packed values
@@ -733,6 +734,7 @@ static void util_mesh_geometry_joined() {
 	util_uv_seammap_cached     = false;
 	util_uv_dilatemap_cached   = false;
 	g_context->ddirty          = 2;
+	util_geometry_mask_invalidate();
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 
@@ -2719,6 +2721,7 @@ static void _util_mesh_modifier_end(mesh_object_t_array_t *objects, bool unwrap)
 		util_uv_trianglemap_cached = false;
 		util_uv_seammap_cached     = false;
 		util_uv_dilatemap_cached   = false;
+		util_geometry_mask_invalidate();
 	}
 }
 

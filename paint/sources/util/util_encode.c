@@ -138,6 +138,16 @@ i32 util_encode_layer_data_size(layer_data_t_array_t *datas) {
 		if (tp_sculpt != NULL) {
 			size += tp_sculpt->length;
 		}
+
+		// Geometry mask faces, the bits of every entry, its count and its object name
+		buffer_t *faces = datas->buffer[i]->geometry_mask_faces;
+		if (faces != NULL) {
+			size += faces->length;
+		}
+		string_array_t *face_objects = datas->buffer[i]->geometry_mask_face_objects;
+		for (i32 j = 0; face_objects != NULL && j < face_objects->length; ++j) {
+			size += 4 + 5 + string_length(face_objects->buffer[j]);
+		}
 	}
 	return size;
 }
@@ -373,7 +383,7 @@ buffer_t *util_encode_project(project_t *raw) {
 	if (raw->layer_datas != NULL) {
 		armpack_encode_array(raw->layer_datas->length);
 		for (i32 i = 0; i < raw->layer_datas->length; ++i) {
-			armpack_encode_map(44); // Same order as layer_data_t, the current version is decoded by position
+			armpack_encode_map(47); // Same order as layer_data_t, the current version is decoded by position
 			armpack_encode_string("name");
 			armpack_encode_string(raw->layer_datas->buffer[i]->name);
 			armpack_encode_string("res");
@@ -462,6 +472,12 @@ buffer_t *util_encode_project(project_t *raw) {
 			armpack_encode_array_i32(raw->layer_datas->buffer[i]->geometry_mask_tiles);
 			armpack_encode_string("geometry_mask_objects");
 			armpack_encode_array_string(raw->layer_datas->buffer[i]->geometry_mask_objects);
+			armpack_encode_string("geometry_mask_face_objects");
+			armpack_encode_array_string(raw->layer_datas->buffer[i]->geometry_mask_face_objects);
+			armpack_encode_string("geometry_mask_face_counts");
+			armpack_encode_array_i32(raw->layer_datas->buffer[i]->geometry_mask_face_counts);
+			armpack_encode_string("geometry_mask_faces");
+			armpack_encode_array_u8(raw->layer_datas->buffer[i]->geometry_mask_faces);
 		}
 	}
 	else {

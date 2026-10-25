@@ -1,12 +1,14 @@
 
 #include "../global.h"
 
-// Geometry mask of layers (LAY-11). The tiles and objects of the mask are drawn into a texture in
-// the uv space of the layer, white where the layer applies. Merge, flatten and export multiply it
+// Geometry mask of layers (LAY-11). The tiles, objects and faces of the mask are drawn into a texture
+// in the uv space of the layer, white where the layer applies. Merge, flatten and export multiply it
 // with the layer masks and the paint shader multiplies the stroke with it. The viewport tests the
-// object of each fragment instead, see make_mesh.c.
+// object of each fragment instead and samples the texture on objects with some of their faces
+// selected, see make_mesh.c.
 
-static gpu_texture_t *util_geometry_mask_temp = NULL; // Layer masks times the geometry mask
+static gpu_texture_t *util_geometry_mask_temp           = NULL;       // Layer masks times the geometry mask
+static u32            util_geometry_mask_viewport_epoch = 0xffffffff; // Epoch of the last util_geometry_mask_prepare_viewport
 
 // Objects drawn into the uv space of the layer: the object of an object mask, the objects of an atlas or all of them
 static bool *util_geometry_mask_space(slot_layer_t *owner) {
@@ -46,6 +48,23 @@ static u32 util_geometry_mask_hash_add(u32 h, u32 v) {
 	return h;
 }
 
+// Selected faces of the object in the masks of the layer and of its group
+static u32 util_geometry_mask_hash_faces(u32 h, slot_layer_t *owner, mesh_object_t *o) {
+	slot_layer_t *slots[] = {owner, slot_layer_geometry_group(owner)};
+	for (i32 i = 0; i < 2; ++i) {
+		geometry_mask_faces_t *f = slots[i] != NULL ? slot_layer_geometry_mask_faces(&slots[i]->geometry_mask, o, true) : NULL;
+		if (f == NULL) {
+			continue;
+		}
+		h = util_geometry_mask_hash_add(h, slots[i]->geometry_mask.mode);
+		for (i32 j = 0; j < f->bits->length; ++j) {
+			h ^= f->bits->buffer[j];
+			h *= 16777619u;
+		}
+	}
+	return h;
+}
+
 // Everything the texture is drawn from, a different hash rebuilds it
 static u32 util_geometry_mask_hash(slot_layer_t *owner, i32 width, i32 height, bool *in) {
 	mesh_object_t_array_t *objects = g_project->_->paint_objects;
@@ -60,13 +79,17 @@ static u32 util_geometry_mask_hash(slot_layer_t *owner, i32 width, i32 height, b
 		if (!in[i]) {
 			continue;
 		}
-		mesh_object_t  *o  = objects->buffer[i];
-		vertex_array_t *va = util_geometry_mask_uvs(owner, o);
-		h                  = util_geometry_mask_hash_add(h, i);
-		h                  = util_geometry_mask_hash_add(h, slot_layer_geometry_mask_object(owner, o));
-		h                  = util_geometry_mask_hash_add(h, udim ? util_mesh_atlas_slot(o->base) : 0);
-		h                  = util_geometry_mask_hash_add(h, (u32)(uintptr_t)o->data);
-		h                  = util_geometry_mask_hash_add(h, o->data->index_array->length);
+		mesh_object_t        *o     = objects->buffer[i];
+		vertex_array_t       *va    = util_geometry_mask_uvs(owner, o);
+		geometry_mask_cover_t cover = slot_layer_geometry_mask_cover(owner, o);
+		h                           = util_geometry_mask_hash_add(h, i);
+		h                           = util_geometry_mask_hash_add(h, cover);
+		if (cover == GEOMETRY_MASK_COVER_SOME) {
+			h = util_geometry_mask_hash_faces(h, owner, o);
+		}
+		h = util_geometry_mask_hash_add(h, udim ? util_mesh_atlas_slot(o->base) : 0);
+		h = util_geometry_mask_hash_add(h, (u32)(uintptr_t)o->data);
+		h = util_geometry_mask_hash_add(h, o->data->index_array->length);
 		if (va != NULL) {
 			// The uvs can be edited in place
 			u32 sum = va->values->length;
@@ -79,7 +102,8 @@ static u32 util_geometry_mask_hash(slot_layer_t *owner, i32 width, i32 height, b
 	return h;
 }
 
-// Triangles of the objects whose contribution matches on, as fills or as outlines that cover the padding of the islands
+// Triangles whose contribution matches on, as fills or as outlines that cover the padding of the islands. The off
+// fills are drawn over the on outlines, a border between faces inside of an island stays sharp.
 static void util_geometry_mask_draw_objects(slot_layer_t *owner, gpu_texture_t *target, bool *in, bool on, bool outline) {
 	mesh_object_t_array_t *objects = g_project->_->paint_objects;
 	bool                   udim    = util_mesh_udim_layer(owner);
@@ -88,10 +112,16 @@ static void util_geometry_mask_draw_objects(slot_layer_t *owner, gpu_texture_t *
 	draw_set_color(on ? 0xffffffff : 0xff000000);
 	for (i32 i = 0; i < objects->length; ++i) {
 		mesh_object_t *o = objects->buffer[i];
-		if (!in[i] || slot_layer_geometry_mask_object(owner, o) != on) {
+		if (!in[i]) {
 			continue;
 		}
-		vertex_array_t *va = util_geometry_mask_uvs(owner, o);
+		geometry_mask_eval_t  e;
+		geometry_mask_cover_t cover = slot_layer_geometry_mask_eval(owner, o, &e);
+		if (cover == (on ? GEOMETRY_MASK_COVER_NONE : GEOMETRY_MASK_COVER_ALL)) {
+			continue;
+		}
+		bool            some = cover == GEOMETRY_MASK_COVER_SOME;
+		vertex_array_t *va   = util_geometry_mask_uvs(owner, o);
 		if (va == NULL) {
 			continue;
 		}
@@ -114,6 +144,9 @@ static void util_geometry_mask_draw_objects(slot_layer_t *owner, gpu_texture_t *
 		i16_array_t *tex = va->values;
 		u32_array_t *ind = o->data->index_array;
 		for (i32 t = 0; t < ind->length / 3; ++t) {
+			if (some && slot_layer_geometry_mask_eval_triangle(&e, t) != on) {
+				continue;
+			}
 			f32 x[3];
 			f32 y[3];
 			for (i32 k = 0; k < 3; ++k) {
@@ -211,6 +244,39 @@ bool util_geometry_mask_paints(slot_layer_t *l) {
 	return l->fill_material == NULL && l->texpaint_sculpt == NULL && !slot_layer_is_group(l) && slot_layer_has_geometry_mask(l);
 }
 
+// A mesh or its uvs changed: the viewport textures are checked on the next frame
+void util_geometry_mask_invalidate() {
+	util_geometry_mask_epoch++;
+}
+
+// The viewport samples the geometry mask texture of the layer, it applies on some of the faces of a paint object
+bool util_geometry_mask_viewport_texture(slot_layer_t *l) {
+	if (!slot_layer_has_geometry_mask(l)) {
+		return false;
+	}
+	mesh_object_t_array_t *objects = g_project->_->paint_objects;
+	for (i32 i = 0; i < objects->length; ++i) {
+		if (slot_layer_geometry_mask_cover(l, objects->buffer[i]) == GEOMETRY_MASK_COVER_SOME) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Before the viewport draws the layers: builds the textures the mesh shader samples, once per change
+void util_geometry_mask_prepare_viewport() {
+	if (util_geometry_mask_viewport_epoch == util_geometry_mask_epoch) {
+		return;
+	}
+	util_geometry_mask_viewport_epoch = util_geometry_mask_epoch;
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		slot_layer_t *l = g_project->_->layers->buffer[i];
+		if (slot_layer_is_layer(l) && util_geometry_mask_viewport_texture(l)) {
+			util_geometry_mask_texture(l);
+		}
+	}
+}
+
 // The layer applies on at least one paint object
 bool util_geometry_mask_any_object(slot_layer_t *l) {
 	mesh_object_t_array_t *objects = g_project->_->paint_objects;
@@ -287,11 +353,19 @@ void util_geometry_mask_rename_object(char *old_name, char *new_name) {
 		return;
 	}
 	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
-		string_array_t *objects = g_project->_->layers->buffer[i]->geometry_mask.objects;
-		i32             j       = objects != NULL ? string_array_index_of(objects, old_name) : -1;
+		geometry_mask_t *g       = &g_project->_->layers->buffer[i]->geometry_mask;
+		string_array_t  *objects = g->objects;
+		i32              j       = objects != NULL ? string_array_index_of(objects, old_name) : -1;
 		if (j >= 0) {
 			free(objects->buffer[j]);
 			objects->buffer[j] = string_copy(new_name);
+		}
+		for (i32 k = 0; g->faces != NULL && k < g->faces->length; ++k) {
+			geometry_mask_faces_t *f = g->faces->buffer[k];
+			if (string_equals(f->object, old_name)) {
+				free(f->object);
+				f->object = string_copy(new_name);
+			}
 		}
 	}
 }
@@ -302,6 +376,7 @@ static void util_geometry_mask_edited(slot_layer_t *owner, geometry_mask_t g) {
 	history_layer_geometry_mask(owner);
 	slot_layer_geometry_mask_free(&owner->geometry_mask);
 	owner->geometry_mask = g;
+	util_geometry_mask_epoch++;
 	make_material_parse_mesh_material();
 	make_material_parse_paint_material(false);
 	g_context->layers_preview_dirty = true;
@@ -366,7 +441,7 @@ void util_geometry_mask_clear(slot_layer_t *l) {
 	if (slot_layer_geometry_mask_is_empty(&owner->geometry_mask) && owner->geometry_mask.mode == GEOMETRY_MASK_INCLUDE) {
 		return;
 	}
-	geometry_mask_t g = {.mode = GEOMETRY_MASK_INCLUDE, .tiles = NULL, .objects = NULL};
+	geometry_mask_t g = {.mode = GEOMETRY_MASK_INCLUDE, .tiles = NULL, .objects = NULL, .faces = NULL};
 	util_geometry_mask_edited(owner, g);
 }
 
@@ -385,4 +460,244 @@ i32_array_t *util_geometry_mask_project_tiles() {
 		}
 	}
 	return tiles;
+}
+
+// Faces (polygon selection). A face is a triangle of the index array of a paint object, the selected ones are
+// a bitset per object.
+
+static geometry_mask_faces_t *util_geometry_mask_faces_create(char *object, i32 triangles, bool set) {
+	geometry_mask_faces_t *f = ALLOC_INIT(geometry_mask_faces_t, {.object = string_copy(object), .triangles = triangles, .count = 0});
+	f->bits                  = u8_array_create((triangles + 7) / 8);
+	if (set) {
+		for (i32 t = 0; t < triangles; ++t) {
+			f->bits->buffer[t >> 3] |= 1 << (t & 7);
+		}
+		f->count = triangles;
+	}
+	return f;
+}
+
+static void util_geometry_mask_faces_remove(geometry_mask_t *g, geometry_mask_faces_t *f) {
+	array_remove((any_array_t *)g->faces, f);
+	slot_layer_geometry_mask_faces_free(f);
+	if (g->faces->length == 0) {
+		array_delete(g->faces);
+		g->faces = NULL;
+	}
+}
+
+// Selects or deselects the triangles tris of the object in the mask g, without an undo step. Returns the number
+// of faces that changed.
+i32 util_geometry_mask_faces_apply(geometry_mask_t *g, mesh_object_t *o, u32_array_t *tris, bool selected) {
+	i32 triangles = o->data->index_array->length / 3;
+	if (triangles == 0 || tris == NULL || tris->length == 0) {
+		return 0;
+	}
+	char *name     = o->base->name;
+	bool  checked  = g->objects != NULL && string_array_index_of(g->objects, name) >= 0;
+	bool  no_lists = (g->objects == NULL || g->objects->length == 0) && (g->faces == NULL || g->faces->length == 0);
+	if (selected && checked) {
+		return 0; // Every face of it is selected already
+	}
+
+	geometry_mask_faces_t *f = slot_layer_geometry_mask_faces(g, o, true);
+	if (!selected) {
+		if (no_lists) {
+			// Every object is selected, or none in exclude mode without tiles
+			if (g->mode == GEOMETRY_MASK_EXCLUDE && (g->tiles == NULL || g->tiles->length == 0)) {
+				return 0;
+			}
+			// The other objects stay selected
+			if (g->objects == NULL) {
+				g->objects = string_array_create(0);
+			}
+			for (i32 i = 0; i < g_project->_->paint_objects->length; ++i) {
+				string_array_push(g->objects, string_copy(g_project->_->paint_objects->buffer[i]->base->name));
+			}
+			checked = true;
+		}
+		if (checked) {
+			// The object moves to its faces, all of them selected
+			i32 i = string_array_index_of(g->objects, name);
+			free(g->objects->buffer[i]);
+			array_splice((any_array_t *)g->objects, i, 1);
+			if (g->objects->length == 0) {
+				array_delete(g->objects);
+				g->objects = NULL;
+			}
+			geometry_mask_faces_t *stale = slot_layer_geometry_mask_faces(g, o, false);
+			if (stale != NULL) {
+				util_geometry_mask_faces_remove(g, stale);
+			}
+			f = util_geometry_mask_faces_create(name, triangles, true);
+			if (g->faces == NULL) {
+				g->faces = (geometry_mask_faces_t_array_t *)any_array_create(0);
+			}
+			any_array_push((any_array_t *)g->faces, f);
+		}
+		if (f == NULL) {
+			return 0;
+		}
+	}
+	else if (f == NULL) {
+		// A new entry replaces one of a different triangle count
+		geometry_mask_faces_t *stale = slot_layer_geometry_mask_faces(g, o, false);
+		if (stale != NULL) {
+			util_geometry_mask_faces_remove(g, stale);
+		}
+		f = util_geometry_mask_faces_create(name, triangles, false);
+		if (g->faces == NULL) {
+			g->faces = (geometry_mask_faces_t_array_t *)any_array_create(0);
+		}
+		any_array_push((any_array_t *)g->faces, f);
+	}
+
+	i32 changed = 0;
+	for (i32 i = 0; i < tris->length; ++i) {
+		i32 t = tris->buffer[i];
+		if (t < 0 || t >= triangles) {
+			continue;
+		}
+		u8   bit = 1 << (t & 7);
+		bool on  = (f->bits->buffer[t >> 3] & bit) != 0;
+		if (on == selected) {
+			continue;
+		}
+		if (selected) {
+			f->bits->buffer[t >> 3] |= bit;
+			f->count++;
+		}
+		else {
+			f->bits->buffer[t >> 3] &= ~bit;
+			f->count--;
+		}
+		changed++;
+	}
+	if (f->count == 0) {
+		util_geometry_mask_faces_remove(g, f);
+	}
+	return changed;
+}
+
+static bool util_geometry_mask_equals_faces(geometry_mask_faces_t *a, geometry_mask_faces_t *b) {
+	return string_equals(a->object, b->object) && a->triangles == b->triangles && a->count == b->count && a->bits->length == b->bits->length &&
+	       memcmp(a->bits->buffer, b->bits->buffer, a->bits->length) == 0;
+}
+
+// Same mode, tiles, objects and faces in the same order
+bool util_geometry_mask_equals(geometry_mask_t *a, geometry_mask_t *b) {
+	if (a->mode != b->mode) {
+		return false;
+	}
+	i32 tiles = a->tiles != NULL ? a->tiles->length : 0;
+	if (tiles != (b->tiles != NULL ? b->tiles->length : 0)) {
+		return false;
+	}
+	for (i32 i = 0; i < tiles; ++i) {
+		if (a->tiles->buffer[i] != b->tiles->buffer[i]) {
+			return false;
+		}
+	}
+	i32 objects = a->objects != NULL ? a->objects->length : 0;
+	if (objects != (b->objects != NULL ? b->objects->length : 0)) {
+		return false;
+	}
+	for (i32 i = 0; i < objects; ++i) {
+		if (!string_equals(a->objects->buffer[i], b->objects->buffer[i])) {
+			return false;
+		}
+	}
+	i32 faces = a->faces != NULL ? a->faces->length : 0;
+	if (faces != (b->faces != NULL ? b->faces->length : 0)) {
+		return false;
+	}
+	for (i32 i = 0; i < faces; ++i) {
+		if (!util_geometry_mask_equals_faces(a->faces->buffer[i], b->faces->buffer[i])) {
+			return false;
+		}
+	}
+	return true;
+}
+
+static mesh_object_t *util_geometry_mask_paint_object(char *name) {
+	for (i32 i = 0; name != NULL && i < g_project->_->paint_objects->length; ++i) {
+		if (string_equals(g_project->_->paint_objects->buffer[i]->base->name, name)) {
+			return g_project->_->paint_objects->buffer[i];
+		}
+	}
+	return NULL;
+}
+
+// Selects or deselects count triangles of the object from first, one undo step
+void util_geometry_mask_set_faces(slot_layer_t *l, char *name, i32 first, i32 count, bool selected) {
+	slot_layer_t  *owner = slot_layer_geometry_owner(l);
+	mesh_object_t *o     = util_geometry_mask_paint_object(name);
+	if (o == NULL || count <= 0) {
+		return;
+	}
+	i32          triangles = o->data->index_array->length / 3;
+	u32_array_t *tris      = u32_array_create(0);
+	for (i32 t = first < 0 ? 0 : first; t < first + count && t < triangles; ++t) {
+		u32_array_push(tris, t);
+	}
+	geometry_mask_t g = slot_layer_geometry_mask_copy(&owner->geometry_mask);
+	if (util_geometry_mask_faces_apply(&g, o, tris, selected) > 0) {
+		util_geometry_mask_edited(owner, g);
+	}
+	else {
+		slot_layer_geometry_mask_free(&g);
+	}
+	array_delete(tris);
+}
+
+// Removes every face from the mask, the objects and tiles stay
+void util_geometry_mask_clear_faces(slot_layer_t *l) {
+	slot_layer_t *owner = slot_layer_geometry_owner(l);
+	if (owner->geometry_mask.faces == NULL) {
+		return;
+	}
+	geometry_mask_t g = slot_layer_geometry_mask_copy(&owner->geometry_mask);
+	for (i32 i = 0; g.faces != NULL && i < g.faces->length; ++i) {
+		slot_layer_geometry_mask_faces_free(g.faces->buffer[i]);
+	}
+	array_delete(g.faces);
+	g.faces = NULL;
+	util_geometry_mask_edited(owner, g);
+}
+
+// Selected faces of the object, 0 when its entry no longer matches the mesh
+i32 util_geometry_mask_face_count(geometry_mask_t *g, mesh_object_t *o) {
+	geometry_mask_faces_t *f = slot_layer_geometry_mask_faces(g, o, true);
+	return f != NULL ? f->count : 0;
+}
+
+// Selected faces in every object
+i32 util_geometry_mask_face_total(geometry_mask_t *g) {
+	i32 total = 0;
+	for (i32 i = 0; g->faces != NULL && i < g->faces->length; ++i) {
+		mesh_object_t *o = util_geometry_mask_paint_object(g->faces->buffer[i]->object);
+		total += o != NULL ? util_geometry_mask_face_count(g, o) : 0;
+	}
+	return total;
+}
+
+// An entry of the mask has a different triangle count than its object: the mesh changed and it selects nothing
+bool util_geometry_mask_faces_stale(geometry_mask_t *g) {
+	for (i32 i = 0; g->faces != NULL && i < g->faces->length; ++i) {
+		mesh_object_t *o = util_geometry_mask_paint_object(g->faces->buffer[i]->object);
+		if (o != NULL && slot_layer_geometry_mask_faces(g, o, true) == NULL) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// After a project or a mesh was loaded
+void util_geometry_mask_check_faces() {
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		if (util_geometry_mask_faces_stale(&g_project->_->layers->buffer[i]->geometry_mask)) {
+			console_info(tr("The mesh changed, the faces of some geometry masks no longer apply"));
+			return;
+		}
+	}
 }

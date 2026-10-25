@@ -187,6 +187,13 @@ typedef enum {
 	GEOMETRY_MASK_EXCLUDE = 1,
 } geometry_mask_mode_t;
 
+// Part of a paint object where a layer applies with its geometry masks
+typedef enum {
+	GEOMETRY_MASK_COVER_NONE = 0,
+	GEOMETRY_MASK_COVER_SOME = 1, // Some of its faces
+	GEOMETRY_MASK_COVER_ALL  = 2,
+} geometry_mask_cover_t;
+
 typedef enum {
 	CAMERA_CONTROLS_NONE   = -1,
 	CAMERA_CONTROLS_ORBIT  = 0,

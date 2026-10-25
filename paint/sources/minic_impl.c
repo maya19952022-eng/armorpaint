@@ -972,6 +972,53 @@ bool script_layer_geometry_applies(slot_layer_t *l, object_t *object) {
 	return script_layer_valid(l) && o != NULL && slot_layer_geometry_mask_object(l, o);
 }
 
+// Faces of the geometry mask, a face is a triangle of the index array of the object
+
+void script_layer_set_geometry_faces(slot_layer_t *l, object_t *object, i32 first, i32 count, bool selected) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL) {
+		return;
+	}
+	util_geometry_mask_set_faces(l, o->base->name, first, count, selected);
+}
+
+// The face is selected in the mask of the layer, without its mode, objects, tiles and group
+bool script_layer_get_geometry_face(slot_layer_t *l, object_t *object, i32 triangle) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL || triangle < 0) {
+		return false;
+	}
+	geometry_mask_faces_t *f = slot_layer_geometry_mask_faces(&slot_layer_geometry_owner(l)->geometry_mask, o, true);
+	return f != NULL && triangle < f->triangles && (f->bits->buffer[triangle >> 3] & (1 << (triangle & 7))) != 0;
+}
+
+// The layer contributes on the face, with every list and mode of its geometry mask and the one of its group
+bool script_layer_geometry_face_applies(slot_layer_t *l, object_t *object, i32 triangle) {
+	mesh_object_t *o = script_paint_object(object);
+	return script_layer_valid(l) && o != NULL && slot_layer_geometry_mask_triangle(l, o, triangle);
+}
+
+// Selected faces of the object, 0 when they were selected on a mesh with a different triangle count
+i32 script_layer_get_geometry_face_count(slot_layer_t *l, object_t *object) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL) {
+		return 0;
+	}
+	return util_geometry_mask_face_count(&slot_layer_geometry_owner(l)->geometry_mask, o);
+}
+
+void script_layer_clear_geometry_faces(slot_layer_t *l) {
+	if (!script_layer_valid(l)) {
+		return;
+	}
+	util_geometry_mask_clear_faces(l);
+}
+
+i32 script_object_triangle_count(object_t *object) {
+	mesh_object_t *o = script_paint_object(object);
+	return o != NULL ? o->data->index_array->length / 3 : 0;
+}
+
 // Selection like ctrl+click (toggle) and shift+click (range) in the layers tab, both false selects only l
 void script_layer_select(slot_layer_t *l, bool toggle, bool range) {
 	if (!script_layer_valid(l)) {

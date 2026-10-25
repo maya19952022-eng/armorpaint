@@ -228,6 +228,9 @@ project_t *import_arm_from_map_to_arm(any_map_t *old) {
 			ld->geometry_mask_mode    = armpack_map_get_i32(old, "geometry_mask_mode"); // Missing means no geometry mask
 			ld->geometry_mask_tiles   = any_map_get(old, "geometry_mask_tiles");
 			ld->geometry_mask_objects = any_map_get(old, "geometry_mask_objects");
+			ld->geometry_mask_face_objects = any_map_get(old, "geometry_mask_face_objects");
+			ld->geometry_mask_face_counts  = any_map_get(old, "geometry_mask_face_counts");
+			ld->geometry_mask_faces        = any_map_get(old, "geometry_mask_faces");
 			any_array_push(project->layer_datas, ld);
 		}
 	}
