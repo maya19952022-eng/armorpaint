@@ -4,6 +4,8 @@ on:
   push:
     tags:
     - 'v*' # A tag makes a release with the portable Windows build
+    branches:
+    - 'release/v*' # So does a release/<tag> branch, for clients that can only push branches
   workflow_dispatch:
     inputs:
       tag:
@@ -33,4 +35,5 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         TAG: ${{ github.event.inputs.tag || github.ref_name }}
       run: |
+        TAG="${TAG#release/}" # The tag is made at this commit
         gh release create "$TAG" ArmorPaint-windows.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "ArmorPaint $TAG" --notes-file docs/release_notes.md --prerelease
