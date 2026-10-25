@@ -1250,7 +1250,7 @@ void history_merge_layers() {
 	if (step->layer >= 0 && step->layer < g_project->_->layers->length) {
 		step->layer_props = history_layer_props(g_project->_->layers->buffer[step->layer]);
 	}
-	array_shift(history_steps); // Merge consumes 2 steps
+	history_step_free(array_shift(history_steps)); // Merge consumes 2 steps
 	history_undos--;
 	// TODO: use undo layer in app_merge_down to save memory
 }
