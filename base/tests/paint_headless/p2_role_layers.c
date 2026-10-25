@@ -116,6 +116,23 @@ void step_delete_undo() {
 	check(find_role(BAKE_ROLE_CAGE) != NULL, "redo makes it again as a cage map");
 }
 
+// A project saved by the P2 builds before the layer fields of the P1 has bake_role at key 45, where effect_paint is now
+void step_open_old_project() {
+	script_project_open("../../../base/tests/paint_headless/fixtures/p2_roles_project.arm");
+	check(script_layer_count() == 3, string("old project: 3 layers (%d)", script_layer_count()));
+	slot_layer_t *skew = find_role(BAKE_ROLE_SKEW);
+	slot_layer_t *cage = find_role(BAKE_ROLE_CAGE);
+	check(skew != NULL && cage != NULL, "old project: the skew and cage maps keep their roles");
+	int paint_effects = 0;
+	for (int i = 0; i < script_layer_count(); ++i) {
+		if (script_layer_at(i)->effect_paint) {
+			paint_effects += 1;
+		}
+	}
+	check(paint_effects == 0, string("old project: no layer becomes a Paint effect (%d)", paint_effects));
+	check(skew != NULL && max_gray(skew) > 240, "old project: the skew map keeps its white fill");
+}
+
 void next_frame() {
 	if (step == 0) {
 		step_paint();
@@ -125,6 +142,9 @@ void next_frame() {
 	}
 	else if (step == 2) {
 		step_delete_undo();
+	}
+	else if (step == 3) {
+		step_open_old_project();
 	}
 	else {
 		printf("[smoke] %d checks, %d failures", checks, failures);

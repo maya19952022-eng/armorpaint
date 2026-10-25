@@ -63,6 +63,10 @@ base/tests/paint_headless/run.sh make_fixture.c
 
 `fixtures/p1_geometry_project.arm` é um projeto da versão 22 salvo com a máscara geométrica de objetos e tiles (44 campos por camada), antes da seleção de faces acrescentar os seus campos às camadas. Tem os quads `geo_a` e `geo_b` e quatro camadas sobre a base: `fx_red` inclui `geo_a`, `fx_blue` (opacidade 0.5) exclui o tile 1002, `fx_green` fica no grupo `fx_group`, que inclui `geo_b`. `p1_geometry_faces.c` abre o arquivo e compara com `fixtures/p1_geometry_project.json`: máscaras das camadas, nenhuma face e a média do `_base` exportado. Foi gerado por `make_fixture_p1_geometry.c` com o build do commit `8a03c95`; um build mais novo grava os campos de faces e o fixture deixaria de testar esse caso, então não o regenere.
 
+## Fixture das camadas Skew e Cage Map da P2
+
+`fixtures/p2_roles_project.arm` é um projeto da versão 23 salvo pelos builds da P2 de antes de os campos do efeito Paint e da seleção de faces (P1) entrarem nas camadas: 45 campos por camada, com `bake_role` na posição 45, onde hoje fica `effect_paint`. Tem a camada da base, um Skew Map preenchido de branco e um Cage Map. `p2_role_layers.c` abre o arquivo e confere que os papéis voltam e que nenhuma camada vira efeito Paint. Foi gerado por `make_fixture_p2_roles.c` com o build do commit `da6d9b9` (`ARMORPAINT_APP=<esse build> run.sh make_fixture_p2_roles.c`); um build mais novo grava todos os campos e o fixture deixaria de testar esse caso, então não o regenere.
+
 ## Teste de integração existente
 
 `paint/assets/plugins/dev/test.c` é um teste bem maior (82 passos, 220 checks) do upstream. Ele também roda com `--script`, mas grava em `/tmp/armorpaint`, deixa a config em modo Sculpt e é lento no llvmpipe. Veja o resultado de referência em `base/docs/building_cloud.md`.
