@@ -17,7 +17,7 @@ Como atualizar:
 | Área | Itens em escopo | ✅ | 🟡 | ❌ | % ✅ |
 |---|---|---|---|---|---|
 | Projeto, texture sets e assets | 18 | 0 | 9 | 9 | 0% |
-| Layer stack | 18 | 14 | 2 | 2 | 78% |
+| Layer stack | 18 | 15 | 1 | 2 | 83% |
 | Ferramentas e pincel | 28 | 8 | 14 | 6 | 29% |
 | Projeções de fill | 7 | 2 | 1 | 4 | 29% |
 | Procedural e biblioteca | 10 | 1 | 5 | 4 | 10% |
@@ -25,9 +25,9 @@ Como atualizar:
 | Viewport, render e shading | 12 | 2 | 5 | 5 | 17% |
 | Import e export | 13 | 1 | 10 | 2 | 8% |
 | Interface, UX e scripting | 11 | 3 | 6 | 2 | 27% |
-| **Total** | **129** | **33 (26%)** | **55** | **41** | meta: 117 ✅ |
+| **Total** | **129** | **34 (26%)** | **54** | **41** | meta: 117 ✅ |
 
-Fora de escopo nas tabelas: 2. Faltam 84 itens ✅ para a meta.
+Fora de escopo nas tabelas: 2. Faltam 83 itens ✅ para a meta.
 
 <!-- placar:fim -->
 
@@ -38,7 +38,7 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 | Fase | PR | ✅ | 🟡 | ❌ | O que mudou |
 |---|---|---|---|---|---|
 | P0 | [PR 1](https://github.com/maya19952022-eng/armorpaint/pull/1) | 20 | 61 | 48 | Matriz criada a partir do plano; nenhum item muda de status na P0 (infraestrutura). |
-| P1 | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2) | 33 (+13) | 55 (−6) | 41 (−7) | Layer stack: LAY-01/02/03/04/06/07/08/09/10/14/15/16/17 ✅; LAY-05 e LAY-11 🟡 (faltam efeito Paint/Generator e seleção por polígono). |
+| P1 | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2) | 34 (+14) | 54 (−7) | 41 (−7) | Layer stack: LAY-01/02/03/04/05/06/07/08/09/10/14/15/16/17 ✅; LAY-11 🟡 (falta seleção por polígono). |
 
 ## 4.1 Projeto, texture sets e assets
 
@@ -72,7 +72,7 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 | LAY-02 | Pass-through em grupos | ✅ feito | — | Flag `passthrough` no grupo; compositor ignora o grupo como unidade | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): grupos já compunham como pass-through (cada camada mistura com o que está abaixo do grupo); agora a linha do grupo mostra "Pass Through" e há teste. Grupo isolado não existe. `group_pass_through.md` |
 | LAY-03 | Multi-seleção de layers (mover, apagar, agrupar, flatten) | ✅ feito | — | `g_context->layers_selected` (lista); ações aplicadas em lote; ctrl/shift-clique | P1 | M | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): ctrl/shift-clique, mover (arrastar), apagar, agrupar e flatten em lote; mover é um passo de undo. `layer_multi_selection.md` |
 | LAY-04 | Lock de layer | ✅ feito | — | Flag `locked`; `render_path_paint` recusa pintura; ícone | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): lock por camada e grupo, herdado por máscaras e efeitos; bloqueia pincel, fill, bake e partículas; conta-gotas continuam. `layer_lock.md` |
-| LAY-05 | Effects stack em conteúdo **e** máscara (Fill, Paint, Generator, Filter, Levels, Compare Mask, Anchor, Color Selection) | 🟡 parcial | filtros só no conteúdo; fill mask; máscara pintável | Generalizar filtro para máscaras (`layers_create_filter` com alvo mask); "Paint effect" = sublayer pintável dentro do stack; UI do stack expandível por layer | P1 | L | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): pilhas de efeitos em camadas e máscaras (Filter, Fill, Levels, HSV, Color Balance, Sharpen, Blur, Compare Mask, Color Selection, Anchor Point), em cadeia e com olho por efeito. Faltam o efeito Paint (sublayer pintável) e Generator (geradores são da P3). `effect_stack.md` |
+| LAY-05 | Effects stack em conteúdo **e** máscara (Fill, Paint, Generator, Filter, Levels, Compare Mask, Anchor, Color Selection) | ✅ feito | filtros só no conteúdo; fill mask; máscara pintável | Generalizar filtro para máscaras (`layers_create_filter` com alvo mask); "Paint effect" = sublayer pintável dentro do stack; UI do stack expandível por layer | P1 | L | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): pilhas de efeitos em camadas e máscaras (Filter, Fill, Paint, Generator, Levels, HSV, Color Balance, Sharpen, Blur, Compare Mask, Color Selection, Anchor Point), em cadeia e com olho por efeito. Paint: traços pintáveis por cima do que está abaixo na pilha, com borracha, blend e opacidade por canal. Generator: Edges (curvatura em espaço UV), 3D Gradient, Facing Up e Noise; Dirt, Metal Edge Wear e Thickness esperam os mesh maps (BAKE-01). `effect_stack.md` |
 | LAY-06 | Levels | ✅ feito | nó não existe | Nó `levels_node.c` (in/out black/white, gamma, por canal) + efeito rápido | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): nó Levels (in/out black/white, gamma, canal) e efeito rápido. `effect_nodes.md` |
 | LAY-07 | HSL / Color Balance / Sharpen como efeitos rápidos | ✅ feito | HSV existe; sharpen e color balance não | Nós `color_balance_node.c`, `sharpen_node.c`; menu "Add effect" em `tab_layers.c` cria filtro com o nó pronto | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): nós Color Balance e Sharpen; HSV, Color Balance, Sharpen e Blur como efeitos rápidos em Add Effect. `effect_nodes.md`, `effect_stack.md` |
 | LAY-08 | Compare Mask | ✅ feito | — | Nó `compare_mask_node.c` (fonte: camada abaixo/anchor, operador, threshold) | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): nó Compare Mask (Greater/Less/Equal/Not Equal, threshold, suavidade) e efeito de máscara; B lê outra camada ou Anchor Point pelo nó Layer. `effect_nodes.md` |
