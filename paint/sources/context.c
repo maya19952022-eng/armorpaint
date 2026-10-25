@@ -163,6 +163,9 @@ void context_init() {
 	g_context->sym_y                        = false;
 	g_context->sym_z                        = false;
 	g_context->fill_type                    = FILL_TYPE_OBJECT;
+	g_context->select_faces                 = false;
+	g_context->select_faces_mode            = GEOMETRY_SELECT_POLYGON;
+	g_context->select_faces_remove          = false;
 	g_context->blur_type                    = BLUR_TYPE_BLUR;
 	g_context->paint2d                      = false;
 	g_context->drag_dest                    = 0;
@@ -356,6 +359,7 @@ void context_select_paint_object(mesh_object_t *o) {
 	util_uv_uvmap_cached       = false;
 	util_uv_trianglemap_cached = false;
 	util_uv_dilatemap_cached   = false;
+	util_geometry_mask_invalidate();
 }
 
 // Cursor tool clicked on empty space, the paint object stays selected in the meshes tab

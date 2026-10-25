@@ -237,6 +237,22 @@ typedef enum {
 	GEOMETRY_MASK_EXCLUDE = 1,
 } geometry_mask_mode_t;
 
+// Part of a paint object where a layer applies with its geometry masks
+typedef enum {
+	GEOMETRY_MASK_COVER_NONE = 0,
+	GEOMETRY_MASK_COVER_SOME = 1, // Some of its faces
+	GEOMETRY_MASK_COVER_ALL  = 2,
+} geometry_mask_cover_t;
+
+// Faces a click of the select tool adds to the geometry mask or removes from it
+typedef enum {
+	GEOMETRY_SELECT_TRIANGLE  = 0,
+	GEOMETRY_SELECT_POLYGON   = 1,
+	GEOMETRY_SELECT_CONNECTED = 2,
+	GEOMETRY_SELECT_UV_ISLAND = 3,
+	GEOMETRY_SELECT_OBJECT    = 4,
+} geometry_select_mode_t;
+
 typedef enum {
 	CAMERA_CONTROLS_NONE   = -1,
 	CAMERA_CONTROLS_ORBIT  = 0,
@@ -334,8 +350,19 @@ typedef enum {
 	EFFECT_TYPE_COMPARE_MASK    = 7,
 	EFFECT_TYPE_COLOR_SELECTION = 8,
 	EFFECT_TYPE_ANCHOR          = 9,
-	EFFECT_TYPE_COUNT           = 10,
+	EFFECT_TYPE_PAINT           = 10, // Strokes painted over the element below, see slot_layer_is_paint_effect
+	EFFECT_TYPE_GENERATOR       = 11, // A fill whose factor is a generator_type_t node chain
+	EFFECT_TYPE_COUNT           = 12,
 } effect_type_t;
+
+// Presets of the Generator effect, each one a node chain driving the factor of a fill
+typedef enum {
+	GENERATOR_TYPE_EDGES     = 0, // Baked curvature of the mesh
+	GENERATOR_TYPE_GRADIENT  = 1, // World height
+	GENERATOR_TYPE_FACING_UP = 2, // World normal pointing up
+	GENERATOR_TYPE_NOISE     = 3,
+	GENERATOR_TYPE_COUNT     = 4,
+} generator_type_t;
 
 typedef enum {
 	TOOL_TYPE_BRUSH     = 0,

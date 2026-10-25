@@ -29,6 +29,9 @@ static bool util_select_in_2d_view() {
 }
 
 void util_select_update() {
+	if (util_geometry_mask_select_update()) {
+		return; // The select tool picks faces of the geometry mask
+	}
 	if (g_context->tool == TOOL_TYPE_SELECT) {
 		if (base_ui_enabled && !base_is_dragging && !base_is_resizing) {
 			f32  mx          = mouse_view_x();

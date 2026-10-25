@@ -155,6 +155,7 @@
 #include "render/make_texcoord.c"
 #include "render/render_compass.c"
 #include "render/render_envsphere.c"
+#include "render/render_geometry_select.c"
 #include "render/render_gizmo.c"
 #include "render/render_grid.c"
 #include "render/render_path_base.c"

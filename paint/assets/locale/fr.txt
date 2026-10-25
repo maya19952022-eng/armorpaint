@@ -1,4 +1,5 @@
 (compressé)
+
 (empaqueté)
 -X
 -Y
@@ -7,6 +8,7 @@
 2D
 Vue 2D
 3D
+
 Vue 3D
 A
 À propos
@@ -135,6 +137,7 @@ Resserrer le résultat
 Argile
 Effacer
 
+
 Effacer le calque
 
 Effacer les échantillons
@@ -170,6 +173,7 @@ Recomposer XYZ
 Gizmos XYZ
 
 Confirmer
+
 Console
 Modèle de console
 Constante
@@ -259,6 +263,7 @@ Dupliquer le calque
 Dupliquer matériau
 Dupliquer l'échantillon
 
+
 Modifier
 Éditer image
 Modifier nœuds
@@ -307,6 +312,9 @@ F1
 F2
 Fac
 Face
+
+
+
 Facteur
 Échec de l'importation du matériau
 Échec de la lecture du son :
@@ -354,6 +362,7 @@ V
 Texture Gabor
 Gamma
 Générées
+
 Géométrie
 
 Géométrie vers origine
@@ -379,6 +388,7 @@ Aide
 High Poly
 
 Historique
+
 Maintenir {action_paint} pour effacer\nMaintenir {brush_ruler} et appuyer {action_paint} pour effacer ligne droite (mode règle)
 Maintenir {action_paint} pour peindre\nMaintenir {brush_ruler} et appuyer {action_paint} pour peindre ligne droite (mode règle)
 Maintenez {brush_opacity} et déplacez la souris vers la gauche pour réduire l'opacité\nMaintenez {brush_opacity} et déplacez la souris vers la droite pour augmenter l'opacité
@@ -550,6 +560,7 @@ Aucune réponse
 Nœud
 Aperçus de nœuds
 Nœuds
+
 Grain du bruit
 Texture de bruit
 Aucun
@@ -638,6 +649,7 @@ Plugin importé :
 Plugins
 Point
 Pointu
+
 Position
 Post-traitement
 Puissance
@@ -678,6 +690,7 @@ Récent
 Refaire {step}
 Refléter
 Rafraîchir
+
 Ré-importer
 Ré-importer le maillage
 Ré-importer les textures
@@ -740,6 +753,7 @@ Rechercher des nœuds
 Segments
 Sélectionner
 Tout sélectionner
+
 Sélectionner les masqués
 Sélectionner matériau
 Sélectionner les visibles
@@ -838,6 +852,7 @@ Texture...
 Textures
 Textures exportées
 Textures...
+
 
 Thème
 Thème importé :

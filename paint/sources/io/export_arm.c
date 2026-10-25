@@ -277,7 +277,8 @@ buffer_t *export_arm_encode_project(char *path) {
 		                              .blending_ch        = i32_array_create(LAYER_CH_COUNT),
 		                              .opacity_ch         = f32_array_create(LAYER_CH_COUNT),
 		                              .locked             = l->locked,
-		                              .effect             = l->effect});
+		                              .effect             = l->effect,
+		                              .effect_paint       = l->effect_paint});
 		for (i32 j = 0; j < LAYER_CH_COUNT; ++j) {
 			d->blending_ch->buffer[j] = l->blending[j];
 			d->opacity_ch->buffer[j]  = l->opacity[j];
@@ -286,7 +287,25 @@ buffer_t *export_arm_encode_project(char *path) {
 		d->geometry_mask_mode    = g->mode;
 		d->geometry_mask_tiles   = g->tiles != NULL && g->tiles->length > 0 ? g->tiles : NULL;
 		d->geometry_mask_objects = g->objects != NULL && g->objects->length > 0 ? g->objects : NULL;
-		d->bake_role             = l->bake_role;
+		if (g->faces != NULL && g->faces->length > 0) {
+			// Entries of a different triangle count than their object are written as they are
+			d->geometry_mask_face_objects = string_array_create(0);
+			d->geometry_mask_face_counts  = i32_array_create(0);
+			i32 bytes                     = 0;
+			for (i32 j = 0; j < g->faces->length; ++j) {
+				bytes += g->faces->buffer[j]->bits->length;
+			}
+			d->geometry_mask_faces = buffer_create(bytes);
+			i32 offset             = 0;
+			for (i32 j = 0; j < g->faces->length; ++j) {
+				geometry_mask_faces_t *f = g->faces->buffer[j];
+				string_array_push(d->geometry_mask_face_objects, f->object);
+				i32_array_push(d->geometry_mask_face_counts, f->triangles);
+				memcpy(d->geometry_mask_faces->buffer + offset, f->bits->buffer, f->bits->length);
+				offset += f->bits->length;
+			}
+		}
+		d->bake_role = l->bake_role;
 		any_array_push(ld, d);
 	}
 
@@ -428,6 +447,9 @@ buffer_t *export_arm_encode_project(char *path) {
 		}
 		array_delete(d->blending_ch);
 		array_delete(d->opacity_ch);
+		array_delete(d->geometry_mask_face_objects); // The names belong to the layers
+		array_delete(d->geometry_mask_face_counts);
+		array_delete(d->geometry_mask_faces);
 		free(d);
 	}
 	array_free(ld);

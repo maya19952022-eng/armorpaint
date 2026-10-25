@@ -1,4 +1,5 @@
 (komprimované)
+
 (zabalené)
 -X
 -Y
@@ -7,6 +8,7 @@
 2D
 2D pohled
 3D
+
 3D pohled
 A
 O programu
@@ -135,6 +137,7 @@ Omezit výsledek
 Hlína
 Vyčistit
 
+
 Vyčistit vrstvu
 
 Vyčistit vzorky
@@ -170,6 +173,7 @@ Kombinovat XYZ
 Kompas
 
 Potvrdit
+
 Konzole
 Model konzole
 Konstanta
@@ -259,6 +263,7 @@ Duplikovat vrstvu
 Duplikovat materiál
 Duplikovat vzorek
 
+
 Upravit
 Upravit obrázek
 Upravit uzly
@@ -307,6 +312,9 @@ F1
 F2
 Fak
 Plocha
+
+
+
 Faktor
 Selhal import materiálu
 Nepodařilo se načíst zvuk:
@@ -354,6 +362,7 @@ G
 Gaborova textura
 Gama
 Generováno
+
 Geometrie
 
 Geometrie do počátku
@@ -379,6 +388,7 @@ Nápověda
 Vysoký počet polygonů
 
 Historie
+
 Držte {action_paint} pro mazání\nDržte {brush_ruler} a stiskněte {action_paint} pro mazání přímky (režim pravítka)
 Držte {action_paint} pro malování\nDržte {brush_ruler} a stiskněte {action_paint} pro malování přímky (režim pravítka)
 Držte {brush_opacity} a pohybujte myší vlevo pro snížení krytí\nDržte {brush_opacity} a pohybujte myší vpravo pro zvýšení krytí
@@ -550,6 +560,7 @@ Ne
 Uzel
 Náhledy uzlů
 Uzly
+
 Šum zrna
 Šumová textura
 Žádný
@@ -638,6 +649,7 @@ Plugin importován:
 Pluginy
 Bod
 Špičatost
+
 Pozice
 Postprodukce
 Mocnina
@@ -678,6 +690,7 @@ Nedávné
 Znovu {step}
 Odrážet
 Obnovit
+
 Znovu importovat
 Znovu importovat síť
 Znovu importovat textury
@@ -740,6 +753,7 @@ Hledat uzly
 Segmenty
 Vybrat
 Vybrat vše
+
 Vybrat skryté
 Vybrat materiál
 Vybrat viditelné
@@ -838,6 +852,7 @@ Textura...
 Textury
 Textury exportovány
 Textury...
+
 
 Téma
 Téma importováno:

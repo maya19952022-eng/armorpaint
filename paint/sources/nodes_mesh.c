@@ -680,6 +680,7 @@ static void nodes_mesh_set_data(mesh_object_t *o, mesh_data_t *data, bool unwrap
 	util_uv_dilatemap_cached   = false;
 	render_path_raytrace_ready = false;
 	g_context->ddirty          = 2;
+	util_geometry_mask_invalidate();
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 

@@ -560,8 +560,9 @@ node_shader_context_t *make_paint_run_context(material_t *data, char *context_id
 	char *matid_string = parser_material_vec1(matid * 3.0);
 	node_shader_write_frag(kong, string_tmp("float matid = %s;", matid_string));
 
-	// A layer effect keeps the material id and the emission or subsurface flag of what it changes
-	slot_layer_t *effect_input = slot_layer_is_filter(g_context->layer) ? slot_layer_effect_input(g_context->layer) : NULL;
+	// A layer effect keeps the material id and the emission or subsurface flag of what it changes, the strokes of a paint
+	// effect have those of the brush material
+	slot_layer_t *effect_input = slot_layer_is_filter(g_context->layer) && !g_context->layer->effect_paint ? slot_layer_effect_input(g_context->layer) : NULL;
 	if (effect_input != NULL && slot_layer_is_layer(effect_input)) {
 		i32 index = array_index_of(g_project->_->layers, effect_input);
 		node_shader_add_texture(kong, "texpaint_nor_effect", string_tmp("_texpaint_nor%d", index));
@@ -596,12 +597,14 @@ node_shader_context_t *make_paint_run_context(material_t *data, char *context_id
 	node_shader_write_frag(kong, string_tmp("float4 sample_nor_undo = sample_lod(%s, sampler_linear, sample_tc, 0.0);", tex_nor_src));
 	node_shader_write_frag(kong, string_tmp("float4 sample_pack_undo = sample_lod(%s, sampler_linear, sample_tc, 0.0);", tex_pack_src));
 
-	bool is_mask = slot_layer_is_mask(g_context->layer);
-	if (g_context->tool == TOOL_TYPE_ERASER && !is_mask) {
+	bool is_mask      = slot_layer_is_mask(g_context->layer);
+	bool mask_strokes = is_mask && g_context->layer->effect_paint; // Value in red and coverage in alpha, painted like a layer
+	bool mask_value   = is_mask && !mask_strokes;
+	if (g_context->tool == TOOL_TYPE_ERASER && !mask_value) {
 		node_shader_write_frag(kong, "float out_a = sample_undo.a * (1.0 - str);");
 		node_shader_write_frag(kong, "output[0] = float4(sample_undo.rgb, out_a);");
 	}
-	else if (g_context->tool == TOOL_TYPE_BLUR && !is_mask) {
+	else if (g_context->tool == TOOL_TYPE_BLUR && !mask_value) {
 		node_shader_write_frag(kong, "float t_blur = str / max(blur_src_alpha, 0.0000001);");
 		node_shader_write_frag(kong, "float out_a = str + sample_undo.a * (1.0 - t_blur);");
 		node_shader_write_frag(kong,
@@ -611,7 +614,7 @@ node_shader_context_t *make_paint_run_context(material_t *data, char *context_id
 		node_shader_write_frag(kong, string_tmp("output[0] = float4(%s, %s);",
 		                                        make_material_blend_mode(kong, g_context->brush_blending, "sample_undo.rgb", "basecol", "str"), "mat_opacity"));
 	}
-	else if (g_context->brush_blending == BLEND_TYPE_MIX && !is_mask) {
+	else if (g_context->brush_blending == BLEND_TYPE_MIX && !mask_value) {
 		node_shader_write_frag(kong, "float out_a = str + sample_undo.a * (1.0 - str);");
 		node_shader_write_frag(kong, "output[0] = float4((basecol * str + sample_undo.rgb * sample_undo.a * (1.0 - str)) / max(out_a, 0.0000001), out_a);");
 	}
@@ -650,7 +653,7 @@ node_shader_context_t *make_paint_run_context(material_t *data, char *context_id
 		con_paint->data->color_writes_alpha->buffer[2] = false;
 	}
 
-	if (is_mask) {
+	if (mask_value) {
 		// Base color only
 		con_paint->data->color_writes_green->buffer[0] = false;
 		con_paint->data->color_writes_blue->buffer[0]  = false;
@@ -663,6 +666,18 @@ node_shader_context_t *make_paint_run_context(material_t *data, char *context_id
 		con_paint->data->color_writes_green->buffer[2] = false;
 		con_paint->data->color_writes_blue->buffer[2]  = false;
 		con_paint->data->color_writes_alpha->buffer[2] = false;
+	}
+	if (mask_strokes) {
+		// Value and coverage, red and alpha follow the channels of the material. The normal and pack targets are the ones
+		// of the parent layer and keep their content.
+		con_paint->data->color_writes_green->buffer[0] = false;
+		con_paint->data->color_writes_blue->buffer[0]  = false;
+		for (i32 i = 1; i < 3; ++i) {
+			con_paint->data->color_writes_red->buffer[i]   = false;
+			con_paint->data->color_writes_green->buffer[i] = false;
+			con_paint->data->color_writes_blue->buffer[i]  = false;
+			con_paint->data->color_writes_alpha->buffer[i] = false;
+		}
 	}
 
 	if (g_context->tool == TOOL_TYPE_BAKE) {

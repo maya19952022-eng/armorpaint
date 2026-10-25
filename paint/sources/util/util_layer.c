@@ -350,8 +350,16 @@ static void layers_refill(bool (*selected)(slot_layer_t *l, void *data), void *d
 	slot_layer_t    *_layer    = g_context->layer;
 	slot_material_t *_material = g_context->material;
 	bool             any       = false;
+	bool             any_fill  = false; // Changed the current layer and material
 	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
 		slot_layer_t *l = g_project->_->layers->buffer[i];
+		if (slot_layer_is_paint_effect(l)) { // No material, its result is rebuilt from its input and its strokes
+			if (selected(l, data)) {
+				layers_update_paint_effect(l);
+				any = true;
+			}
+			continue;
+		}
 		if (l->fill_material == NULL || l->texpaint_sculpt != NULL || slot_layer_is_group(l) || !selected(l, data)) {
 			continue;
 		}
@@ -369,15 +377,18 @@ static void layers_refill(bool (*selected)(slot_layer_t *l, void *data), void *d
 		g_context->material = l->fill_material;
 		layers_set_object_mask();
 		layers_update_fill_layer(true);
-		any = true;
+		any      = true;
+		any_fill = true;
 	}
 	if (!any) {
 		return;
 	}
-	g_context->layer    = _layer;
-	g_context->material = _material;
-	layers_set_object_mask();
-	make_material_parse_paint_material(false);
+	if (any_fill) {
+		g_context->layer    = _layer;
+		g_context->material = _material;
+		layers_set_object_mask();
+		make_material_parse_paint_material(false);
+	}
 	g_context->rtdirty              = 1;
 	g_context->ddirty               = 2;
 	g_context->layers_preview_dirty = true;
@@ -469,14 +480,92 @@ void layers_update_effects() {
 	layers_refill(&layers_refill_effect, NULL);
 }
 
+// Effects of the stacks of the layer of l and fills reading other layers, after a change only they show
+void layers_update_effects_of(slot_layer_t *l) {
+	layers_refill(&layers_refill_after_paint, layers_owner(l));
+}
+
 bool layers_has_effects() {
 	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
 		slot_layer_t *e = g_project->_->layers->buffer[i];
-		if (slot_layer_is_effect(e) && e->fill_material != NULL) {
+		if (slot_layer_is_effect(e) && (e->fill_material != NULL || e->effect_paint)) {
 			return true;
 		}
 	}
 	return false;
+}
+
+// Paint effect: the element below it in its stack with the strokes merged over it like a layer merged down, each channel
+// with the blending and opacity of the effect. A mask paint effect blends the value of its strokes by their coverage.
+void layers_update_paint_effect(slot_layer_t *e) {
+	slot_layer_t *base = slot_layer_effect_base(e);
+	if (base == NULL || array_index_of(g_project->_->layers, base) < 0 || e->texpaint_result == NULL) {
+		return; // Lost its layer or mask, keeps its last result
+	}
+	slot_layer_t  *in      = slot_layer_effect_input(e);
+	gpu_texture_t *current = _draw_current;
+	bool           in_use  = gpu_in_use;
+	if (in_use) {
+		draw_end();
+	}
+
+	bool            mask = slot_layer_is_mask(e);
+	gpu_pipeline_t *pipe = mask || base_bits == TEXTURE_BITS_BITS8 ? pipes_copy : base_bits == TEXTURE_BITS_BITS16 ? pipes_copy64 : pipes_copy128;
+	gpu_texture_t  *to[] = {e->texpaint_result, e->texpaint_result_nor, e->texpaint_result_pack};
+	for (i32 i = 0; i < 3 && to[i] != NULL; ++i) {
+		draw_begin(to[i], false, 0);
+		draw_set_pipeline(pipe);
+		draw_image(slot_layer_result(in, i), 0, 0); // The input can be a lower paint effect
+		draw_set_pipeline(NULL);
+		draw_end();
+	}
+
+	slot_layer_t s = *e; // The strokes, merged like a layer of their own
+	s.parent       = NULL;
+	s.effect       = false;
+	s.effect_paint = false;
+	s.visible      = true;
+	s.mask_opacity = 1.0;
+	s.paint_base   = true;
+	s.paint_nor    = !mask;
+	s.paint_occ    = !mask;
+	s.paint_rough  = !mask;
+	s.paint_met    = !mask;
+	s.paint_height = !mask;
+	if (mask) {
+		s.texpaint_nor = e->texpaint; // Not read, merges the strokes like a layer: the value by its coverage in alpha
+	}
+	slot_layer_t d = {.texpaint = e->texpaint_result, .texpaint_nor = e->texpaint_result_nor, .texpaint_pack = e->texpaint_result_pack};
+	layers_merge_layer(&d, &s, false);
+
+	if (in_use) {
+		draw_begin(current, false, 0);
+	}
+}
+
+// Every paint effect, from the bottom of the stack up, after a project is opened
+void layers_update_paint_effects() {
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		slot_layer_t *l = g_project->_->layers->buffer[i];
+		if (slot_layer_is_paint_effect(l)) {
+			layers_update_paint_effect(l);
+		}
+	}
+}
+
+// A paint effect becomes a plain layer or mask holding its result, used before destructive merges
+void layers_bake_paint_effect(slot_layer_t *e) {
+	gpu_texture_t *from[] = {e->texpaint_result, e->texpaint_result_nor, e->texpaint_result_pack};
+	gpu_texture_t *to[]   = {e->texpaint, e->texpaint_nor, e->texpaint_pack};
+	for (i32 i = 0; i < 3 && from[i] != NULL && to[i] != NULL; ++i) {
+		draw_begin(to[i], false, 0);
+		draw_set_pipeline(pipes_copy);
+		draw_image(from[i], 0, 0);
+		draw_set_pipeline(NULL);
+		draw_end();
+	}
+	slot_layer_free_result(e);
+	e->effect_paint = false;
 }
 
 void layers_update_effects_on_next_frame(void *_) {
@@ -730,6 +819,7 @@ void layers_set_object_mask() {
 		}
 	}
 	util_uv_dilatemap_cached = false;
+	util_geometry_mask_invalidate();
 }
 
 void tab_layers_apply_filter(i32 filter) {
@@ -992,12 +1082,29 @@ char *layers_effect_name(effect_type_t type) {
 		return tr("Color Selection");
 	case EFFECT_TYPE_ANCHOR:
 		return tr("Anchor Point");
+	case EFFECT_TYPE_PAINT:
+		return tr("Paint");
+	case EFFECT_TYPE_GENERATOR:
+		return tr("Generator");
 	default:
 		return tr("Filter");
 	}
 }
 
-// Color effects are for layers, mask generators for masks
+char *layers_generator_name(generator_type_t g) {
+	switch (g) {
+	case GENERATOR_TYPE_GRADIENT:
+		return tr("3D Gradient");
+	case GENERATOR_TYPE_FACING_UP:
+		return tr("Facing Up");
+	case GENERATOR_TYPE_NOISE:
+		return tr("Noise");
+	default:
+		return tr("Edges");
+	}
+}
+
+// Color effects are for layers, mask generators for masks. Paint and Generator fit both.
 bool layers_effect_allowed(effect_type_t type, bool mask) {
 	if (type < 0 || type >= EFFECT_TYPE_COUNT) {
 		return false;
@@ -1019,8 +1126,44 @@ static ui_node_t *layers_effect_add_node(slot_material_t *m, char *type, f32 x, 
 	return n;
 }
 
-// Effect Input (the layer or mask below) -> effect node -> Material Output, the other channels of a layer pass through
-static slot_material_t *layers_new_effect_material(char *name, bool mask, effect_type_t type) {
+// Node chain of a generator preset ending in a clamped Map Range at x, y, returns the Map Range
+static ui_node_t *layers_effect_add_generator(slot_material_t *m, generator_type_t g, f32 x, f32 y) {
+	ui_node_canvas_t *canvas                            = m->canvas;
+	ui_node_t        *range                             = layers_effect_add_node(m, "MAPRANGE", x, y);
+	ui_node_t        *src                               = NULL;
+	i32               socket                            = 0;
+	f32               from_min                          = 0.0;
+	f32               from_max                          = 1.0;
+	range->buttons->buffer[0]->default_value->buffer[0] = 1.0; // Clamp
+	if (g == GENERATOR_TYPE_GRADIENT || g == GENERATOR_TYPE_FACING_UP) {
+		// Z of the world position or of the world normal, z is up
+		ui_node_t *geometry = layers_effect_add_node(m, "NEW_GEOMETRY", x - 500, y);
+		src                 = layers_effect_add_node(m, "SEPXYZ", x - 250, y);
+		any_array_push(canvas->links, project_create_node_link(canvas->links, geometry->id, g == GENERATOR_TYPE_GRADIENT ? 0 : 1, src->id, 0));
+		socket   = 2;
+		from_min = g == GENERATOR_TYPE_GRADIENT ? -1.0 : 0.5;
+	}
+	else if (g == GENERATOR_TYPE_NOISE) {
+		src                                              = layers_effect_add_node(m, "TEX_NOISE", x - 250, y);
+		src->inputs->buffer[1]->default_value->buffer[0] = 8.0; // Scale
+		src->inputs->buffer[2]->default_value->buffer[0] = 4.0; // Detail
+		from_min                                         = 0.4;
+		from_max                                         = 0.6;
+	}
+	else { // Edges: curvature baked in uv space, Strength 1, Radius 1 and Offset 0
+		src      = layers_effect_add_node(m, "BAKE_CURVATURE", x - 250, y);
+		from_min = 0.2;
+		from_max = 0.5;
+	}
+	range->inputs->buffer[1]->default_value->buffer[0] = from_min;
+	range->inputs->buffer[2]->default_value->buffer[0] = from_max;
+	any_array_push(canvas->links, project_create_node_link(canvas->links, src->id, socket, range->id, 0));
+	return range;
+}
+
+// Effect Input (the layer or mask below) -> effect node -> Material Output, the other channels of a layer pass through.
+// A generator is a fill whose factor is the node chain of the preset gen.
+static slot_material_t *layers_new_effect_material(char *name, bool mask, effect_type_t type, generator_type_t gen) {
 	slot_material_t  *m      = slot_material_create(g_project->_->materials->buffer[0]->data, NULL);
 	ui_node_canvas_t *canvas = m->canvas;
 	canvas->name             = string_copy(slot_material_unique_name(canvas, name));
@@ -1039,7 +1182,8 @@ static slot_material_t *layers_new_effect_material(char *name, bool mask, effect
 	ui_node_t *input = layers_effect_add_node(m, mask ? "LAYER_MASK" : "LAYER", output->x - 500, output->y);
 	input->name      = "Effect Input";
 
-	char *node_type = type == EFFECT_TYPE_FILL              ? "MIX_RGB"
+	bool  fill      = type == EFFECT_TYPE_FILL || type == EFFECT_TYPE_GENERATOR;
+	char *node_type = fill                                  ? "MIX_RGB"
 	                  : type == EFFECT_TYPE_LEVELS          ? "LEVELS"
 	                  : type == EFFECT_TYPE_HSV             ? "HUE_SAT"
 	                  : type == EFFECT_TYPE_COLOR_BALANCE   ? "COLOR_BALANCE"
@@ -1051,13 +1195,17 @@ static slot_material_t *layers_new_effect_material(char *name, bool mask, effect
 	i32   from_id   = input->id;
 	if (node_type != NULL) {
 		ui_node_t *e      = layers_effect_add_node(m, node_type, output->x - 250, output->y);
-		i32        socket = type == EFFECT_TYPE_FILL ? 1 : type == EFFECT_TYPE_HSV ? 4 : 0; // Color 1 of Mix, Color of HSV
-		if (type == EFFECT_TYPE_FILL) {
+		i32        socket = fill ? 1 : type == EFFECT_TYPE_HSV ? 4 : 0; // Color 1 of Mix, Color of HSV
+		if (fill) {
 			e->inputs->buffer[0]->default_value->buffer[0] = 1.0; // Factor
 			f32_array_t *color                             = e->inputs->buffer[2]->default_value;
 			color->buffer[0]                               = 1.0; // White, a fill starts fully visible in a mask
 			color->buffer[1]                               = 1.0;
 			color->buffer[2]                               = 1.0;
+		}
+		if (type == EFFECT_TYPE_GENERATOR) { // The generator drives the factor
+			ui_node_t *g = layers_effect_add_generator(m, gen, e->x - 250, e->y + 200);
+			any_array_push(canvas->links, project_create_node_link(canvas->links, g->id, 0, e->id, 0));
 		}
 		if (type == EFFECT_TYPE_COMPARE_MASK) {
 			e->inputs->buffer[1]->default_value->buffer[0] = 0.5; // B
@@ -1083,25 +1231,47 @@ static slot_material_t *layers_new_effect_material(char *name, bool mask, effect
 
 static slot_layer_t *layers_add_effect_slot(slot_layer_t *target, slot_material_t *m, char *name);
 
-// New effect on top of the effect chain of a layer or mask, each effect has its own material
-slot_layer_t *layers_add_effect(slot_layer_t *target, effect_type_t type) {
-	if (target == NULL || slot_layer_is_group(target) || target->texpaint_sculpt != NULL) {
+// The layer or mask whose effect stack takes a new effect, the base of an effect, NULL when it takes none
+static slot_layer_t *layers_effect_target(slot_layer_t *target) {
+	if (target == NULL || slot_layer_is_group(target) || target->texpaint_sculpt != NULL || g_project->_->layers->length > layers_max_layers) {
 		return NULL;
 	}
-	bool mask = slot_layer_is_mask(target);
 	if (slot_layer_is_effect(target) && slot_layer_effect_base(target) != NULL) {
-		target = slot_layer_effect_base(target);
+		return slot_layer_effect_base(target);
 	}
-	if (!layers_effect_allowed(type, mask) || g_project->_->layers->length > layers_max_layers) {
+	return target;
+}
+
+// New effect on top of the effect chain of a layer or mask, each effect has its own material but the Paint effect
+slot_layer_t *layers_add_effect(slot_layer_t *target, effect_type_t type) {
+	target = layers_effect_target(target);
+	if (target == NULL || !layers_effect_allowed(type, slot_layer_is_mask(target))) {
 		return NULL;
+	}
+	if (type == EFFECT_TYPE_PAINT) {
+		return layers_add_paint_effect(target, NULL);
+	}
+	if (type == EFFECT_TYPE_GENERATOR) {
+		return layers_add_generator(target, GENERATOR_TYPE_EDGES);
 	}
 	char            *name = layers_effect_name(type);
-	slot_material_t *m    = layers_new_effect_material(string_tmp("%s %s", target->name, name), mask, type);
+	slot_material_t *m    = layers_new_effect_material(string_tmp("%s %s", target->name, name), slot_layer_is_mask(target), type, GENERATOR_TYPE_EDGES);
 	return layers_add_effect_slot(target, m, name);
 }
 
-// The layer or mask of an effect with the material m on top of the effect stack of target
-static slot_layer_t *layers_add_effect_slot(slot_layer_t *target, slot_material_t *m, char *name) {
+// New Generator effect with the preset g, its parameters are edited in the node editor
+slot_layer_t *layers_add_generator(slot_layer_t *target, generator_type_t g) {
+	target = layers_effect_target(target);
+	if (target == NULL || g < 0 || g >= GENERATOR_TYPE_COUNT) {
+		return NULL;
+	}
+	char            *name = layers_generator_name(g);
+	slot_material_t *m    = layers_new_effect_material(string_tmp("%s %s", target->name, name), slot_layer_is_mask(target), EFFECT_TYPE_GENERATOR, g);
+	return layers_add_effect_slot(target, m, name);
+}
+
+// Empty layer or mask on top of the effect stack of target, named name, the current layer
+static slot_layer_t *layers_new_effect_slot(slot_layer_t *target, char *name) {
 	bool                  mask     = slot_layer_is_mask(target);
 	slot_layer_t_array_t *pointers = tab_layers_init_layer_map();
 	slot_layer_t         *e        = NULL;
@@ -1130,7 +1300,16 @@ static slot_layer_t *layers_add_effect_slot(slot_layer_t *target, slot_material_
 	char *old_name = e->name;
 	e->name        = string_copy(slot_layer_unique_name(e, name));
 	tab_stages_rename_layer(old_name, e->name); // The layers tab lists the names of the stage
-	if (mask) {
+	return e;
+}
+
+// The layer or mask of an effect with the material m on top of the effect stack of target
+static slot_layer_t *layers_add_effect_slot(slot_layer_t *target, slot_material_t *m, char *name) {
+	slot_layer_t *e = layers_new_effect_slot(target, name);
+	if (e == NULL) {
+		return NULL;
+	}
+	if (slot_layer_is_mask(e)) {
 		history_new_fill_mask();
 		history_keep_layer_props(e);
 	}
@@ -1142,6 +1321,49 @@ static slot_layer_t *layers_add_effect_slot(slot_layer_t *target, slot_material_
 	layers_set_effect_input(m, slot_layer_effect_input(e));
 	g_context->material = m;
 	slot_layer_to_fill_layer(e);
+	make_material_parse_mesh_material();
+	g_context->layers_preview_dirty = true;
+	return e;
+}
+
+// New Paint effect on top of the effect stack of target, strokes painted over what is below it in the stack. src is a
+// paint effect whose strokes, blending and opacity are copied, NULL for an empty one.
+slot_layer_t *layers_add_paint_effect(slot_layer_t *target, slot_layer_t *src) {
+	target = layers_effect_target(target);
+	if (target == NULL || (src != NULL && slot_layer_is_mask(src) != slot_layer_is_mask(target))) {
+		return NULL;
+	}
+	slot_layer_t *e = layers_new_effect_slot(target, src != NULL ? src->name : tr("Paint"));
+	if (e == NULL) {
+		return NULL;
+	}
+	e->effect_paint = true;
+	if (src != NULL) {
+		memcpy(e->blending, src->blending, sizeof(e->blending));
+		memcpy(e->opacity, src->opacity, sizeof(e->opacity));
+	}
+	slot_layer_alloc_result(e);
+	slot_layer_clear(e, 0x00000000, NULL, 1.0, layers_default_rough, 0.0); // No strokes
+	if (slot_layer_is_mask(e)) {
+		history_new_black_mask();
+	}
+	else {
+		history_new_layer();
+	}
+	history_keep_layer_props(e);
+	if (src != NULL) { // The strokes are a second step, like the pixels of Paste as Mask
+		history_paste_pixels(tr("Paste"));
+		gpu_texture_t *from[] = {src->texpaint, src->texpaint_nor, src->texpaint_pack};
+		gpu_texture_t *to[]   = {e->texpaint, e->texpaint_nor, e->texpaint_pack};
+		for (i32 i = 0; i < 3 && from[i] != NULL && to[i] != NULL; ++i) {
+			draw_begin(to[i], false, 0);
+			draw_set_pipeline(pipes_copy);
+			draw_image(from[i], 0, 0);
+			draw_set_pipeline(NULL);
+			draw_end();
+		}
+	}
+	layers_update_paint_effect(e);
 	make_material_parse_mesh_material();
 	g_context->layers_preview_dirty = true;
 	return e;
@@ -1245,6 +1467,9 @@ void layers_duplicate_layer(slot_layer_t *l) {
 			}
 		}
 		context_set_layer(new_layer);
+		if (slot_layer_is_effect(new_layer)) { // The copy of an effect goes above it and reads it
+			layers_update_effects_of(new_layer);
+		}
 	}
 	else {
 		slot_layer_t *new_group = layers_new_group();
@@ -1311,6 +1536,13 @@ static void layers_delete_covered_masks(slot_layer_t *l) {
 	for (i32 i = 0; i < drop->length; ++i) {
 		slot_layer_delete(drop->buffer[i]);
 	}
+	// A paint effect left on top of its mask stack becomes a mask holding its result
+	masks = slot_layer_get_masks(l, true);
+	for (i32 i = 0; masks != NULL && i < masks->length; ++i) {
+		if (slot_layer_is_paint_effect(masks->buffer[i])) {
+			layers_bake_paint_effect(masks->buffer[i]);
+		}
+	}
 }
 
 // The top visible filter of a layer replaces its content and the filters are removed, used before destructive merges
@@ -1318,6 +1550,11 @@ void layers_bake_filters(slot_layer_t *l) {
 	slot_layer_t_array_t *filters = slot_layer_get_filters(l, false);
 	if (filters == NULL) {
 		return;
+	}
+	for (i32 i = 0; i < filters->length; ++i) {
+		if (slot_layer_is_paint_effect(filters->buffer[i])) { // Its textures hold the strokes, the result goes in their place
+			layers_bake_paint_effect(filters->buffer[i]);
+		}
 	}
 	slot_layer_t *top = NULL;
 	for (i32 i = 0; i < filters->length; ++i) {
@@ -1647,9 +1884,11 @@ void layers_move_selected(i32 to) {
 	make_material_parse_mesh_material();
 }
 
-// The effect src goes on top of the effect stack of target with a copy of its material
+// The effect src goes on top of the effect stack of target with a copy of its material, a paint effect with a copy of
+// its strokes
 slot_layer_t *layers_paste_effect(slot_layer_t *src, slot_layer_t *target) {
-	if (src == NULL || target == NULL || !slot_layer_is_effect(src) || src->fill_material == NULL || array_index_of(g_project->_->layers, src) < 0) {
+	if (src == NULL || target == NULL || !slot_layer_is_effect(src) || (src->fill_material == NULL && !src->effect_paint) ||
+	    array_index_of(g_project->_->layers, src) < 0) {
 		return NULL;
 	}
 	if (slot_layer_is_effect(target) && slot_layer_effect_base(target) != NULL) {
@@ -1658,6 +1897,9 @@ slot_layer_t *layers_paste_effect(slot_layer_t *src, slot_layer_t *target) {
 	if (slot_layer_is_group(target) || slot_layer_is_mask(target) != slot_layer_is_mask(src) || target->texpaint_sculpt != NULL ||
 	    g_project->_->layers->length > layers_max_layers) {
 		return NULL;
+	}
+	if (src->effect_paint) {
+		return layers_add_paint_effect(target, src);
 	}
 	slot_material_t  *m      = slot_material_create(g_project->_->materials->buffer[0]->data, NULL);
 	ui_node_canvas_t *canvas = util_clone_canvas(src->fill_material->canvas);
@@ -1716,7 +1958,7 @@ slot_layer_t *layers_paste_mask(slot_layer_t *src, slot_layer_t *target) {
 	history_paste_mask();
 	draw_begin(m->texpaint, false, 0);
 	draw_set_pipeline(pipes_copy);
-	draw_scaled_image(src->texpaint, 0, 0, m->texpaint->width, m->texpaint->height);
+	draw_scaled_image(slot_layer_result(src, 0), 0, 0, m->texpaint->width, m->texpaint->height); // What the stack of a paint effect shows
 	draw_set_pipeline(NULL);
 	draw_end();
 	make_material_parse_mesh_material();
@@ -1747,6 +1989,8 @@ void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
 	    l0->bake_role != BAKE_ROLE_NONE) {
 		return;
 	}
+	slot_layer_t  v1;
+	slot_layer_t *t1 = slot_layer_result_view(l1, &v1); // Textures of what a paint effect shows, l1 for opacity and blending
 
 	layers_make_temp_img();
 
@@ -1767,7 +2011,7 @@ void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
 		layers_make_temp_mask_img();
 		_gpu_begin(pipes_temp_mask_image, NULL, NULL, GPU_CLEAR_NONE, 0, 0.0);
 		gpu_set_pipeline(pipes_merge_mask);
-		gpu_set_texture(pipes_tex0_merge_mask, l1masks->buffer[0]->texpaint);
+		gpu_set_texture(pipes_tex0_merge_mask, slot_layer_result(l1masks->buffer[0], 0));
 		gpu_set_texture(pipes_texa_merge_mask, empty);
 		gpu_set_float(pipes_opac_merge_mask, l1masks->buffer[0]->mask_opacity);
 		gpu_set_int(pipes_blending_merge_mask, BLEND_TYPE_MIX);
@@ -1781,7 +2025,7 @@ void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
 	if (slot_layer_is_mask(l1)) {
 		_gpu_begin(l0->texpaint, NULL, NULL, GPU_CLEAR_NONE, 0, 0.0);
 		gpu_set_pipeline(pipes_merge_mask);
-		gpu_set_texture(pipes_tex0_merge_mask, l1->texpaint);
+		gpu_set_texture(pipes_tex0_merge_mask, t1->texpaint);
 		gpu_set_texture(pipes_texa_merge_mask, layers_temp_image);
 		gpu_set_float(pipes_opac_merge_mask, slot_layer_get_opacity(l1));
 		gpu_set_int(pipes_blending_merge_mask, BLEND_TYPE_MIX);
@@ -1795,7 +2039,7 @@ void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
 		if (l1->paint_base) {
 			_gpu_begin(l0->texpaint, NULL, NULL, GPU_CLEAR_NONE, 0, 0.0);
 			gpu_set_pipeline(pipes_merge);
-			gpu_set_texture(pipes_tex0, l1->texpaint);
+			gpu_set_texture(pipes_tex0, t1->texpaint);
 			gpu_set_texture(pipes_tex1, empty);
 			gpu_set_texture(pipes_texmask, mask);
 			gpu_set_texture(pipes_texa, layers_temp_image);
@@ -1818,12 +2062,12 @@ void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
 			if (l1->paint_nor) {
 				_gpu_begin(l0->texpaint_nor, NULL, NULL, GPU_CLEAR_NONE, 0, 0.0);
 				gpu_set_pipeline(pipes_merge);
-				gpu_set_texture(pipes_tex0, l1->texpaint);
-				gpu_set_texture(pipes_tex1, l1->texpaint_nor);
+				gpu_set_texture(pipes_tex0, t1->texpaint);
+				gpu_set_texture(pipes_tex1, t1->texpaint_nor);
 				gpu_set_texture(pipes_texmask, mask);
 				gpu_set_texture(pipes_texa, layers_temp_image);
 				gpu_set_float(pipes_opac, slot_layer_get_channel_opacity(l1, LAYER_CH_NOR));
-				gpu_set_float(pipes_tex1w, l1->texpaint_nor->width);
+				gpu_set_float(pipes_tex1w, t1->texpaint_nor->width);
 				gpu_set_int(pipes_blending, layers_nor_merge_mode(l1));
 				gpu_set_vertex_buffer(const_data_screen_aligned_vb);
 				gpu_set_index_buffer(const_data_screen_aligned_ib);
@@ -1840,7 +2084,7 @@ void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
 			draw_end();
 
 			if (l1->paint_occ || l1->paint_rough || l1->paint_met || l1->paint_height) {
-				layers_commands_merge_pack(l0->texpaint_pack, l1, mask);
+				layers_commands_merge_pack(l0->texpaint_pack, t1, mask);
 			}
 		}
 	}
@@ -2007,6 +2251,8 @@ slot_layer_t *layers_flatten(bool height_to_normal, slot_layer_t_array_t *layers
 		}
 		mask = util_geometry_mask_apply(l1, mask);
 
+		slot_layer_t view;
+		l1 = slot_layer_result_view(l1, &view); // A paint effect on top of the stack shows its result
 		l1 = layers_move_preview(l1);
 
 		// Flattened layers are in shared atlas space
@@ -2124,6 +2370,9 @@ void layers_on_resized_on_next_frame(void *_) {
 			layers_set_object_mask();
 			layers_update_fill_layer(true);
 		}
+		else if (slot_layer_is_paint_effect(l)) { // Its scaled result is redone from the refilled input
+			layers_update_paint_effect(l);
+		}
 	}
 	g_context->layer    = _layer;
 	g_context->material = _material;
@@ -2139,6 +2388,7 @@ void layers_on_resized() {
 	util_uv_trianglemap_cached = false;
 	util_uv_dilatemap_cached   = false;
 	render_path_raytrace_ready = false;
+	util_geometry_mask_invalidate();
 }
 
 void tab_layers_remap_layer_pointers(ui_node_t_array_t *nodes, i32_imap_t *pointer_map) {

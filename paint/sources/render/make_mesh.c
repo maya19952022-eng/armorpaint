@@ -105,15 +105,17 @@ static char *make_mesh_blend_channel(slot_layer_t *l, layer_channel_t ch, char *
 	return blending == BLEND_TYPE_MIX ? res : string_tmp("clamp(%s, 0.0, 1.0)", res);
 }
 
-// Opens a test of the object uid for a layer with a geometry mask, false when it applies on every object
-static bool make_mesh_geometry_mask_begin(node_shader_t *kong, slot_layer_t *l) {
+// Opens a test of the object uid for a layer with a geometry mask, false when it applies on every object. The
+// uids of the objects it applies on in part are pushed to some, *in counts the objects it applies on.
+static bool make_mesh_geometry_mask_begin(node_shader_t *kong, slot_layer_t *l, i32_array_t *some, i32 *in) {
+	*in = 0;
 	if (!slot_layer_has_geometry_mask(l)) {
 		return false;
 	}
 	mesh_object_t_array_t *objects = g_project->_->paint_objects;
 	bool                   all     = true;
 	for (i32 i = 0; i < objects->length; ++i) {
-		if (!slot_layer_geometry_mask_object(l, objects->buffer[i])) {
+		if (slot_layer_geometry_mask_cover(l, objects->buffer[i]) != GEOMETRY_MASK_COVER_ALL) {
 			all = false;
 			break;
 		}
@@ -125,13 +127,18 @@ static bool make_mesh_geometry_mask_begin(node_shader_t *kong, slot_layer_t *l) 
 	node_shader_write_frag(kong, "if (");
 	bool first = true;
 	for (i32 i = 0; i < objects->length; ++i) {
-		if (!slot_layer_geometry_mask_object(l, objects->buffer[i])) {
+		geometry_mask_cover_t cover = slot_layer_geometry_mask_cover(l, objects->buffer[i]);
+		if (cover == GEOMETRY_MASK_COVER_NONE) {
 			continue;
+		}
+		if (cover == GEOMETRY_MASK_COVER_SOME) {
+			i32_array_push(some, objects->buffer[i]->base->uid);
 		}
 		if (!first) {
 			node_shader_write_frag(kong, " || ");
 		}
 		first = false;
+		*in += 1;
 		node_shader_write_frag(kong, string_tmp("%s == constants.uid", i32_to_string(objects->buffer[i]->base->uid)));
 	}
 	if (first) {
@@ -139,6 +146,31 @@ static bool make_mesh_geometry_mask_begin(node_shader_t *kong, slot_layer_t *l) 
 	}
 	node_shader_write_frag(kong, ") {");
 	return true;
+}
+
+// Objects the layer applies on in part sample its geometry mask texture, after the layer opacity is read
+static void make_mesh_geometry_mask_faces(node_shader_t *kong, slot_layer_t *l, i32_array_t *some, i32 in, char *tex_coord) {
+	if (some->length == 0) {
+		return;
+	}
+	slot_layer_t *owner = slot_layer_geometry_owner(l);
+	node_shader_add_texture(kong, string_tmp("texgeometry%d", l->id), string_tmp("_texgeometry_layer%d", owner->id));
+	bool test = some->length < in; // Others apply whole
+	if (test) {
+		node_shader_write_frag(kong, "if (");
+		for (i32 i = 0; i < some->length; ++i) {
+			if (i > 0) {
+				node_shader_write_frag(kong, " || ");
+			}
+			node_shader_write_frag(kong, string_tmp("%s == constants.uid", i32_to_string(some->buffer[i])));
+		}
+		node_shader_write_frag(kong, ") {");
+	}
+	node_shader_write_frag(kong, string_tmp("texpaint_opac *= sample_lod(texgeometry%d, sampler_linear, %s, 0.0).r;", l->id, tex_coord));
+	if (test) {
+		node_shader_write_frag(kong, "}");
+	}
+	util_geometry_mask_epoch++; // Built before the next frame by util_geometry_mask_prepare_viewport
 }
 
 node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
@@ -337,6 +369,9 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 			}
 
 			i32 count = 3;
+			if (util_geometry_mask_viewport_texture(l)) {
+				count += 1;
+			}
 
 			slot_layer_t_array_t *masks = slot_layer_get_composite_masks(l);
 			if (masks != NULL) {
@@ -377,12 +412,16 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 					node_shader_write_frag(kong, string_tmp("if (%s == constants.uid) {", i32_to_string(uid)));
 				}
 			}
-			bool geometry_mask = make_mesh_geometry_mask_begin(kong, l);
+			i32_array_t *geometry_some = i32_array_create(0);
+			i32          geometry_in   = 0;
+			bool         geometry_mask = make_mesh_geometry_mask_begin(kong, l, geometry_some, &geometry_in);
 
 			char *tex_coord = l->uv_map == 1 ? "tex_coord1" : util_mesh_udim_layer(l) ? "tex_coord_atlas" : "tex_coord";
 			node_shader_add_texture(kong, string_tmp("texpaint%s", i32_to_string(l->id)), NULL);
 			node_shader_write_frag(kong, string_tmp("texpaint_sample = sample_lod(texpaint%s, sampler_linear, %s, 0.0);", i32_to_string(l->id), tex_coord));
 			node_shader_write_frag(kong, "texpaint_opac = texpaint_sample.a;");
+			make_mesh_geometry_mask_faces(kong, l, geometry_some, geometry_in, tex_coord);
+			array_delete(geometry_some);
 
 			if (make_material_transluc_used && g_context->viewport_mode != VIEWPORT_MODE_PATH_TRACE) {
 				con_mesh->data->cull_mode = "none";

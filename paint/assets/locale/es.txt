@@ -1,4 +1,5 @@
 (comprimido)
+
 (empaquetado)
 -X
 -Y
@@ -7,6 +8,7 @@
 2D
 Vista 2D
 3D
+
 Vista 3D
 A
 Acerca de
@@ -135,6 +137,7 @@ Limitar resultado
 Arcilla
 Limpiar
 
+
 Limpiar capa
 
 Limpiar muestras
@@ -170,6 +173,7 @@ Combinar XYZ
 Gizmo orientación
 
 Confirmar
+
 Consola
 Modelo de consola
 Constante
@@ -259,6 +263,7 @@ Duplicar capa
 Duplicar material
 Duplicar muestra
 
+
 Editar
 Editar imagen
 Editar nodos
@@ -307,6 +312,9 @@ F1
 F2
 Fac
 Cara
+
+
+
 Factor
 Error al importar el material
 Error al leer el sonido:
@@ -354,6 +362,7 @@ V
 Textura Gabor
 Gama
 Generado
+
 Geometría
 
 Geometria al origen
@@ -379,6 +388,7 @@ Ayuda
 High Poly
 
 Historial
+
 Mantener {action_paint} para borrar\nMantener {brush_ruler} y presionar {action_paint} para borrar línea recta (modo regla)
 Mantener {action_paint} para pintar\nMantener {brush_ruler} y presionar {action_paint} para pintar línea recta (modo regla)
 Mantén {brush_opacity} y mueve el ratón a la izquierda para reducir la opacidad\nMantén {brush_opacity} y mueve el ratón a la derecha para aumentar la opacidad
@@ -550,6 +560,7 @@ Sin respuesta
 Nodo
 Vistas previas de nodos
 Nodos
+
 Grano de ruido
 Ruido
 Ninguno
@@ -638,6 +649,7 @@ Plugin importado:
 Complementos
 Punto
 Puntiagudez
+
 Posición
 Posprocesado
 Potencia
@@ -678,6 +690,7 @@ Reciente
 Rehacer {step}
 Reflejar
 Actualizar
+
 Reimportar
 Reimportar malla
 Reimportar texturas
@@ -740,6 +753,7 @@ Buscar nodos
 Segmentos
 Seleccionar
 Seleccionar todo
+
 Seleccionar ocultos
 Seleccionar material
 Seleccionar visibles
@@ -838,6 +852,7 @@ Textura...
 Texturas
 Texturas exportadas
 Texturas...
+
 
 Tema
 Tema importado:

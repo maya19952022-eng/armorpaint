@@ -1,4 +1,5 @@
 (tömörített)
+
 (csomagolva)
 -X
 -Y
@@ -7,6 +8,7 @@
 2D
 2D Nézet
 3D
+
 3D Nézet
 A
 Névjegy
@@ -135,6 +137,7 @@ Eredmény szorítása
 Agyag
 Törlés
 
+
 Réteg törlése
 
 Színminták törlése
@@ -170,6 +173,7 @@ XYZ egyesítése
 Iránytű
 
 Megerősítés
+
 Konzol
 Konzol modell
 Állandó
@@ -259,6 +263,7 @@ Réteg duplikálása
 Anyag duplikálása
 Színminta duplikálása
 
+
 Szerkesztés
 Kép szerkesztése
 Csomópontok szerkesztése
@@ -307,6 +312,9 @@ F1
 F2
 Fak
 Lap
+
+
+
 Faktor
 Az anyag importálása nem sikerült
 Nem sikerült beolvasni a hangot:
@@ -354,6 +362,7 @@ G
 Gabor textúra
 Gamma
 Generált
+
 Geometria
 
 Geometria az origóba
@@ -379,6 +388,7 @@ Súgó
 High Poly
 
 Előzmények
+
 Tartsa lenyomva a(z) {action_paint} gombot a törléshez\nTartsa lenyomva a(z) {brush_ruler} és {action_paint} gombokat egyenes vonal törléséhez (vonalzó mód)
 Tartsa lenyomva a(z) {action_paint} gombot a festéshez\nTartsa lenyomva a(z) {brush_ruler} és {action_paint} gombokat egyenes vonal festéséhez (vonalzó mód)
 Tartsa lenyomva a {brush_opacity} gombot és mozgassa az egeret balra az átlátszatlanság csökkentéséhez\nTartsa lenyomva a {brush_opacity} gombot és mozgassa az egeret jobbra az átlátszatlanság növeléséhez
@@ -550,6 +560,7 @@ Nincs válasz
 Csomópont
 Csomópont előnézetek
 Csomópontok
+
 Zaj szemcse
 Zaj textúra
 Nincs
@@ -638,6 +649,7 @@ Bővítmény importálva:
 Bővítmények
 Pont
 Hegyesség (Pointiness)
+
 Pozíció
 Utófeldolgozás
 Hatvány
@@ -678,6 +690,7 @@ Legutóbbi
 Mégsem von vissza: {step}
 Visszatükröződés
 Frissítés
+
 Újraimportálás
 Háló újraimportálása
 Textúrák újraimportálása
@@ -740,6 +753,7 @@ Csomópontok keresése
 Szegmensek
 Kijelölés
 Összes kijelölése
+
 Rejtettek kijelölése
 Anyag kiválasztása
 Láthatók kijelölése
@@ -838,6 +852,7 @@ Textúra...
 Textúrák
 Textúrák exportálva
 Textúrák...
+
 
 Téma
 Téma importálva:

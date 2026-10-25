@@ -593,6 +593,7 @@ void util_mesh_visibility_changed() {
 	util_uv_seammap_cached     = false;
 	util_uv_dilatemap_cached   = false;
 	g_context->ddirty          = 2;
+	util_geometry_mask_invalidate();
 }
 
 // Positions are transformed from their packed values
@@ -733,6 +734,7 @@ static void util_mesh_geometry_joined() {
 	util_uv_seammap_cached     = false;
 	util_uv_dilatemap_cached   = false;
 	g_context->ddirty          = 2;
+	util_geometry_mask_invalidate();
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 
@@ -2719,6 +2721,7 @@ static void _util_mesh_modifier_end(mesh_object_t_array_t *objects, bool unwrap)
 		util_uv_trianglemap_cached = false;
 		util_uv_seammap_cached     = false;
 		util_uv_dilatemap_cached   = false;
+		util_geometry_mask_invalidate();
 	}
 }
 
@@ -2879,30 +2882,196 @@ u32_array_t *util_mesh_connected_indices(mesh_data_t *g, i32 tri) {
 	return out;
 }
 
-// Triangle of o hit by the ray, closest to its origin, -1 on a miss
-i32 util_mesh_raycast_triangle(mesh_object_t *o, struct ray *ray) {
-	i16_array_t *va0     = o->data->vertex_arrays->buffer[0]->values;
-	u32_array_t *inda    = o->data->index_array;
-	mat4_t       m       = o->base->transform->world_unpack;
-	i32          closest = -1;
-	f32          min_d   = 0.0;
-	for (i32 i = 0; i + 2 < inda->length; i += 3) {
-		vec4_t p[3];
+// Bounds of the vertex positions of g in object space, min xyz then max xyz
+void util_mesh_local_bounds(mesh_data_t *g, f32 *aabb) {
+	i16_array_t *va0 = g->vertex_arrays->buffer[0]->values;
+	for (i32 k = 0; k < 3; ++k) {
+		aabb[k]     = 1.0;
+		aabb[k + 3] = -1.0;
+	}
+	for (i32 i = 0; i + 3 < va0->length; i += 4) {
 		for (i32 k = 0; k < 3; ++k) {
-			i32 v = inda->buffer[i + k] * 4;
-			p[k]  = vec4_apply_mat4((vec4_t){va0->buffer[v] / 32767.0, va0->buffer[v + 1] / 32767.0, va0->buffer[v + 2] / 32767.0, 1.0}, m);
-		}
-		vec4_t hit = ray_intersect_triangle(ray, p[0], p[1], p[2], false);
-		if (isnan(hit.x)) {
-			continue;
-		}
-		f32 d = vec4_dist(hit, ray->origin);
-		if (closest < 0 || d < min_d) {
-			closest = i / 3;
-			min_d   = d;
+			f32 v       = va0->buffer[i + k] / 32767.0;
+			aabb[k]     = math_min(aabb[k], v);
+			aabb[k + 3] = math_max(aabb[k + 3], v);
 		}
 	}
+}
+
+// Triangle of o hit by the ray from origin along dir (world space), closest to the origin, -1 on a miss. Both
+// sides of the triangles are hit. The ray moves to object space once, aabb (util_mesh_local_bounds, or NULL)
+// skips the triangles of an object it misses. t is set to the hit along dir, the same in world space.
+i32 util_mesh_raycast_triangle_t(mesh_object_t *o, vec4_t origin, vec4_t dir, f32 *aabb, f32 *t) {
+	mat4_t inv      = mat4_inv(o->base->transform->world_unpack);
+	vec4_t ro       = vec4_apply_mat4((vec4_t){origin.x, origin.y, origin.z, 1.0}, inv);
+	vec4_t rd       = vec4_apply_mat4((vec4_t){dir.x, dir.y, dir.z, 0.0}, inv);
+	f32    ray_o[3] = {ro.x, ro.y, ro.z};
+	f32    ray_d[3] = {rd.x, rd.y, rd.z};
+
+	if (aabb != NULL) {
+		// Slab test, the ray starts at the near plane and has no end
+		f32 t0 = 0.0;
+		f32 t1 = FLT_MAX;
+		for (i32 k = 0; k < 3; ++k) {
+			if (ray_d[k] == 0.0) {
+				if (ray_o[k] < aabb[k] || ray_o[k] > aabb[k + 3]) {
+					return -1;
+				}
+				continue;
+			}
+			f32 a = (aabb[k] - ray_o[k]) / ray_d[k];
+			f32 b = (aabb[k + 3] - ray_o[k]) / ray_d[k];
+			t0    = math_max(t0, math_min(a, b));
+			t1    = math_min(t1, math_max(a, b));
+		}
+		if (t0 > t1) {
+			return -1;
+		}
+	}
+
+	// Moller-Trumbore on the packed positions
+	i16_array_t *va0     = o->data->vertex_arrays->buffer[0]->values;
+	u32_array_t *inda    = o->data->index_array;
+	f32          s       = 1.0 / 32767.0;
+	i32          closest = -1;
+	f32          min_t   = 0.0;
+	for (i32 i = 0; i + 2 < inda->length; i += 3) {
+		i16 *a = &va0->buffer[inda->buffer[i] * 4];
+		i16 *b = &va0->buffer[inda->buffer[i + 1] * 4];
+		i16 *c = &va0->buffer[inda->buffer[i + 2] * 4];
+		f32  e1[3];
+		f32  e2[3];
+		f32  so[3];
+		for (i32 k = 0; k < 3; ++k) {
+			e1[k] = (b[k] - a[k]) * s;
+			e2[k] = (c[k] - a[k]) * s;
+			so[k] = ray_o[k] - a[k] * s;
+		}
+		f32 p[3] = {ray_d[1] * e2[2] - ray_d[2] * e2[1], ray_d[2] * e2[0] - ray_d[0] * e2[2], ray_d[0] * e2[1] - ray_d[1] * e2[0]};
+		f32 det  = e1[0] * p[0] + e1[1] * p[1] + e1[2] * p[2];
+		if (det == 0.0) {
+			continue;
+		}
+		f32 inv_det = 1.0 / det;
+		f32 u       = (so[0] * p[0] + so[1] * p[1] + so[2] * p[2]) * inv_det;
+		if (u < 0.0 || u > 1.0) {
+			continue;
+		}
+		f32 q[3] = {so[1] * e1[2] - so[2] * e1[1], so[2] * e1[0] - so[0] * e1[2], so[0] * e1[1] - so[1] * e1[0]};
+		f32 v    = (ray_d[0] * q[0] + ray_d[1] * q[1] + ray_d[2] * q[2]) * inv_det;
+		if (v < 0.0 || u + v > 1.0) {
+			continue;
+		}
+		f32 hit = (e2[0] * q[0] + e2[1] * q[1] + e2[2] * q[2]) * inv_det;
+		if (hit < 0.0) {
+			continue;
+		}
+		if (closest < 0 || hit < min_t) {
+			closest = i / 3;
+			min_t   = hit;
+		}
+	}
+	if (t != NULL) {
+		*t = min_t;
+	}
 	return closest;
+}
+
+// Triangle of o hit by the ray, closest to its origin, -1 on a miss
+i32 util_mesh_raycast_triangle(mesh_object_t *o, struct ray *ray) {
+	return util_mesh_raycast_triangle_t(o, ray->origin, ray->dir, NULL, NULL);
+}
+
+static i16_array_t *util_mesh_components_tex;
+
+// Vertices in position order, then in uv order
+static i32 util_mesh_components_sort(i32 *pa, i32 *pb) {
+	i32 diff = util_mesh_calc_normals_sort(pa, pb);
+	if (diff != 0) {
+		return diff;
+	}
+	diff = util_mesh_components_tex->buffer[*pa * 2] - util_mesh_components_tex->buffer[*pb * 2];
+	if (diff != 0) {
+		return diff;
+	}
+	return util_mesh_components_tex->buffer[*pa * 2 + 1] - util_mesh_components_tex->buffer[*pb * 2 + 1];
+}
+
+// Component of every triangle of g, as the smallest vertex index in it. Without uvs, triangles that share
+// vertices or positions are connected. With uvs, positions are joined only where the uvs match too: the uv
+// islands, which stay whole across vertices split by their normals.
+i32 *util_mesh_triangle_components(mesh_data_t *g, vertex_array_t *uvs) {
+	u32_array_t *inda     = g->index_array;
+	i32          num_tris = inda->length / 3;
+	i32         *uf       = NULL;
+	if (uvs == NULL) {
+		uf = _util_mesh_connected(g);
+	}
+	else {
+		i16_array_t *va0       = g->vertex_arrays->buffer[0]->values;
+		i32          num_verts = va0->length / 4;
+		i32_array_t *weld_sort = i32_array_create(num_verts);
+		uf                     = malloc((num_verts > 0 ? num_verts : 1) * sizeof(i32));
+		for (i32 i = 0; i < num_verts; ++i) {
+			weld_sort->buffer[i] = i;
+			uf[i]                = i;
+		}
+		util_mesh_va0            = va0;
+		util_mesh_components_tex = uvs->values;
+		i32_array_sort(weld_sort, &util_mesh_components_sort);
+		for (i32 i = 1; i < num_verts; ++i) {
+			i32 curr = weld_sort->buffer[i];
+			i32 prev = weld_sort->buffer[i - 1];
+			if (util_mesh_components_sort(&curr, &prev) == 0) {
+				_util_mesh_bevel_union(uf, curr, prev);
+			}
+		}
+		array_delete(weld_sort);
+		for (i32 i = 0; i < num_tris * 3; i += 3) {
+			_util_mesh_bevel_union(uf, inda->buffer[i], inda->buffer[i + 1]);
+			_util_mesh_bevel_union(uf, inda->buffer[i], inda->buffer[i + 2]);
+		}
+	}
+	i32 *components = malloc((num_tris > 0 ? num_tris : 1) * sizeof(i32));
+	for (i32 i = 0; i < num_tris; ++i) {
+		components[i] = _util_mesh_bevel_find(uf, inda->buffer[i * 3]);
+	}
+	free(uf);
+	return components;
+}
+
+static bool util_mesh_same_position(i16 *pos, u32 a, u32 b) {
+	return pos[a * 4] == pos[b * 4] && pos[a * 4 + 1] == pos[b * 4 + 1] && pos[a * 4 + 2] == pos[b * 4 + 2];
+}
+
+// Triangle t + 1 continues the fan of t. Positions are compared, corners of a polygon can be split by flat normals.
+static bool util_mesh_polygon_continues(i16 *pos, u32 *ind, i32 t) {
+	return util_mesh_same_position(pos, ind[(t + 1) * 3], ind[t * 3]) && util_mesh_same_position(pos, ind[(t + 1) * 3 + 1], ind[t * 3 + 2]);
+}
+
+// Triangles of the polygon tri was split from. Importers split polygons into fans (iron_obj.c), the next
+// triangle of a fan starts at the same corner and its second corner is the third one of the previous triangle.
+// Up to 64 triangles, a triangle outside of a fan is a polygon by itself.
+u32_array_t *util_mesh_polygon_triangles(mesh_data_t *g, i32 tri) {
+	u32_array_t *out      = u32_array_create(0);
+	i32          num_tris = g->index_array->length / 3;
+	if (tri < 0 || tri >= num_tris) {
+		return out;
+	}
+	i16 *pos   = g->vertex_arrays->buffer[0]->values->buffer;
+	u32 *ind   = g->index_array->buffer;
+	i32  first = tri;
+	i32  last  = tri;
+	while (first > 0 && last - first + 1 < 64 && util_mesh_polygon_continues(pos, ind, first - 1)) {
+		first--;
+	}
+	while (last + 1 < num_tris && last - first + 1 < 64 && util_mesh_polygon_continues(pos, ind, last)) {
+		last++;
+	}
+	for (i32 t = first; t <= last; ++t) {
+		u32_array_push(out, t);
+	}
+	return out;
 }
 
 void util_mesh_split(mesh_object_t *o) {
