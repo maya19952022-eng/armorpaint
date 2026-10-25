@@ -124,14 +124,23 @@ bool                   slot_layer_geometry_mask_triangle(slot_layer_t *raw, mesh
 void                   util_geometry_mask_invalidate();
 bool                   util_geometry_mask_viewport_texture(slot_layer_t *l);
 void                   util_geometry_mask_prepare_viewport();
+i32                    util_geometry_mask_pick(f32 x, f32 y, mesh_object_t **hit);
+u32_array_t           *util_geometry_mask_expand(mesh_object_t *o, i32 tri, geometry_select_mode_t mode, slot_layer_t *owner);
 i32                    util_geometry_mask_faces_apply(geometry_mask_t *g, mesh_object_t *o, u32_array_t *tris, bool selected);
 bool                   util_geometry_mask_equals(geometry_mask_t *a, geometry_mask_t *b);
+void                   util_geometry_mask_stroke_begin(slot_layer_t *owner, geometry_select_mode_t mode, bool selected);
+i32                    util_geometry_mask_stroke_at(f32 x, f32 y);
+i32                    util_geometry_mask_stroke_end();
+void                   util_geometry_mask_stroke_cancel();
+bool                   util_geometry_mask_select_update();
+geometry_mask_t       *util_geometry_mask_shown();
 void                   util_geometry_mask_set_faces(slot_layer_t *l, char *name, i32 first, i32 count, bool selected);
 void                   util_geometry_mask_clear_faces(slot_layer_t *l);
 i32                    util_geometry_mask_face_count(geometry_mask_t *g, mesh_object_t *o);
 i32                    util_geometry_mask_face_total(geometry_mask_t *g);
 bool                   util_geometry_mask_faces_stale(geometry_mask_t *g);
 void                   util_geometry_mask_check_faces();
+void                   render_geometry_select();
 
 bool layers_is_fill_material();
 void layers_update_fill_layers();
@@ -708,6 +717,9 @@ bool                   script_layer_get_geometry_face(slot_layer_t *l, object_t 
 bool                   script_layer_geometry_face_applies(slot_layer_t *l, object_t *object, i32 triangle);
 i32                    script_layer_get_geometry_face_count(slot_layer_t *l, object_t *object);
 void                   script_layer_clear_geometry_faces(slot_layer_t *l);
+i32                    script_layer_select_faces_world(slot_layer_t *l, f32 x, f32 y, f32 z, i32 mode, bool selected);
+i32                    script_layer_select_faces_drag_world(slot_layer_t *l, f32 x0, f32 y0, f32 z0, f32 x1, f32 y1, f32 z1, i32 mode, bool selected);
+i32                    script_pick_face_world(object_t *object, f32 x, f32 y, f32 z);
 i32                    script_object_triangle_count(object_t *object);
 void                   script_layer_select(slot_layer_t *l, bool toggle, bool range);
 i32                    script_layer_selected_count(void);
@@ -980,6 +992,10 @@ void                      util_mesh_merge_geometry_objects(mesh_object_t_array_t
 void                      util_mesh_split(mesh_object_t *o);
 u32_array_t              *util_mesh_connected_indices(mesh_data_t *g, i32 tri);
 i32                       util_mesh_raycast_triangle(mesh_object_t *o, struct ray *ray);
+void                      util_mesh_local_bounds(mesh_data_t *g, f32 *aabb);
+i32                       util_mesh_raycast_triangle_t(mesh_object_t *o, vec4_t origin, vec4_t dir, f32 *aabb, f32 *t);
+i32                      *util_mesh_triangle_components(mesh_data_t *g, vertex_array_t *uvs);
+u32_array_t              *util_mesh_polygon_triangles(mesh_data_t *g, i32 tri);
 void                      util_mesh_swap_axis(mesh_object_t_array_t *objects, i32 a, i32 b);
 void                      util_mesh_flip_normals(mesh_object_t_array_t *objects);
 void                      util_mesh_calc_normals(mesh_object_t_array_t *objects, bool smooth);

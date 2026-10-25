@@ -384,7 +384,10 @@ typedef struct context {
 	f32                         decal_x;
 	f32                         decal_y;
 	bool                        brush_camera_align;
-	bool                        select_active; // Select tool
+	bool                        select_active;       // Select tool
+	bool                        select_faces;        // Select tool picks faces of the geometry mask instead of a region
+	i32                         select_faces_mode;   // geometry_select_mode_t
+	bool                        select_faces_remove; // Clicks remove faces, ctrl inverts it
 	bool                        select_dragging;
 	bool                        select_2d;
 	f32                         select_start_x;

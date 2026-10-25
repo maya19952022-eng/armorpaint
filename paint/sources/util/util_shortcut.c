@@ -5,6 +5,9 @@ static f64 util_shortcut_undo_tap_time = 0.0;
 static f64 util_shortcut_redo_tap_time = 0.0;
 
 void util_shortcut_undo_redo() {
+	if (util_geometry_mask_dragging) {
+		return; // The face selection stroke becomes one step when it ends
+	}
 	bool undo_pressed = keymap_shortcut(any_map_get(g_keymap, "edit_undo"), SHORTCUT_TYPE_STARTED);
 	bool redo_pressed = keymap_shortcut(any_map_get(g_keymap, "edit_redo"), SHORTCUT_TYPE_STARTED) || (keyboard_down("control") && keyboard_started("y"));
 

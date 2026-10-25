@@ -959,6 +959,24 @@ static void tab_layers_draw_geometry_mask(slot_layer_t *l) {
 	}
 	array_delete(tiles);
 
+	// Faces picked in the 3D view with the select tool, a mesh with a different triangulation leaves them out
+	char *faces = string_tmp("%s: %d", tr("Faces"), util_geometry_mask_face_total(g));
+	if (util_geometry_mask_faces_stale(g)) {
+		faces = string_tmp("%s %s", faces, tr("(mesh changed)"));
+	}
+	ui_menu_align();
+	ui_menu_label(faces, NULL);
+	if (ui_menu_button(tr("Select Faces"), "", ICON_SELECT)) {
+		context_set_layer(l);
+		context_select_tool(TOOL_TYPE_SELECT);
+		g_context->select_faces   = true;
+		ui_header_handle->redraws = 2;
+	}
+	g_ui->enabled = g->faces != NULL;
+	if (ui_menu_button(tr("Clear Faces"), "", ICON_ERASE)) {
+		util_geometry_mask_clear_faces(l);
+	}
+
 	g_ui->enabled = !slot_layer_geometry_mask_is_empty(g) || g->mode != GEOMETRY_MASK_INCLUDE;
 	if (ui_menu_button(tr("Clear Geometry Mask"), "", ICON_ERASE)) {
 		util_geometry_mask_clear(l);
