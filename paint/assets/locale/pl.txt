@@ -25,12 +25,14 @@ Wszystkie przetwarzanie odbywa się lokalnie na urządzeniu
 Zezwól na odwróconą kamerę
 Alfa
 Odrzucenie alfy
+
 Ilość
 
 Kąt
 Odrzucenie kątu
 Animacja
 Anizotropia
+
 Dołącz
 Zatwierdź
 Zatwierdź Przemieszczenie
@@ -52,17 +54,30 @@ Atlasy
 Atrybut
 Automatyczny
 
+
+
+
 Średnia
+
 Oś
 B
 Tył
 Wypalanie
+
 Wypalanie materiału...
+
+
+
 Wypalanie tekstury
+
 Wypal do tekstur
+
+
 Pasma
 Kolor bazowy
+
 Wygięta normalna
+
 Ścięcie
 Odchylenie
 Bity
@@ -95,6 +110,8 @@ Pędzel...
 Pędzle
 Bump
 Wypalenie
+
+
 Przelicz normalne
 Kamera
 Prędkość panoramowania kamery
@@ -122,7 +139,9 @@ Wyczyść
 
 
 Wyczyść warstwę
+
 Wyczyść próbki kolorów
+
 Koniec clipu
 Początek clipu
 Klonowanie
@@ -143,11 +162,13 @@ Mapa ID koloru
 Maska koloru
 Rampa koloru
 
+
 Przestrzeń kolorów
 IDKoloru
 Łączenie
 Połącz kolor
 Połącz XYZ
+
 
 Kompas
 
@@ -212,6 +233,7 @@ Ukośny
 Różnica
 Promień rozszerzenia
 Rozszerz malowane tekstury, aby zapobiec szwom
+
 Wymiary
 Mapa normalnych DirectX
 Kierunek
@@ -240,6 +262,7 @@ Duplikuj pędzel
 Duplikuj warstwę
 Duplikuj materiał
 Duplikuj próbkę koloru
+
 
 Edytuj
 Edytuj obraz
@@ -304,6 +327,7 @@ Maska wypełnienia
 Tryb wypełniania
 Filtr
 Filtruj tekstury
+
 Płaski
 Spłaszcz
 
@@ -349,6 +373,7 @@ Grawitacja X
 Grawitacja Y
 Grawitacja Z
 
+
 Więcej niż
 
 Komórka siatki
@@ -379,6 +404,8 @@ Odcień/Nasycenie/Wartość
 Cosinus hiperboliczny
 Sinus hiperboliczny
 Tangens hiperboliczny
+
+
 Tekstura obrazu
 Obraz do PBR
 Importuj
@@ -452,11 +479,13 @@ Logarytm
 Tekstura magiczna
 Uczyń unikalnym
 Instrukcja
+
 Mapa zakresu
 Mapowanie
 Maska
 Kolor maski
 Masa
+
 Materiał
 ID materiału
 Indeks materiału
@@ -465,6 +494,9 @@ Materiał...
 Materiały
 Matematyka
 Maks
+
+
+
 Maksimum
 Połącz w dół
 Scal geometrię
@@ -472,7 +504,11 @@ Połącz grupy
 Połącz warstwy
 Model
 Wejście modelu
+
+
 Wyjście modelu
+
+
 Model...
 Modele
 Metaliczność
@@ -500,6 +536,7 @@ Wygładzenie zaprawy
 
 Mnożenie
 Nazwa
+
 Neuronowy
 Nowy
 Nowa czarna maska
@@ -533,7 +570,9 @@ Mapa normalnych 1
 Mapa normalnych 2
 Normalizuj
 
+
 Niedostępne w kompilacji debugowania
+
 Nie zaimplementowano
 OK
 Obiekt
@@ -544,6 +583,7 @@ Normalna obiektu
 
 Okluzja
 Przesunięcie
+
 Stary kolor
 Krycie
 Tryb krycia
@@ -587,6 +627,7 @@ Pauza
 Pióro
 Ołówek
 Na obiekt
+
 Na kafel UDIM
 Perspektywiczny
 Faza
@@ -629,6 +670,8 @@ Projekty
 Prompt
 Jakość
 Kwantyzuj
+
+
 R
 
 Krzywe RGB
@@ -640,6 +683,9 @@ Losowy
 Losowość
 Zakres
 Współczynnik
+
+
+
 Ostatnie
 Powtórz {step}
 Odbij
@@ -721,12 +767,14 @@ Ustaw jako mapę ID koloru
 Ustaw jako Envmapę
 Ustaw jako maskę
 Ustawianie źródła
+
 Ustawienia
 Shader
 
 Kształt
 Udostępnij link do odtwarzacza
 Współdzielone
+
 
 Pokaż podgląd 2D
 Pokaż nazwy zasobów
@@ -744,6 +792,7 @@ Zalogowano jako
 Logowanie...
 Sinus
 Rozmiar
+
 Slot
 
 Wygładzanie
@@ -757,6 +806,7 @@ Sortuj
 Dźwięk
 Dźwięk zaimportowany:
 Dźwięki
+
 Sfera
 Sferyczny
 Ekran powitalny
@@ -802,6 +852,7 @@ Tekstura...
 Tekstury
 Tekstury wyeksportowane
 Tekstury...
+
 
 Motyw
 Motyw zaimportowany:
@@ -893,6 +944,7 @@ Profil fali
 Tekstura fali
 Typ fali
 Co nowego
+
 Biała maska
 Bielenie
 Szerokość
@@ -900,6 +952,7 @@ Okno
 Siatka
 Przestrzeń robocza
 Świat
+
 Zawijaj mysz
 Zawijaj mysz wokół granic widoku podczas sterowania kamerą
 X
@@ -913,6 +966,7 @@ Przybliż
 Oddal
 Dopasuj powiększenie
 Typ mieszania
+
 Przestrzeń kolorów
 ctrl+f aby szukać
 esc aby anulować
@@ -920,8 +974,10 @@ fBM
 plik
 pamięć GPU
 Typ gradientu
+
 węzły
 Operacja
+
 spakowane
 player
 Plugin włączony

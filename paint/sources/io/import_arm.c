@@ -729,6 +729,7 @@ static void import_arm_layer_channels(slot_layer_t *l, layer_data_t *ld) {
 #define IMPORT_ARM_LAYER_KEYS_GEOMETRY_MASK  44 // Keys up to geometry_mask_objects
 #define IMPORT_ARM_LAYER_KEYS_EFFECT_PAINT   45 // Keys up to effect_paint
 #define IMPORT_ARM_LAYER_KEYS_GEOMETRY_FACES 48 // Keys up to geometry_mask_faces
+#define IMPORT_ARM_LAYER_KEYS_BAKE_ROLE      49 // Keys up to bake_role
 static i32 import_arm_layer_keys = -1;          // Keys of each layer map, -1 when every field was filled in
 
 // Face entries of the geometry mask of a layer, in arrays of their own. NULL without faces, or when the
@@ -1076,12 +1077,19 @@ void import_arm_run_project(char *path) {
 		if (ld->name != NULL) {
 			l->name = string_copy(ld->name);
 		}
-		l->visible      = ld->visible;
-		l->locked       = ld->locked;
-		l->effect       = (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_EFFECT) && ld->effect; // Saved after effects
-		l->effect_paint = (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_EFFECT_PAINT) && ld->effect_paint;
+		l->visible = ld->visible;
+		l->locked  = ld->locked;
+		l->effect  = (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_EFFECT) && ld->effect; // Saved after effects
+		// Version 23 files of the P2 builds before the fields of the P1 have bake_role at key 45, where effect_paint is now:
+		// the decoder stored the i32 there, a role fits in its first byte
+		bool role_at_45 = import_arm_layer_keys == IMPORT_ARM_LAYER_KEYS_EFFECT_PAINT && string_equals(project->version, "23");
+		l->effect_paint = !role_at_45 && (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_EFFECT_PAINT) && ld->effect_paint;
 		if (l->effect_paint) {
 			slot_layer_alloc_result(l); // Filled once the stack is loaded, results are not saved
+		}
+		l->bake_role = (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_BAKE_ROLE) ? ld->bake_role : BAKE_ROLE_NONE;
+		if (role_at_45) {
+			l->bake_role = *(u8 *)&ld->effect_paint;
 		}
 		l->mask_opacity = ld->opacity_mask; // Groups have an opacity too
 		import_arm_layer_geometry_mask(l, ld);
@@ -1192,6 +1200,7 @@ void import_arm_run_project(char *path) {
 	// Layer
 	g_context->layer        = g_project->_->layers->buffer[0];
 	ui_view2d_hwnd->redraws = 2;
+	context_update_role_view(); // Leaves the mask view a skew map of the previous project was shown in
 	if (slot_layer_get_object_mask(g_context->layer) > 0 || g_context->layer_filter > 0) {
 		layers_set_object_mask();
 	}
@@ -1317,6 +1326,7 @@ void import_arm_run_project(char *path) {
 
 	nodes_mesh_import();
 	util_path_tool_import();
+	util_bake_import(g_project);
 
 	import_arm_progress(0.95);
 	tab_meshes_sort_hierarchy();

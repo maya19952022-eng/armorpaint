@@ -316,6 +316,12 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 			node_shader_add_texture(kong, "texuvmap", "_texuvmap");
 		}
 
+		if (g_context->viewport_mode == VIEWPORT_MODE_MASK && g_context->layer->bake_role != BAKE_ROLE_NONE) {
+			texture_count++;
+			i32 index = array_index_of(g_project->_->layers, g_context->layer);
+			node_shader_add_texture(kong, "texpaint_view_role", string_tmp("_texpaint%s", i32_to_string(index)));
+		}
+
 		if (g_context->viewport_mode == VIEWPORT_MODE_MASK && slot_layer_get_composite_masks(g_context->layer) != NULL) {
 			slot_layer_t_array_t *view_masks = slot_layer_get_composite_masks(g_context->layer);
 			for (i32 i = 0; i < view_masks->length; ++i) {
@@ -733,6 +739,24 @@ node_shader_context_t *make_mesh_run(material_t *data, i32 layer_pass) {
 				node_shader_write_frag(kong, "float id_b = frac(sin(dot(float2(obid, obid * 40.0), float2(12.9898, 78.233))) * 43758.5453);");
 				node_shader_write_frag(kong, "output[1] = float4(id_r, id_g, id_b, 1.0);");
 			}
+		}
+		else if (g_context->viewport_mode == VIEWPORT_MODE_MESH_MAP) { // In the mesh uvs, like the Mesh Map node
+			i32 slot = g_context->viewport_mesh_map;
+			texture_count++;
+			node_shader_add_texture(kong, "texview_mesh_map", slot >= 0 && slot < MESH_MAP_COUNT ? string_tmp("_texmeshmap%d", slot) : "_texraydirections");
+			node_shader_write_frag(kong, "output[1] = float4(sample_lod(texview_mesh_map, sampler_linear, tex_coord, 0.0).rgb, 1.0);");
+		}
+		else if (g_context->viewport_mode == VIEWPORT_MODE_MASK && g_context->layer->bake_role != BAKE_ROLE_NONE) {
+			// Skew map: black is no skew. Cage map: middle gray is no offset, unpainted texels show it.
+			node_shader_write_frag(kong, string_tmp("float4 role_sample = sample_lod(texpaint_view_role, sampler_linear, %s, 0.0);", tex_coord_layer));
+			node_shader_write_frag(kong, "float role_gray = (role_sample.r + role_sample.g + role_sample.b) / 3.0;");
+			if (g_context->layer->bake_role == BAKE_ROLE_SKEW) {
+				node_shader_write_frag(kong, "float role_view = role_gray * role_sample.a;");
+			}
+			else {
+				node_shader_write_frag(kong, "float role_view = 0.5 + (role_gray - 0.5) * role_sample.a;");
+			}
+			node_shader_write_frag(kong, "output[1] = float4(role_view, role_view, role_view, 1.0);");
 		}
 		else if (g_context->viewport_mode == VIEWPORT_MODE_MASK &&
 		         (slot_layer_get_composite_masks(g_context->layer) != NULL || slot_layer_is_mask(g_context->layer))) {

@@ -10,11 +10,19 @@ static void bake_texture_node_clear(gpu_texture_t *t) {
 	draw_end();
 }
 
-static void bake_texture_node_check_result(ui_node_t *node) {
+typedef struct bake_texture_node_job {
+	ui_node_t *node;
+	i32        bake_type;
+	bool       rt_bake;
+	bool       started;
+} bake_texture_node_job_t;
+
+// True once the bake is done and the layer has its texture back
+static bool bake_texture_node_check_result(ui_node_t *node) {
 	ui_nodes_hwnd->redraws = 2;
 
 	if (g_context->pdirty > 0 || render_path_paint_baking) {
-		return;
+		return false;
 	}
 
 	bool rgba128 = g_context->bake_type == BAKE_TYPE_NORMAL || g_context->bake_type == BAKE_TYPE_HEIGHT || g_context->bake_type == BAKE_TYPE_DERIVATIVE;
@@ -43,8 +51,7 @@ static void bake_texture_node_check_result(ui_node_t *node) {
 	}
 
 	layers_update_fill_layers();
-
-	sys_remove_update(bake_texture_node_check_result);
+	return true;
 }
 
 static void bake_texture_node_run(ui_node_t *node, int bake_type, bool rt_bake) {
@@ -75,6 +82,9 @@ static void bake_texture_node_run(ui_node_t *node, int bake_type, bool rt_bake) 
 
 	g_context->tool      = TOOL_TYPE_BAKE;
 	g_context->bake_type = bake_type;
+	if (bake_type == BAKE_TYPE_UV_ISLAND) {
+		util_bake_make_uv_islands(rt->width);
+	}
 
 	if (g_context->bake_type == BAKE_TYPE_NORMAL || g_context->bake_type == BAKE_TYPE_HEIGHT || g_context->bake_type == BAKE_TYPE_DERIVATIVE) {
 		// Use RGBA128 texture format for high poly to low poly baking to prevent artifacts
@@ -85,9 +95,14 @@ static void bake_texture_node_run(ui_node_t *node, int bake_type, bool rt_bake) 
 		_bake_texture_node_bits = base_bits;
 		base_bits               = TEXTURE_BITS_BITS32;
 		gpu_texture_t *current  = _draw_current;
-		draw_end();
+		bool           in_use   = gpu_in_use;
+		if (in_use) {
+			draw_end();
+		}
 		layers_set_bits();
-		draw_begin(current, false, 0);
+		if (in_use) {
+			draw_begin(current, false, 0);
+		}
 
 		// Requires 2 steps
 		history_push_undo = true;
@@ -107,7 +122,56 @@ static void bake_texture_node_run(ui_node_t *node, int bake_type, bool rt_bake) 
 	bake_texture_node_baking                 = true;
 	make_material_parse_paint_material(false);
 	sys_notify_on_next_frame(bake_texture_node_clear, rt->_image);
-	sys_notify_on_update(bake_texture_node_check_result, node);
+}
+
+// Runs in the bake queue of util_bake.c, one call per frame
+static bool bake_texture_node_step(bake_job_t *job) {
+	bake_texture_node_job_t *d = util_bake_job_data(job);
+	if (!d->started) {
+		d->started = true;
+		if (slot_layer_is_paint_locked(g_context->layer)) { // Painting is off, the bake would never end
+			console_info(tr("The layer is locked"));
+			return true;
+		}
+		bake_texture_node_run(d->node, d->bake_type, d->rt_bake);
+		return false;
+	}
+	if (d->rt_bake && g_context->bake_samples > 0) {
+		f32 progress = render_path_raytrace_bake_current_sample / (float)g_context->bake_samples;
+		util_bake_set_progress(job, progress > 1.0 ? 1.0 : progress);
+	}
+	return bake_texture_node_check_result(d->node);
+}
+
+static void bake_texture_node_cancel(bake_job_t *job) {
+	g_context->pdirty = 0; // Keeps what was baked so far
+}
+
+static void bake_texture_node_queue(ui_node_t *node, int bake_type, bool rt_bake) {
+	bake_texture_node_job_t *d = calloc(1, sizeof(bake_texture_node_job_t));
+	d->node                    = node;
+	d->bake_type               = bake_type;
+	d->rt_bake                 = rt_bake;
+	util_bake_run_custom(bake_texture_node_step, bake_texture_node_cancel, d, node, NULL, NULL);
+}
+
+static bool bake_texture_node_is_rt(i32 bake_type) {
+	return bake_type == BAKE_TYPE_OCCLUSION || bake_type == BAKE_TYPE_LIGHTMAP || bake_type == BAKE_TYPE_BENT_NORMAL || bake_type == BAKE_TYPE_THICKNESS;
+}
+
+// Queues the bake of the type stored in the node into the selected layer, as its Bake button does
+void bake_texture_node_bake(ui_node_t *node) {
+	i32 bake_type = (i32)node->buttons->buffer[0]->default_value->buffer[0];
+	if (bake_texture_node_is_rt(bake_type) && !gpu_raytrace_supported()) {
+		return;
+	}
+	bake_texture_node_queue(node, bake_type, bake_texture_node_is_rt(bake_type));
+}
+
+// What the node baked last, NULL before its first bake and while it bakes
+gpu_texture_t *bake_texture_node_texture(ui_node_t *node) {
+	render_target_t *rt = any_map_get(render_path_render_targets, string_tmp("bake_texture_node_%d", node->id));
+	return rt == NULL || bake_texture_node_baking ? NULL : rt->_image;
 }
 
 static void bake_texture_node_button(i32 node_id) {
@@ -115,42 +179,39 @@ static void bake_texture_node_button(i32 node_id) {
 	ui_push_id((ui_id_t)ui_nodes_get_nodes());
 	ui_push_id((ui_id_t)node_id); // Shared bake settings still need distinct controls per node
 
-	string_array_t *bakes = any_array_create_from_raw(
-	    (void *[]){
-	        tr("Curvature"),
-	        tr("Normal"),
-	        tr("Object Normal"),
-	        tr("Height"),
-	        tr("Derivative"),
-	        tr("Position"),
-	        tr("TexCoord"),
-	        tr("Material ID"),
-	        tr("Object ID"),
-	        tr("Vertex Color"),
-	    },
-	    10);
-	if (gpu_raytrace_supported()) {
-		any_array_push(bakes, tr("Occlusion"));
-		any_array_push(bakes, tr("Lightmap"));
-		any_array_push(bakes, tr("Bent Normal"));
-		any_array_push(bakes, tr("Thickness"));
-	}
+	// The node stores the bake type, the list shows the types this machine can bake
+	char *names[] = {tr("Curvature"), tr("Normal"),      tr("Object Normal"), tr("Height"),       tr("Derivative"), tr("Position"),
+	                 tr("TexCoord"),  tr("Material ID"), tr("Object ID"),     tr("Vertex Color"), tr("Opacity"),    tr("UV Island"),
+	                 tr("Occlusion"), tr("Lightmap"),    tr("Bent Normal"),   tr("Thickness")};
+	i32   types[] = {BAKE_TYPE_CURVATURE, BAKE_TYPE_NORMAL,     BAKE_TYPE_NORMAL_OBJECT, BAKE_TYPE_HEIGHT,       BAKE_TYPE_DERIVATIVE, BAKE_TYPE_POSITION,
+	                 BAKE_TYPE_TEXCOORD,  BAKE_TYPE_MATERIALID, BAKE_TYPE_OBJECTID,      BAKE_TYPE_VERTEX_COLOR, BAKE_TYPE_OPACITY,    BAKE_TYPE_UV_ISLAND,
+	                 BAKE_TYPE_OCCLUSION, BAKE_TYPE_LIGHTMAP,   BAKE_TYPE_BENT_NORMAL,   BAKE_TYPE_THICKNESS};
+	i32   count   = gpu_raytrace_supported() ? 16 : 12;
 
 	f32_array_t *values    = node->buttons->buffer[0]->default_value;
 	i32          bake_type = (i32)values->buffer[0];
-	if (bake_type >= bakes->length) { // Saved on a machine with raytracing
-		bake_type = 0;
+	i32          index     = 0; // Curvature when the type was saved on a machine with raytracing
+	for (i32 i = 0; i < count; ++i) {
+		if (types[i] == bake_type) {
+			index = i;
+		}
 	}
 	ui_set_next_id((ui_id_t)&values->buffer[0]);
-	ui_combo(&bake_type, bakes, tr("Bake"), false, UI_ALIGN_LEFT, true);
+	ui_combo(&index, any_array_create_from_raw_tmp((void **)names, count), tr("Bake"), false, UI_ALIGN_LEFT, true);
+	bake_type         = types[index];
 	values->buffer[0] = bake_type;
 	i32 height        = 1;
 
-	bool rt_bake =
-	    bake_type == BAKE_TYPE_OCCLUSION || bake_type == BAKE_TYPE_LIGHTMAP || bake_type == BAKE_TYPE_BENT_NORMAL || bake_type == BAKE_TYPE_THICKNESS;
+	bool rt_bake = bake_texture_node_is_rt(bake_type);
 
-	bool baking = g_context->tool == TOOL_TYPE_BAKE && g_context->pdirty > 0;
-	if (baking) {
+	i32  state  = util_bake_state(-1, node);
+	bool baking = state == BAKE_STATE_RUNNING && g_context->tool == TOOL_TYPE_BAKE && g_context->pdirty > 0;
+	if (state == BAKE_STATE_QUEUED) { // Waits for the bakes ahead of it, a click takes it out of the queue
+		if (ui_icon_button(tr("Queued"), ICON_STOP, UI_ALIGN_CENTER)) {
+			util_bake_cancel_job(-1, node);
+		}
+	}
+	else if (baking) {
 		f32 progress = render_path_raytrace_bake_current_sample / (float)g_context->bake_samples;
 		if (progress > 1.0) {
 			progress = 1.0;
@@ -166,11 +227,14 @@ static void bake_texture_node_button(i32 node_id) {
 		g_theme->BUTTON_COL = _BUTTON_COL;
 
 		if (g_ui->is_hovered && g_ui->input_released) {
-			g_context->pdirty = 0; // Stop baking
+			util_bake_cancel_job(-1, node); // Stops this bake and keeps what was baked so far
 		}
 	}
+	else if (state == BAKE_STATE_RUNNING) {
+		ui_text(tr("Baking..."), UI_ALIGN_CENTER, 0);
+	}
 	else if (ui_icon_button(tr("Bake"), ICON_PLAY, UI_ALIGN_CENTER)) {
-		bake_texture_node_run(node, bake_type, rt_bake);
+		bake_texture_node_queue(node, bake_type, rt_bake);
 	}
 	height++;
 

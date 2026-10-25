@@ -25,12 +25,14 @@ Alle Verarbeitung erfolgt lokal auf dem Gerät
 Kamera über Kopf erlauben
 Alpha
 Alpha verwerfen
+
 Stärke
 
 Winkel
 Winkel verwerfen
 Animation
 Anisotropie
+
 Hinzufügen
 Anwenden
 Displacement anwenden
@@ -52,17 +54,30 @@ Atlanten
 Attribut
 Automatisch
 
+
+
+
 Mittelwert
+
 Achse
 B
 Hinten
 Baken
+
 Material baken...
+
+
+
 Textur baken
+
 Auf Textur backen
+
+
 Bänder
 Base Color
+
 Gekrümmte Normalen
+
 Abschrägung
 Bias
 Bits
@@ -95,6 +110,8 @@ Pinsel...
 Pinsel
 Bump
 Nachbelichten
+
+
 Normalen berechnen
 Kamera
 Kamera Schwenkgeschwindigkeit
@@ -122,7 +139,9 @@ Leeren
 
 
 Ebene leeren
+
 Farbfelder leeren
+
 Clip Ende
 Clip Start
 Klonen
@@ -143,11 +162,13 @@ Color ID Map
 Farbmaske
 Farbgradient
 
+
 Farbraum
 FarbID
 Kombinieren
 Farbe zusammenführen
 XYZ zusammenführen
+
 
 Kompass
 
@@ -212,6 +233,7 @@ Diagonal
 Unterschied
 Radius erweitern
 Gemalte Texturen ausweiten, um Seams zu vermeiden
+
 Abmessungen
 DirectX Normal Map
 Richtung
@@ -240,6 +262,7 @@ Pinsel duplizieren
 Ebene duplizieren
 Material duplizieren
 Farbfeld duplizieren
+
 
 Bearbeiten
 Bild bearbeiten
@@ -304,6 +327,7 @@ Füllmaske
 Füllmodus
 Filter
 Texturen filtern
+
 Flach
 Abflachen
 
@@ -349,6 +373,7 @@ Gravitation X
 Gravitation Y
 Gravitation Z
 
+
 Größer als
 
 Gitterzelle
@@ -379,6 +404,8 @@ Farbton/Sättigung/Helligkeit
 Kosinus Hyperbolicus
 Sinus Hyperbolicus
 Tangens Hyperbolicus
+
+
 Bild Textur
 Bild zu PBR
 Importieren
@@ -452,11 +479,13 @@ Logarithmus
 Magie Textur
 Einzigartig machen
 Handbuch
+
 Bereich abbilden
 Mapping
 Maske
 Maskenfarbe
 Masse
+
 Material
 Material ID
 Material Index
@@ -465,6 +494,9 @@ Material...
 Materialien
 Mathematik
 Max
+
+
+
 Maximum
 Nach unten vereinen
 Geometrie vereinen
@@ -472,7 +504,11 @@ Gruppe vereinigen
 Ebenen zusammenfassen
 Mesh
 Mesh-Eingabe
+
+
 Mesh-Ausgabe
+
+
 Mesh...
 Meshes
 Metallic
@@ -500,6 +536,7 @@ Mörtel Glättung
 
 Multiplizieren
 Name
+
 Neural
 Neu
 Neue schwarze Maske
@@ -533,7 +570,9 @@ Normal Map 1
 Normal Map 2
 Normieren
 
+
 Nicht verfügbar im Debug Build
+
 Nicht implementiert
 OK
 Objekt
@@ -544,6 +583,7 @@ Objekt Normale
 
 Occlusion
 Offset
+
 Alte Farbe
 Deckkraft
 Deckkraft Modus
@@ -587,6 +627,7 @@ Pause
 Stift
 Bleistift
 Pro Objekt
+
 Pro Udim Tile
 Perspektivisch
 Phase
@@ -629,6 +670,8 @@ Projekte
 Prompt
 Qualität
 Quantisieren
+
+
 R
 
 RGB Kurven
@@ -640,6 +683,9 @@ Zufall
 Zufälligkeit
 Bereich
 Verhältnis
+
+
+
 Neuste
 Wiederherstellen {step}
 Spiegeln
@@ -721,12 +767,14 @@ Farbe als ID Map setzen
 Als Hintergrundbild setzen
 Als Maske setzen
 Quelle wird gesetzt
+
 Einrichtung
 Shader
 
 Form
 Player-Link teilen
 Geteilt
+
 
 2D Ansicht anzeigen
 Namen der Assets anzeigen
@@ -744,6 +792,7 @@ Angemeldet als
 Anmeldung läuft...
 Sinus
 Größe
+
 Slot
 
 Glatt
@@ -757,6 +806,7 @@ Sortieren
 Sound
 Sound importiert:
 Sounds
+
 Kugel
 Sphärisch
 Begrüßungsbildschirm
@@ -802,6 +852,7 @@ Textur...
 Texturen
 Texturen exportiert.
 Texturen...
+
 
 Theme
 Theme importiert:
@@ -893,6 +944,7 @@ Wellenprofil
 Wellen Textur
 Wellentyp
 Neuigkeiten
+
 Weiße Maske
 Whiteout
 Breite
@@ -900,6 +952,7 @@ Fenster
 Drahtgitter
 Arbeitsbereich
 Welt
+
 Maus herumführen
 Bei der Steuerung der Kamera die Maus um die Ansichtsgrenzen herumführen.
 X
@@ -913,6 +966,7 @@ Vergrößern
 Verkleinern
 Auf Fenstergröße zoomen
 Überblendungsart
+
 Farbraum
 Suchen mit ctrl+f
 Abbrechen mit esc
@@ -920,8 +974,10 @@ fBM
 Datei
 GPU-Speicher
 Farbverlauf Art
+
 Nodes
 Operation
+
 gepackt
 player
 Plugin aktiviert

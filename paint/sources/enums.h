@@ -31,6 +31,8 @@ typedef enum {
 	BAKE_TYPE_LIGHTMAP      = 11,
 	BAKE_TYPE_BENT_NORMAL   = 12,
 	BAKE_TYPE_THICKNESS     = 13,
+	BAKE_TYPE_OPACITY       = 14,
+	BAKE_TYPE_UV_ISLAND     = 15,
 } bake_type_t;
 
 typedef enum {
@@ -55,6 +57,53 @@ typedef enum {
 	BAKE_UP_AXIS_X = 2,
 } bake_up_axis_t;
 
+// Mesh map slots of the project, the order is saved in .arm files
+typedef enum {
+	MESH_MAP_NORMAL       = 0,
+	MESH_MAP_WORLD_NORMAL = 1,
+	MESH_MAP_ID           = 2,
+	MESH_MAP_OCCLUSION    = 3,
+	MESH_MAP_CURVATURE    = 4,
+	MESH_MAP_POSITION     = 5,
+	MESH_MAP_THICKNESS    = 6,
+	MESH_MAP_BENT_NORMAL  = 7,
+	MESH_MAP_OPACITY      = 8,
+	MESH_MAP_COUNT        = 9,
+} mesh_map_slot_t;
+
+typedef enum {
+	MESH_MAP_ID_OBJECT       = 0,
+	MESH_MAP_ID_VERTEX_COLOR = 1,
+	MESH_MAP_ID_UV_ISLAND    = 2,
+} mesh_map_id_source_t;
+
+typedef enum {
+	MESH_MAP_CURVATURE_NORMALS = 0, // From the normals of the neighbouring texels
+	MESH_MAP_CURVATURE_MESH    = 1, // From the vertices, across uv seams
+} mesh_map_curvature_t;
+
+typedef enum {
+	BAKE_CAGE_DISTANCE = 0, // Rays start at Max Frontal Distance above the low poly
+	BAKE_CAGE_AUTO     = 1, // Rays start just past the nearest high poly surface above, searched up to Max Frontal Distance
+} bake_cage_t;
+
+typedef enum {
+	BAKE_ROLE_NONE = 0,
+	BAKE_ROLE_SKEW = 1, // Paint layer read by the baker: ray directions from the smooth normals toward the triangle normals
+	BAKE_ROLE_CAGE = 2, // Paint layer read by the baker: cage offset per texel
+} bake_role_t;
+
+typedef enum {
+	BAKE_SKEW_BASE_MESH     = 0, // Unpainted rays follow the smooth normals, the skew map turns them toward the triangle normals
+	BAKE_SKEW_BASE_TRIANGLE = 1, // Unpainted rays follow the triangle normals, the skew map turns them toward the smooth normals
+} bake_skew_base_t;
+
+typedef enum {
+	BAKE_STATE_IDLE    = 0,
+	BAKE_STATE_QUEUED  = 1,
+	BAKE_STATE_RUNNING = 2,
+} bake_state_t;
+
 typedef enum {
 	VIEWPORT_MODE_NONE          = -1,
 	VIEWPORT_MODE_LIT           = 0,
@@ -73,6 +122,7 @@ typedef enum {
 	VIEWPORT_MODE_OBJECT_ID     = 13,
 	VIEWPORT_MODE_MASK          = 14,
 	VIEWPORT_MODE_PATH_TRACE    = 15,
+	VIEWPORT_MODE_MESH_MAP      = 16, // The mesh map of g_context->viewport_mesh_map
 } viewport_mode_t;
 
 // Layouts to reset the docked tabs to
@@ -377,7 +427,8 @@ typedef enum {
 	TAB_VIEW3D    = 14,
 	TAB_VIEW2D    = 15,
 	TAB_NODES     = 16,
-	TAB_COUNT     = 17,
+	TAB_BAKING    = 17,
+	TAB_COUNT     = 18,
 } tab_id_t;
 
 typedef enum {
@@ -643,6 +694,7 @@ typedef enum {
 	HISTORY_ACTION_FLATTEN_GROUP,
 	HISTORY_ACTION_LAYER_LOCK,
 	HISTORY_ACTION_LAYER_GEOMETRY_MASK,
+	HISTORY_ACTION_BAKE_MESH_MAP,
 } history_action_t;
 
 typedef enum {

@@ -224,6 +224,62 @@ static void export_texture_compute_diff_spec_channel(buffer_t *from_albedo, buff
 	}
 }
 
+// Slot and component of a mesh map channel of a preset: mesh_ao, mesh_curvature, mesh_thickness and mesh_opacity are gray,
+// the others end in _r, _g or _b. False for the other channels.
+static bool export_texture_mesh_channel(char *c, i32 *slot, i32 *comp) {
+	char *names[] = {"mesh_normal",   "mesh_world_normal", "mesh_id",          "mesh_ao",     "mesh_curvature",
+	                 "mesh_position", "mesh_thickness",    "mesh_bent_normal", "mesh_opacity"};
+	i32   slots[] = {MESH_MAP_NORMAL,   MESH_MAP_WORLD_NORMAL, MESH_MAP_ID,          MESH_MAP_OCCLUSION, MESH_MAP_CURVATURE,
+	                 MESH_MAP_POSITION, MESH_MAP_THICKNESS,    MESH_MAP_BENT_NORMAL, MESH_MAP_OPACITY};
+	for (i32 i = 0; i < 9; ++i) {
+		i32 n = string_length(names[i]);
+		if (strncmp(c, names[i], n) != 0) {
+			continue;
+		}
+		char *rest = c + n;
+		if (rest[0] == '\0') {
+			*slot = slots[i];
+			*comp = 0;
+			return true;
+		}
+		if (rest[0] == '_' && (rest[1] == 'r' || rest[1] == 'g' || rest[1] == 'b') && rest[2] == '\0') {
+			*slot = slots[i];
+			*comp = rest[1] == 'r' ? 0 : rest[1] == 'g' ? 1 : 2;
+			return true;
+		}
+	}
+	return false;
+}
+
+// A component of a mesh map resized to the export, the default value of the slot when it is not baked
+static void export_texture_copy_mesh_channel(i32 slot, i32 comp, buffer_t *to, i32 to_channel, i32 bits, bool linear, i32 width, i32 height) {
+	gpu_texture_t *tex = util_bake_mesh_map(slot);
+	to_channel         = _export_texture_channel(to_channel, bits);
+	if (tex == NULL) {
+		console_info(string("%s: %s", tr("Mesh map not baked"), util_bake_slot_name(slot)));
+		f32 def[4];
+		util_bake_slot_default(slot, def);
+		for (i32 i = 0; i < width * height; ++i) {
+			_export_texture_set_value(to, i, to_channel, bits, def[comp]);
+		}
+	}
+	else {
+		f32_array_t *px = util_bake_texture_pixels(tex);
+		for (i32 y = 0; y < height; ++y) {
+			for (i32 x = 0; x < width; ++x) {
+				i32 mx = x * tex->width / width;
+				i32 my = y * tex->height / height;
+				_export_texture_set_value(to, y * width + x, to_channel, bits, px->buffer[(my * tex->width + mx) * 4 + comp]);
+			}
+		}
+		array_free(px);
+		free(px);
+	}
+	if (!linear) {
+		export_texture_to_srgb(to, to_channel, bits);
+	}
+}
+
 static void export_texture_set_channel(f32 value, buffer_t *to, i32 to_channel, i32 bits, bool linear) {
 	to_channel = _export_texture_channel(to_channel, bits);
 	i32 count  = _export_texture_pixel_count(to, bits);
@@ -489,7 +545,9 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 				pix = buffer_create(texture_size_x * texture_size_y * 4 * math_floor(bits / 8.0));
 			}
 			for (i32 i = 0; i < 4; ++i) {
-				char *c = t->channels->buffer[i];
+				char *c         = t->channels->buffer[i];
+				i32   mesh_slot = 0;
+				i32   mesh_comp = 0;
 				if (string_equals(c, "base_r")) {
 					export_texture_copy_channel(pixpaint, 0, pix, i, bits, string_equals(t->color_space, "linear"));
 				}
@@ -553,6 +611,10 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 				else if (string_equals(c, "spec_b")) {
 					export_texture_compute_diff_spec_channel(pixpaint, pixpaint_pack, 2, pix, i, bits, string_equals(t->color_space, "linear"), true);
 				}
+				else if (export_texture_mesh_channel(c, &mesh_slot, &mesh_comp)) {
+					export_texture_copy_mesh_channel(mesh_slot, mesh_comp, pix, i, bits, string_equals(t->color_space, "linear"), texture_size_x,
+					                                 texture_size_y);
+				}
 				else if (string_equals(c, "0.0")) {
 					export_texture_set_channel(0.0, pix, i, bits, true);
 				}
@@ -560,7 +622,10 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 					export_texture_set_channel(1.0, pix, i, bits, true);
 				}
 			}
-			export_texture_write_texture(out_path, pix, 3, 0);
+			i32  mesh_slot = 0;
+			i32  mesh_comp = 0;
+			bool mesh_gray = single_channel && export_texture_mesh_channel(c->buffer[0], &mesh_slot, &mesh_comp);
+			export_texture_write_texture(out_path, pix, mesh_gray ? 2 : 3, 0); // Gray mesh maps as grayscale
 		}
 	}
 

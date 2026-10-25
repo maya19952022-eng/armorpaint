@@ -212,6 +212,8 @@ char *ui_menubar_viewport_mode_to_string(viewport_mode_t m) {
 		return "Mask";
 	if (m == VIEWPORT_MODE_PATH_TRACE)
 		return "Path Traced";
+	if (m == VIEWPORT_MODE_MESH_MAP)
+		return "Mesh Map";
 	return "Lit";
 }
 
@@ -315,6 +317,9 @@ void ui_menubar_draw_category_items() {
 		}
 		if (ui_menu_button(tr("Bake Material..."), "", ICON_BAKE)) {
 			box_export_show_bake_material();
+		}
+		if (ui_menu_button(tr("Bake Mesh Maps..."), "", ICON_BAKE)) {
+			ui_base_show_tab(TAB_BAKING);
 		}
 		ui_menu_separator();
 		if (ui_menu_button(tr("Exit"), "", ICON_EXIT)) {
@@ -530,6 +535,9 @@ void ui_menubar_draw_category_items() {
 		if (mode_changed) {
 			viewport_mode_t m = ui_menubar_string_to_viewport_mode(modes->buffer[mode]);
 			context_set_viewport_mode(m);
+			ui_menu_keep_open = true;
+		}
+		if (ui_base_draw_mesh_map_modes()) {
 			ui_menu_keep_open = true;
 		}
 	}

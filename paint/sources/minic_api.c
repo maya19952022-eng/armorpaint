@@ -601,6 +601,23 @@ void minic_register_builtins() {
 	MINIC_ENUM("generator_type_t", "GENERATOR_TYPE_EDGES", "GENERATOR_TYPE_GRADIENT", "GENERATOR_TYPE_FACING_UP", "GENERATOR_TYPE_NOISE",
 	           "GENERATOR_TYPE_COUNT");
 	MINIC_ENUM("geometry_mask_mode_t", "GEOMETRY_MASK_INCLUDE", "GEOMETRY_MASK_EXCLUDE");
+	MINIC_ENUM("mesh_map_slot_t", "MESH_MAP_NORMAL", "MESH_MAP_WORLD_NORMAL", "MESH_MAP_ID", "MESH_MAP_OCCLUSION", "MESH_MAP_CURVATURE", "MESH_MAP_POSITION",
+	           "MESH_MAP_THICKNESS", "MESH_MAP_BENT_NORMAL", "MESH_MAP_OPACITY", "MESH_MAP_COUNT");
+	MINIC_ENUM("mesh_map_id_source_t", "MESH_MAP_ID_OBJECT", "MESH_MAP_ID_VERTEX_COLOR", "MESH_MAP_ID_UV_ISLAND");
+	MINIC_ENUM("mesh_map_curvature_t", "MESH_MAP_CURVATURE_NORMALS", "MESH_MAP_CURVATURE_MESH");
+	MINIC_ENUM("bake_cage_t", "BAKE_CAGE_DISTANCE", "BAKE_CAGE_AUTO");
+	MINIC_ENUM("bake_role_t", "BAKE_ROLE_NONE", "BAKE_ROLE_SKEW", "BAKE_ROLE_CAGE");
+	MINIC_ENUM("viewport_mode_t", "VIEWPORT_MODE_LIT", "VIEWPORT_MODE_BASE_COLOR", "VIEWPORT_MODE_NORMAL_MAP", "VIEWPORT_MODE_OCCLUSION",
+	           "VIEWPORT_MODE_ROUGHNESS", "VIEWPORT_MODE_METALLIC", "VIEWPORT_MODE_OPACITY", "VIEWPORT_MODE_HEIGHT", "VIEWPORT_MODE_EMISSION",
+	           "VIEWPORT_MODE_SUBSURFACE", "VIEWPORT_MODE_TEXCOORD", "VIEWPORT_MODE_OBJECT_NORMAL", "VIEWPORT_MODE_MATERIAL_ID", "VIEWPORT_MODE_OBJECT_ID",
+	           "VIEWPORT_MODE_MASK", "VIEWPORT_MODE_PATH_TRACE", "VIEWPORT_MODE_MESH_MAP");
+	MINIC_ENUM("bake_skew_base_t", "BAKE_SKEW_BASE_MESH", "BAKE_SKEW_BASE_TRIANGLE");
+	MINIC_ENUM("bake_type_t", "BAKE_TYPE_CURVATURE", "BAKE_TYPE_NORMAL", "BAKE_TYPE_NORMAL_OBJECT", "BAKE_TYPE_HEIGHT", "BAKE_TYPE_DERIVATIVE",
+	           "BAKE_TYPE_POSITION", "BAKE_TYPE_TEXCOORD", "BAKE_TYPE_MATERIALID", "BAKE_TYPE_OBJECTID", "BAKE_TYPE_VERTEX_COLOR", "BAKE_TYPE_OCCLUSION",
+	           "BAKE_TYPE_LIGHTMAP", "BAKE_TYPE_BENT_NORMAL", "BAKE_TYPE_THICKNESS", "BAKE_TYPE_OPACITY", "BAKE_TYPE_UV_ISLAND");
+	MINIC_ENUM("bake_state_t", "BAKE_STATE_IDLE", "BAKE_STATE_QUEUED", "BAKE_STATE_RUNNING");
+	MINIC_ENUM("tab_id_t", "TAB_LAYERS", "TAB_MESHES", "TAB_SCRIPTS", "TAB_MATERIALS", "TAB_BRUSHES", "TAB_PLUGINS", "TAB_BROWSER", "TAB_TEXTURES", "TAB_FONTS",
+	           "TAB_SOUNDS", "TAB_SWATCHES", "TAB_TIMELINE", "TAB_CONSOLE", "TAB_DEBUG", "TAB_VIEW3D", "TAB_VIEW2D", "TAB_NODES", "TAB_BAKING", "TAB_COUNT");
 	MINIC_ENUM("geometry_select_mode_t", "GEOMETRY_SELECT_TRIANGLE", "GEOMETRY_SELECT_POLYGON", "GEOMETRY_SELECT_CONNECTED", "GEOMETRY_SELECT_UV_ISLAND",
 	           "GEOMETRY_SELECT_OBJECT");
 	MINIC_ENUM("tool_type_t", "TOOL_TYPE_BRUSH", "TOOL_TYPE_ERASER", "TOOL_TYPE_FILL", "TOOL_TYPE_DECAL", "TOOL_TYPE_TEXT", "TOOL_TYPE_CLONE", "TOOL_TYPE_BLUR",
@@ -688,6 +705,7 @@ void minic_register_builtins() {
 	MINIC_B(locked);
 	MINIC_B(effect);
 	MINIC_B(effect_paint);
+	MINIC_I(bake_role);
 	MINIC_O(parent, slot_layer_t);
 	MINIC_F(mask_opacity);
 	MINIC_O(fill_material, slot_material_t);
@@ -936,12 +954,40 @@ void minic_register_builtins() {
 	MINIC_I(brush_blending);
 	MINIC_I(brush_sculpt);
 	MINIC_I(viewport_mode);
+	MINIC_I(viewport_mesh_map);
 	MINIC_I(xray);
 	MINIC_B(capturing_screenshot);
 	MINIC_F(envmap_angle);
 	MINIC_B(select_faces);
 	MINIC_I(select_faces_mode);
 	MINIC_B(select_faces_remove);
+	MINIC_END();
+
+	MINIC_STRUCT(bake_settings_t);
+	MINIC_I(res);
+	MINIC_I(dilation);
+	MINIC_I(occlusion_samples);
+	MINIC_F(occlusion_distance);
+	MINIC_I(thickness_samples);
+	MINIC_F(thickness_distance);
+	MINIC_F(curvature_strength);
+	MINIC_I(id_source);
+	MINIC_I(maps);
+	MINIC_I(aa);
+	MINIC_F(front_distance);
+	MINIC_F(rear_distance);
+	MINIC_B(average_normals);
+	MINIC_B(ignore_backface);
+	MINIC_B(match_by_name);
+	MINIC_S(high_polys);
+	MINIC_I(curvature_mode);
+	MINIC_B(auto_rebake);
+	MINIC_B(quick_rebake);
+	MINIC_I(cage);
+	MINIC_I(skew_base);
+	MINIC_B(edge_protection);
+	MINIC_F(paint_value);
+	MINIC_F(cage_range);
 	MINIC_END();
 
 	MINIC_STRUCT(project_t);

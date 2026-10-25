@@ -25,12 +25,14 @@ Tout le traitement est effectué localement sur l'appareil
 Autoriser la caméra à l'envers
 Alpha
 Rejeter Alpha
+
 Quantité
 
 Angle
 Rejet par angle
 Animation
 Anisotropie
+
 Ajouter
 Appliquer
 Appliquer déplacement
@@ -52,17 +54,30 @@ Atlas
 Attributs
 Auto
 
+
+
+
 Moyenne
+
 Axe
 B
 Arrière
 Rendu
+
 Exporter le matériau...
+
+
+
 Rendu de texture
+
 Rendu des textures
+
+
 Bandes
 Couleur de base
+
 Bent Normal
+
 Biseau
 Biais
 Bits
@@ -95,6 +110,8 @@ Pinceau...
 Brosses
 Relief
 Brûler
+
+
 Calculer les normales
 Caméra
 Vitesse du panorama caméra
@@ -122,7 +139,9 @@ Effacer
 
 
 Effacer le calque
+
 Effacer les échantillons
+
 Fin du clip
 Début du clip
 Clonage
@@ -143,11 +162,13 @@ Carte de Color ID
 Masque de couleur
 Plage de couleur
 
+
 Espace couleur
 ID Couleur
 Combiner
 Recomposer couleur
 Recomposer XYZ
+
 
 Gizmos XYZ
 
@@ -212,6 +233,7 @@ Diagonale
 Différence
 Rayon de dilatation
 Dilater textures peintes pour éviter les coutures
+
 Dimensions
 Carte de normales DirectX
 Direction
@@ -240,6 +262,7 @@ Dupliquer la brosse
 Dupliquer le calque
 Dupliquer matériau
 Dupliquer l'échantillon
+
 
 Modifier
 Éditer image
@@ -304,6 +327,7 @@ Masque de remplissage
 Mode de remplissage
 Filtrer
 Filtrer les textures
+
 Plat
 Aplatir
 
@@ -349,6 +373,7 @@ Gravité X
 Gravité Y
 Gravité Z
 
+
 Plus grand que
 
 Cellule de la grille
@@ -379,6 +404,8 @@ Teinte/Saturation/Valeur
 Cosinus hyperbolique
 Sinus hyperbolique
 Tangente hyperbolique
+
+
 Texture image
 Image vers PBR
 Importer
@@ -452,11 +479,13 @@ Logarithme
 Texture magique
 Rendre unique
 Manuel
+
 Plage de carte
 Mappage
 Masque
 Couleur de masque
 Masse
+
 Matériau
 ID matériau
 Index de matériau
@@ -465,6 +494,9 @@ Matériau...
 Matériaux
 Mathématique
 Max
+
+
+
 Maximum
 Fusionner vers le bas
 Fusionner la géométrie
@@ -472,7 +504,11 @@ Fusionner le groupe
 Fusionner les calques
 Maillage
 Entrée du maillage
+
+
 Sortie du maillage
+
+
 Maillage...
 Maillages
 Métallique
@@ -500,6 +536,7 @@ Adoucissement du mortier
 
 Multiplier
 Nom
+
 Neuronal
 Nouveau
 Nouveau masque noir
@@ -533,7 +570,9 @@ Carte de normales 1
 Carte de normales 2
 Normaliser
 
+
 Non disponible dans la version de débogage
+
 Non implémenté
 OK
 Objet
@@ -544,6 +583,7 @@ Normale objet
 
 Occlusion
 Décalage
+
 Ancienne couleur
 Opacité
 Mode d'opacité
@@ -587,6 +627,7 @@ Pause
 Stylo
 Crayon
 Par objet
+
 Par tuile UDIM
 Perspective
 Phase
@@ -629,6 +670,8 @@ Projets
 Prompt
 Qualité
 Quantifier
+
+
 R
 
 Courbes RGB
@@ -640,6 +683,9 @@ Aléatoire
 Caractère aléatoire
 Plage
 Ratio
+
+
+
 Récent
 Refaire {step}
 Refléter
@@ -721,12 +767,14 @@ Définir comme carte d'ID couleur
 Définir comme carte d'environnement
 Définir comme masque
 Définition de la source
+
 Configuration
 Shader
 
 Forme
 Partager le lien du lecteur
 Partagé
+
 
 Afficher la vue 2D
 Montrer les noms des assets
@@ -744,6 +792,7 @@ Connecté en tant que
 Connexion en cours...
 Sinus
 Taille
+
 Emplacement
 
 Adoucir
@@ -757,6 +806,7 @@ Trier
 Son
 Son importé :
 Sons
+
 Sphère
 Sphérique
 Écran d'accueil
@@ -802,6 +852,7 @@ Texture...
 Textures
 Textures exportées
 Textures...
+
 
 Thème
 Thème importé :
@@ -893,6 +944,7 @@ Profil d'onde
 Texture d'onde
 Type d'onde
 Quoi de neuf ?
+
 Masque blanc
 Voile blanc
 Largeur
@@ -900,6 +952,7 @@ Fenêtre
 Fil de fer
 Espace de travail
 Monde
+
 Boucler la souris
 Boucler la souris autour des limites de la vue pendant le contrôle caméra
 X
@@ -913,6 +966,7 @@ Zoom avant
 Zoom arrière
 Ajuster à la vue
 type_de_mélange
+
 espace_couleur
 Ctrl+F pour rechercher
 Échap pour annuler
@@ -920,8 +974,10 @@ fBM
 fichier
 mémoire GPU
 type_de_dégradé
+
 nœuds
 opération
+
 empaqueté
 player
 plugin activé

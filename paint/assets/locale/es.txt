@@ -25,12 +25,14 @@ Todo el procesamiento se realiza localmente en el dispositivo
 Permitir cámara invertida
 Alfa
 Descartar alfa
+
 Cantidad
 
 Ángulo
 Rechazar por ángulo
 Animación
 Anisotropía
+
 Adjuntar
 Aplicar
 Aplicar desplazamiento
@@ -52,17 +54,30 @@ Atlas
 Atributo
 Automático
 
+
+
+
 Promedio
+
 Ejes
 A
 Trasera
 Hornear
+
 Hornear material...
+
+
+
 Hornear textura
+
 Hornear a texturas
+
+
 Bandas
 Color base
+
 Bent Normal
+
 Bisel
 Sesgo
 Bits
@@ -95,6 +110,8 @@ Pincel...
 Pinceles
 Relieve
 Quemar
+
+
 Calcular normales
 Cámara
 Velocidad de paneo de cámara
@@ -122,7 +139,9 @@ Limpiar
 
 
 Limpiar capa
+
 Limpiar muestras
+
 Finalizar recorte
 Comenzar a recortar
 Clonar
@@ -143,11 +162,13 @@ Mapa de ID de colores
 Máscara de color
 Rampa de color
 
+
 Espacio de color
 Color ID
 Combinar
 Combinar color
 Combinar XYZ
+
 
 Gizmo orientación
 
@@ -212,6 +233,7 @@ Diagonal
 Diferencia
 Expandir radio
 Expandir texturas pintadas para evitar costuras
+
 Dimensiones
 DirectX Mapa de normales
 Dirección
@@ -240,6 +262,7 @@ Duplicar pincel
 Duplicar capa
 Duplicar material
 Duplicar muestra
+
 
 Editar
 Editar imagen
@@ -304,6 +327,7 @@ Máscara de relleno
 Modo de relleno
 Filtrar
 Filtrar texturas
+
 Plano
 Aplanar
 
@@ -349,6 +373,7 @@ Gravedad X
 Gravedad Y
 Gravedad Z
 
+
 Mayor que
 
 Celda de la rejilla
@@ -379,6 +404,8 @@ Tono/Saturación/Valor
 Coseno hiperbólico
 Seno hiperbólico
 Tangente hiperbólica
+
+
 Imagen
 Imagen a PBR
 Importar
@@ -452,11 +479,13 @@ Logaritmo
 Mágica
 Hacer único
 Manual
+
 Mapear Rango
 Mapeado
 Máscara
 Color de máscara
 Masa
+
 Material
 ID de material
 Índice de materiales
@@ -465,6 +494,9 @@ Material...
 Materiales
 Matemática
 Máx
+
+
+
 Máximo
 Fusionar hacia abajo
 Combinar geometría
@@ -472,7 +504,11 @@ Fusionar grupo
 Fusionar capas
 Malla
 Entrada de malla
+
+
 Salida de malla
+
+
 Malla...
 Mallas
 Metálico
@@ -500,6 +536,7 @@ Suavizado del mortero
 
 Multiplicar
 Nombre
+
 Neuronal
 Nuevo
 Nueva máscara negra
@@ -533,7 +570,9 @@ Mapa de normales 1
 Mapa de normales 2
 Normalizar
 
+
 No disponible en la compilación de depuración
+
 No implementado
 OK
 Objeto
@@ -544,6 +583,7 @@ Normales del objeto
 
 Oclusión
 Compensación
+
 Color antiguo
 Opacidad
 Modo de opacidad
@@ -587,6 +627,7 @@ Pausar
 Stylus
 Lápiz
 Por objeto
+
 Por tile UDIM
 Perspectiva
 Fase
@@ -629,6 +670,8 @@ Proyectos
 Prompt
 Calidad
 Cuantificar
+
+
 R
 
 Curvas RGB
@@ -640,6 +683,9 @@ Aleatorio
 Aleatoriedad
 Rango
 Proporción
+
+
+
 Reciente
 Rehacer {step}
 Reflejar
@@ -721,12 +767,14 @@ Establecer como mapa de ID de color
 Establecer como mapa de entorno
 Establecer como máscara
 Estableciendo origen
+
 Configuración
 Sombreador
 
 Forma
 Compartir enlace del reproductor
 Compartido
+
 
 Mostrar vista 2D
 Mostrar nombres de recursos
@@ -744,6 +792,7 @@ Sesión iniciada como
 Iniciando sesión...
 Seno
 Tamaño
+
 Ranura
 
 Suavizar
@@ -757,6 +806,7 @@ Ordenar
 Sonido
 Sonido importado:
 Sonidos
+
 Esfera
 Esférico
 Pantalla de inicio
@@ -802,6 +852,7 @@ Textura...
 Texturas
 Texturas exportadas
 Texturas...
+
 
 Tema
 Tema importado:
@@ -893,6 +944,7 @@ Perfil de onda
 Onda
 Tipo de onda
 Que hay de nuevo
+
 Mascara blanca
 Blanqueado
 Anchura
@@ -900,6 +952,7 @@ Ventana
 Alambre
 Espacio de trabajo
 Mundo
+
 Envolver ratón
 Envolver ratón alrededor de límites de vista durante control de cámara
 X
@@ -913,6 +966,7 @@ Acercar
 Alejar
 Ajustar a la ventana
 Tipo de mezcla
+
 Espacio de color
 Ctrl+F para buscar
 Esc para cancelar
@@ -920,8 +974,10 @@ fBM
 Archivo
 memoria gpu
 Tipo de gradiente
+
 nodos
 Operación
+
 empaquetado
 player
 plugin habilitado

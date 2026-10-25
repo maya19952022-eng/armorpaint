@@ -76,6 +76,7 @@
 #include "nodes_material/material_node.c"
 #include "nodes_material/material_output_node.c"
 #include "nodes_material/math2_node.c"
+#include "nodes_material/mesh_map_node.c"
 #include "nodes_material/mix_color_node.c"
 #include "nodes_material/mix_normal_map_node.c"
 #include "nodes_material/noise_texture_node.c"
@@ -178,6 +179,7 @@
 #include "ui/box_new_project.c"
 #include "ui/box_preferences.c"
 #include "ui/box_projects.c"
+#include "ui/tab_baking.c"
 #include "ui/tab_browser.c"
 #include "ui/tab_brushes.c"
 #include "ui/tab_console.c"
@@ -205,7 +207,9 @@
 #include "ui/ui_view2d.c"
 
 #include "util/edit_uvmap.c"
+#include "util/util_bake.c"
 #include "util/util_brush.c"
+#include "util/util_bvh.c"
 #include "util/util_clone.c"
 #include "util/util_csg.c"
 #include "util/util_cursor.c"
@@ -273,10 +277,51 @@ void _kickstart() {
 
 	box_export_channels = any_array_create_from_raw(
 	    (void *[]){
-	        "base_r", "base_g", "base_b", "height", "metal",  "nor_r",  "nor_g",  "nor_g_directx", "nor_b",  "occ", "opac", "rough",
-	        "smooth", "emis",   "subs",   "diff_r", "diff_g", "diff_b", "spec_r", "spec_g",        "spec_b", "0.0", "1.0",
+	        "base_r",
+	        "base_g",
+	        "base_b",
+	        "height",
+	        "metal",
+	        "nor_r",
+	        "nor_g",
+	        "nor_g_directx",
+	        "nor_b",
+	        "occ",
+	        "opac",
+	        "rough",
+	        "smooth",
+	        "emis",
+	        "subs",
+	        "diff_r",
+	        "diff_g",
+	        "diff_b",
+	        "spec_r",
+	        "spec_g",
+	        "spec_b",
+	        "0.0",
+	        "1.0",
+	        // Mesh maps, see export_texture_mesh_channel
+	        "mesh_normal_r",
+	        "mesh_normal_g",
+	        "mesh_normal_b",
+	        "mesh_world_normal_r",
+	        "mesh_world_normal_g",
+	        "mesh_world_normal_b",
+	        "mesh_id_r",
+	        "mesh_id_g",
+	        "mesh_id_b",
+	        "mesh_ao",
+	        "mesh_curvature",
+	        "mesh_position_r",
+	        "mesh_position_g",
+	        "mesh_position_b",
+	        "mesh_thickness",
+	        "mesh_bent_normal_r",
+	        "mesh_bent_normal_g",
+	        "mesh_bent_normal_b",
+	        "mesh_opacity",
 	    },
-	    23);
+	    42);
 
 	box_export_color_spaces = any_array_create_from_raw(
 	    (void *[]){

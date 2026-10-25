@@ -305,6 +305,7 @@ buffer_t *export_arm_encode_project(char *path) {
 				offset += f->bits->length;
 			}
 		}
+		d->bake_role = l->bake_role;
 		any_array_push(ld, d);
 	}
 
@@ -423,8 +424,16 @@ buffer_t *export_arm_encode_project(char *path) {
 		export_arm_pack_sounds(g_project, g_project->_->sounds);
 	}
 
+	if (export_arm_layers == NULL) { // Layer exports leave the mesh maps out
+		util_bake_export(g_project);
+	}
+	else {
+		g_project->mesh_maps     = NULL;
+		g_project->bake_settings = NULL;
+	}
 	buffer_t *buffer = util_encode_project(g_project);
 	nodes_mesh_export_end();
+	util_bake_export_free(g_project);
 
 	for (i32 i = 0; i < ld->length; ++i) {
 		layer_data_t *d = ld->buffer[i];

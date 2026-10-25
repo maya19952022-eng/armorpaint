@@ -25,12 +25,14 @@ Minden feldolgozás helyben történik
 Fejjel lefelé álló kamera engedélyezése
 Alfa
 Alfa eldobása
+
 Mennyiség
 
 Szög
 Szög elvetése
 Animáció
 Anizotrópia
+
 Hozzáfűzés
 Alkalmazás
 Eltolás alkalmazása
@@ -52,17 +54,30 @@ Atlaszok
 Attribútum
 Auto
 
+
+
+
 Átlag
+
 Tengely
 B
 Hátul
 Sütés (Bake)
+
 Anyag sütése...
+
+
+
 Textúra sütése
+
 Sütés textúrákra
+
+
 Sávok
 Alapszín
+
 Hajlított normál
+
 Élletörés
 Eltérés (Bias)
 Bitek
@@ -95,6 +110,8 @@ Ecset...
 Ecsetek
 Bucka (Bump)
 Sötétítés (Burn)
+
+
 Normálok számítása
 Kamera
 Kamera pásztázási sebesség
@@ -122,7 +139,9 @@ Törlés
 
 
 Réteg törlése
+
 Színminták törlése
+
 Vágás vége
 Vágás kezdete
 Klónozás
@@ -143,11 +162,13 @@ Szín ID térkép
 Szín maszk
 Színátmenet (Ramp)
 
+
 Színtér
 SzínID
 Kombinálás
 Szín egyesítése
 XYZ egyesítése
+
 
 Iránytű
 
@@ -212,6 +233,7 @@ Részletesség méretezése
 Különbség
 Tágítás sugara
 Festett textúrák tágítása az illesztési hibák elkerülésére
+
 Méretek
 DirectX Normal Map
 Irány
@@ -240,6 +262,7 @@ Ecset duplikálása
 Réteg duplikálása
 Anyag duplikálása
 Színminta duplikálása
+
 
 Szerkesztés
 Kép szerkesztése
@@ -304,6 +327,7 @@ Kitöltő maszk
 Kitöltési mód
 Szűrő
 Textúrák szűrése
+
 Lapos
 Lapítás
 
@@ -349,6 +373,7 @@ Gravitáció X
 Gravitáció Y
 Gravitáció Z
 
+
 Nagyobb mint
 
 Rácscella
@@ -379,6 +404,8 @@ Hogyan használd
 Hiperbolikus koszinusz
 Hiperbolikus szinusz
 Hiperbolikus tangens
+
+
 Kép textúra
 Képből PBR
 Importálás
@@ -452,11 +479,13 @@ Logaritmus
 Mágikus textúra
 Egyedivé tétel
 Kézikönyv
+
 Tartomány leképzése
 Leképzés
 Maszk
 Maszk színe
 Massza
+
 Anyag
 Anyag ID
 Anyag Index
@@ -465,6 +494,9 @@ Anyag...
 Anyagok
 Matematika
 Max
+
+
+
 Maximum
 Egyesítés lefelé
 Geometria összevonása
@@ -472,7 +504,11 @@ Csoport egyesítése
 Rétegek egyesítése
 Háló
 Háló bemenet
+
+
 Háló kimenet
+
+
 Háló...
 Hálók
 Fémes (Metallic)
@@ -500,6 +536,7 @@ Habarcs simítása
 
 Szorzás
 Név
+
 Neurális
 Új
 Új fekete maszk
@@ -533,7 +570,9 @@ Normal Map 1
 Normal Map 2
 Normalizálás
 
+
 Nem elérhető hibakereső változatban
+
 Nincs megvalósítva
 OK
 Objektum
@@ -544,6 +583,7 @@ Objektum Normál
 
 Okklúzió (AO)
 Eltolás
+
 Régi szín
 Átlátszatlanság
 Átlátszatlanság mód
@@ -587,6 +627,7 @@ Szünet
 Toll
 Ceruza
 Objektumonként
+
 UDIM csempénként
 Perspektivikus
 Fázis
@@ -629,6 +670,8 @@ Projektek
 Prompt
 Minőség
 Kvantálás
+
+
 R
 
 RGB görbék
@@ -640,6 +683,9 @@ Véletlenszerű
 Véletlenszerűség
 Tartomány
 Arány
+
+
+
 Legutóbbi
 Mégsem von vissza: {step}
 Visszatükröződés
@@ -721,12 +767,14 @@ Beállítás Szín ID térképként
 Beállítás környezeti térképként
 Beállítás maszkként
 Forrás beállítása...
+
 Beállítás
 Shader
 
 Alakzat
 Player hivatkozás megosztása
 Megosztott
+
 
 2D Nézet megjelenítése
 Asset nevek mutatása
@@ -744,6 +792,7 @@ Bejelentkezve mint
 Bejelentkezés folyamatban...
 Szinusz
 Méret
+
 Hely
 
 Simítás
@@ -757,6 +806,7 @@ Rendezés
 Hang
 Hang importálva:
 Hangok
+
 Gömb
 Gömb alakú
 Indítóképernyő
@@ -802,6 +852,7 @@ Textúra...
 Textúrák
 Textúrák exportálva
 Textúrák...
+
 
 Téma
 Téma importálva:
@@ -893,6 +944,7 @@ Hullám profil
 Hullám textúra
 Hullám típusa
 Újdonságok
+
 Fehér maszk
 Kifehérítés
 Szélesség
@@ -900,6 +952,7 @@ Ablak
 Drótváz
 Munkaterület
 Világ
+
 Egér átfordítása
 Kamera mozgatása közben az egér átfordul a képernyő szélein
 X
@@ -913,6 +966,7 @@ Nagyítás
 Kicsinyítés
 Nagyítás igazítása
 Keverés típusa
+
 Színtér
 Keresés: Ctrl+F
 Mégse: Esc
@@ -920,8 +974,10 @@ fBM
 Fájl
 GPU memória
 Színátmenet típusa
+
 Csomópontok
 Művelet
+
 csomagolt
 player
 Bővítmény engedélyezve

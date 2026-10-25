@@ -25,12 +25,14 @@ All processing is done locally on device
 Allow Upside Down Camera
 Alpha
 Alpha Discard
+Ambient Occlusion
 Amount
 Anchor Point
 Angle
 Angle Reject
 Animation
 Anisotropy
+Antialiasing
 Append
 Apply
 Apply Displacement
@@ -51,18 +53,31 @@ Atlas
 Atlases
 Attribute
 Auto
+Auto Rebake
+Auto Rebake shows a preview at a quarter of the resolution first
 Auto Run Scripts
+Auto starts each ray just past the high poly above the low poly, up to Max Frontal Distance
 Average
+Average Normals
 Axis
 B
 Back
 Bake
+Bake All
 Bake Material...
+Bake Mesh Map
+Bake Mesh Maps...
+Bake Selected
 Bake Texture
+Bake the outdated maps again once the settings and the scene stop changing
 Bake to Textures
+Baking
+Baking...
 Bands
 Base Color
+Base Normal
 Bent Normal
+Bent Normals
 Bevel
 Bias
 Bits
@@ -95,6 +110,8 @@ Brush...
 Brushes
 Bump
 Burn
+Cage
+Cage Map
 Calculate Normals
 Camera
 Camera Pan Speed
@@ -122,7 +139,9 @@ Clear
 Clear Faces
 Clear Geometry Mask
 Clear Layer
+Clear Mesh Map
 Clear Swatches
+Click to cancel
 Clip End
 Clip Start
 Clone
@@ -143,11 +162,13 @@ Color ID Map
 Color Mask
 Color Ramp
 Color Selection
+Color Source
 Color Space
 ColorID
 Combine
 Combine Color
 Combine XYZ
+Common Settings
 Compare Mask
 Compass
 Cone
@@ -212,6 +233,7 @@ Diagonal
 Difference
 Dilate Radius
 Dilate painted textures to prevent seams
+Dilation
 Dimensions
 DirectX Normal Map
 Direction
@@ -240,6 +262,7 @@ Duplicate Brush
 Duplicate Layer
 Duplicate Material
 Duplicate Swatch
+Edge Protection
 Edges
 Edit
 Edit Image
@@ -304,6 +327,7 @@ Fill Mask
 Fill Mode
 Filter
 Filter Textures
+Fixed Distance
 Flat
 Flatten
 Flatten Group
@@ -348,6 +372,7 @@ Gradient Texture
 Gravity X
 Gravity Y
 Gravity Z
+Gray painted and filled into the skew and cage maps, whatever the material
 Greater
 Greater Than
 Grid
@@ -379,6 +404,8 @@ Hue/Saturation/Value
 Hyperbolic Cosine
 Hyperbolic Sine
 Hyperbolic Tangent
+ID
+Ignore Backface
 Image Texture
 Image to PBR
 Import
@@ -452,11 +479,13 @@ Logarithm
 Magic Texture
 Make Unique
 Manual
+Map
 Map Range
 Mapping
 Mask
 Mask Color
 Mass
+Match by Name
 Material
 Material ID
 Material Index
@@ -465,6 +494,9 @@ Material...
 Materials
 Math
 Max
+Max Distance
+Max Frontal Distance
+Max Rear Distance
 Maximum
 Merge Down
 Merge Geometry
@@ -472,7 +504,11 @@ Merge Group
 Merge Layers
 Mesh
 Mesh Input
+Mesh Map
+Mesh Maps
 Mesh Output
+Mesh map not baked
+Mesh measures the bend of the geometry, also across uv seams
 Mesh...
 Meshes
 Metallic
@@ -500,6 +536,7 @@ Mortar Smooth
 Move
 Multiply
 Name
+Near hard edges rays keep the smooth normals, turning them there would open gaps
 Neural
 New
 New Black Mask
@@ -532,8 +569,10 @@ Normal Map
 Normal Map 1
 Normal Map 2
 Normalize
+Normals
 Not Equal
 Not available in debug build
+Not baked
 Not implemented
 OK
 Object
@@ -544,6 +583,7 @@ Object Normal
 Objects
 Occlusion
 Offset
+Offset of the cage where the cage map is white, relative to the size of the scene. Middle gray is no offset, black pulls the cage in
 Old Color
 Opacity
 Opacity Mode
@@ -587,6 +627,7 @@ Pause
 Pen
 Pencil
 Per Object
+Per Triangle
 Per Udim Tile
 Perspective
 Phase
@@ -629,6 +670,8 @@ Projects
 Prompt
 Quality
 Quantize
+Queued
+Quick Rebake
 R
 RGB
 RGB Curves
@@ -640,6 +683,9 @@ Random
 Randomness
 Range
 Ratio
+Ray Directions
+Rebake
+Rebake Outdated
 Recent
 Redo {step}
 Reflect
@@ -721,12 +767,14 @@ Set as Color ID Map
 Set as Envmap
 Set as Mask
 Setting Source
+Settings
 Setup
 Shader
 Shadows
 Shape
 Share Player Link
 Shared
+Shared with Ambient Occlusion
 Sharpen
 Show 2D View
 Show Asset Names
@@ -744,6 +792,7 @@ Signed in as
 Signing in...
 Sine
 Size
+Skew Map
 Slot
 Small Icons
 Smooth
@@ -757,6 +806,7 @@ Sort
 Sound
 Sound imported:
 Sounds
+Source
 Sphere
 Spherical
 Splash Screen
@@ -802,6 +852,7 @@ Texture...
 Textures
 Textures exported
 Textures...
+The layer is locked
 The mesh changed, the faces of some geometry masks no longer apply
 Theme
 Theme imported:
@@ -893,6 +944,7 @@ Wave Profile
 Wave Texture
 Wave Type
 What's New
+Where nothing is painted, rays follow the smooth normals of the mesh or the normal of each triangle
 White Mask
 Whiteout
 Width
@@ -900,6 +952,7 @@ Window
 Wireframe
 Workspace
 World
+World Space Normal
 Wrap Mouse
 Wrap mouse around view boundaries during camera control
 X
@@ -913,6 +966,7 @@ Zoom In
 Zoom Out
 Zoom to Fit
 blend_type
+by name
 color_space
 ctrl+f to search
 esc to cancel
@@ -920,8 +974,10 @@ fBM
 file
 gpu memory
 gradient_type
+name_low is baked only from name_high, and objects ending in _high are high poly
 nodes
 operation
+outdated
 packed
 player
 plugin enabled

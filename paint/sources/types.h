@@ -77,6 +77,7 @@ typedef struct slot_layer {
 	bool                  locked;       // Painting is blocked, masks and filters follow their layer
 	bool                  effect;       // Mask computed from the mask below it, see slot_layer_effect_base
 	bool                  effect_paint; // Paint effect: texpaint* hold the strokes, texpaint_result* what the stack shows
+	i32                   bake_role;    // bake_role_t, a skew or cage map read by the baker and left out of the material
 	struct slot_layer    *parent;       // Group (for layers) or layer (for masks and filters)
 	struct gpu_texture   *texpaint;     // Base or mask
 	struct gpu_texture   *texpaint_nor;
@@ -308,6 +309,7 @@ typedef struct context {
 	split_type_t                split_by;
 	f64                         select_time;
 	viewport_mode_t             viewport_mode;
+	i32                         viewport_mesh_map; // Slot shown by VIEWPORT_MODE_MESH_MAP, MESH_MAP_COUNT for the ray directions
 	void                       *viewport_shader;
 	bool                        hscale_was_changed;
 	mesh_format_t               export_mesh_format;
@@ -585,6 +587,7 @@ typedef struct history_layer_props {
 	bool            effect;
 	bool            effect_paint;
 	geometry_mask_t geometry_mask;
+	i32             bake_role;
 } history_layer_props_t;
 
 typedef struct history_step {
@@ -614,6 +617,9 @@ typedef struct history_step {
 	f32                          layer_angle;
 	i32                          layer_uv_type;
 	geometry_mask_t              layer_geometry; // Geometry mask before the step, swapped on undo and redo of an edit
+	i32                          mesh_map_slot;
+	struct gpu_texture          *mesh_map_tex; // The other version of the mesh map, swapped on undo and redo
+	u32                          mesh_map_sig; // What mesh_map_tex was baked from, see util_bake_signature
 	i32                          swatch;
 	struct swatch_color         *swatch_color;
 	struct swatch_color_t_array *swatch_colors;
@@ -719,6 +725,8 @@ typedef struct project {
 	struct ui_node_canvas_t_array               *mesh_nodes;
 	struct i32_array                            *mesh_nodes_objects; // Object index for each mesh_nodes canvas
 	struct f32_array_t_array                    *mesh_paths;         // Path and curve tool points
+	struct mesh_map_data_t_array                *mesh_maps;          // Version 23, baked mesh maps
+	char                                        *bake_settings;      // Version 23, json of bake_settings_t
 	project_runtime_t                           *_;
 } project_t;
 
@@ -795,7 +803,67 @@ typedef struct layer_data {
 	string_array_t   *geometry_mask_face_objects; // One name per entry of geometry_mask_t.faces, NULL when empty
 	i32_array_t      *geometry_mask_face_counts;  // Triangle count of each entry when selected
 	buffer_t         *geometry_mask_faces;        // Bits of each entry back to back, (count + 7) / 8 bytes each
+	i32               bake_role;                  // bake_role_t, optional
 } layer_data_t;
+
+typedef struct mesh_map_data {
+	i32            slot;    // mesh_map_slot_t
+	i32            set;     // Texture set, always 0 for now
+	i32            res;     // Width and height pixels
+	i32            bpp;     // Bits per channel, 8 or 16
+	struct buffer *texture; // Lz4 compressed rgba pixels
+} mesh_map_data_t;
+
+typedef struct bake_settings {
+	i32 res;                // Width and height of the baked maps
+	i32 dilation;           // Texels filled around the uv islands
+	i32 occlusion_samples;  // Rays per texel
+	f32 occlusion_distance; // Farthest occluder, relative to the size of the scene
+	i32 thickness_samples;
+	f32 thickness_distance;
+	f32 curvature_strength;
+	i32 id_source; // mesh_map_id_source_t
+	i32   maps;            // Bit per mesh_map_slot_t, the slots Bake Selected bakes
+	i32   aa;              // Samples per side of a texel: 1, 2, 4 or 8
+	f32   front_distance;  // Rays to the high poly start this far above the low poly (the cage), relative to the size of the scene
+	f32   rear_distance;   // and find it down to this far below
+	bool  average_normals; // Rays follow the normals averaged over the vertices at the same place, no gaps at hard edges
+	bool  ignore_backface; // Rays pass through high poly triangles they meet from behind
+	bool  match_by_name;   // name_low only finds name_high, and objects ending in _high are high poly
+	char *high_polys;      // Names of the high poly objects, one per line
+	i32   curvature_mode;  // mesh_map_curvature_t
+	bool  auto_rebake;     // Outdated maps are baked again once the settings and the scene stop changing
+	bool  quick_rebake;    // Auto rebake shows a preview at a quarter of the resolution first
+	i32   cage;            // bake_cage_t
+	i32   skew_base;       // bake_skew_base_t
+	bool  edge_protection; // Rays keep the smooth normals near hard edges, where turning them would open gaps
+	f32   paint_value;     // Value painted into the skew and cage maps
+	f32   cage_range;      // Cage offset of a white texel of the cage map, relative to the size of the scene; black is the opposite
+} bake_settings_t;
+
+typedef struct bake_job bake_job_t; // util_bake.c
+
+typedef struct bvh_node {
+	f32 min[3];
+	f32 max[3];
+	i32 first; // First triangle of a leaf, left child of an inner node
+	i32 count; // Triangles of a leaf, 0 for an inner node
+} bvh_node_t;
+
+typedef struct bvh {
+	f32        *tris; // 9 floats per triangle, world space
+	i32        *ids;  // Id of each triangle, given back by hits
+	i32         tri_count;
+	bvh_node_t *nodes;
+	i32         node_count;
+} bvh_t;
+
+typedef struct bvh_hit {
+	f32 t;
+	f32 u; // Barycentrics of the second and third vertex
+	f32 v;
+	i32 tri;
+} bvh_hit_t;
 
 typedef struct timeline_layer_keyframe_data {
 	i32               frame;
@@ -1049,6 +1117,12 @@ typedef struct layer_data_t_array {
 	int            length;
 	int            capacity;
 } layer_data_t_array_t;
+
+typedef struct mesh_map_data_t_array {
+	mesh_map_data_t **buffer;
+	int               length;
+	int               capacity;
+} mesh_map_data_t_array_t;
 
 typedef struct timeline_layer_keyframe_data_t_array {
 	timeline_layer_keyframe_data_t **buffer;

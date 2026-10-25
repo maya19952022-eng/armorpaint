@@ -25,12 +25,14 @@ Todo o processamento é feito localmente no dispositivo
 Permitir Câmera Invertida
 Alfa
 Descartar Alfa
+Oclusão de Ambiente
 Quantidade
 Ponto de Âncora
 Ângulo
 Rejeição de Ângulo
 Animação
 Anisotropia
+Antisserrilhamento
 Anexar
 Aplicar
 Aplicar Deslocamento
@@ -51,18 +53,31 @@ Atlas
 Atlas
 Atributo
 Automático
+Rebake Automático
+O Rebake Automático mostra antes uma prévia em um quarto da resolução
 Executar Scripts Automaticamente
+Auto começa cada raio logo depois do high poly acima do low poly, até a Distância Frontal Máxima
 Média
+Média das Normais
 Eixo
 B
 Costas
 Cozinhar
+Cozinhar Todos
 Cozinhar Material
+Cozinhar Mapa da Malha
+Cozinhar Mapas da Malha...
+Cozinhar Selecionados
 Cozinhar Textura
+Assa de novo os mapas desatualizados quando os ajustes e a cena param de mudar
 Cozinhar para Texturas
+Cozimento
+Cozinhando...
 Faixas
 Cor Base
+Normal Base
 Normal Dobrada
+Normais Dobradas
 Chanfro
 Viés
 Bits
@@ -95,6 +110,8 @@ Pincel...
 Pincéis
 Relevo
 Queimar
+Gaiola
+Mapa da Gaiola
 Calcular Normais
 Câmera
 Velocidade de Pan da Câmera
@@ -122,7 +139,9 @@ Limpar
 Limpar Faces
 Limpar Máscara Geométrica
 Limpar Camada
+Limpar Mapa da Malha
 Limpar Amostras
+Clique para cancelar
 Fim do Recorte
 Início do Recorte
 Clonar
@@ -143,11 +162,13 @@ Mapa de ID de Cor
 Máscara de Cor
 Rampa de Cores
 Seleção de Cor
+Origem da Cor
 Espaço de Cor
 ID de Cor
 Combinar
 Combinar Cor
 Combinar XYZ
+Ajustes Comuns
 Máscara de Comparação
 Bússola
 Cone
@@ -212,6 +233,7 @@ Diagonal
 Diferença
 Dilatar Raio
 Dilatar texturas pintadas para evitar costuras
+Dilatação
 Dimensões
 Mapa de Normais DirectX
 Direção
@@ -240,6 +262,7 @@ Duplicar Pincel
 Duplicar Camada
 Duplicar Material
 Duplicar Amostra
+Proteção de Quinas
 Bordas
 Editar
 Editar Imagem
@@ -304,6 +327,7 @@ Máscara de Preenchimento
 Modo de Preenchimento
 Filtro
 Filtrar Texturas
+Distância Fixa
 Plano
 Achatar
 Achatar Grupo
@@ -348,6 +372,7 @@ Textura de Gradiente
 Gravidade X
 Gravidade Y
 Gravidade Z
+Cinza pintado e preenchido nos mapas de skew e da gaiola, seja qual for o material
 Maior
 Maior Que
 Grade
@@ -379,6 +404,8 @@ Matiz/Saturação/Valor
 Cosseno Hiperbólico
 Seno Hiperbólico
 Tangente Hiperbólica
+ID
+Ignorar Verso
 Textura de Imagem
 Imagem para PBR
 Importar
@@ -452,11 +479,13 @@ Logaritmo
 Textura Mágica
 Tornar Único
 Manual
+Mapa
 Mapear Intervalo
 Mapeamento
 Máscara
 Cor da Máscara
 Massa
+Casar pelo Nome
 Material
 ID de Material
 Índice de Material
@@ -465,6 +494,9 @@ Material...
 Materiais
 Matemática
 Máximo
+Distância Máxima
+Distância Frontal Máxima
+Distância Traseira Máxima
 Máximo
 Mesclar para Baixo
 Mesclar Geometria
@@ -472,7 +504,11 @@ Mesclar Grupo
 Mesclar Camadas
 Malha
 Entrada de Malha
+Mapa da Malha
+Mapas da Malha
 Saída de Malha
+Mesh map não assado
+Mesh mede a dobra da geometria, também sobre costuras de UV
 Malha...
 Malhas
 Metálico
@@ -500,6 +536,7 @@ Suavização da Argamassa
 Mover
 Multiplicar
 Nome
+Perto das quinas vivas os raios mantêm as normais suavizadas, virá-los ali abriria buracos
 Neural
 Novo
 Nova Máscara Preta
@@ -532,8 +569,10 @@ Mapa de Normais
 Mapa de Normais 1
 Mapa de Normais 2
 Normalizar
+Normais
 Diferente
 Não disponível na compilação de depuração
+Não cozido
 Não implementado
 OK
 Objeto
@@ -544,6 +583,7 @@ Normal do Objeto
 Objetos
 Oclusão
 Deslocamento
+Deslocamento da gaiola onde o mapa da gaiola é branco, relativo ao tamanho da cena. Cinza médio não desloca, preto recolhe a gaiola
 Cor Antiga
 Opacidade
 Modo de Opacidade
@@ -587,6 +627,7 @@ Pausar
 Caneta
 Lápis
 Por Objeto
+Por Triângulo
 Por Telha UDIM
 Perspectiva
 Fase
@@ -629,6 +670,8 @@ Projetos
 Prompt
 Qualidade
 Quantizar
+Na fila
+Rebake Rápido
 R
 RGB
 Curvas RGB
@@ -640,6 +683,9 @@ Aleatório
 Aleatoriedade
 Intervalo
 Proporção
+Direções dos Raios
+Cozinhar de Novo
+Refazer Desatualizados
 Recente
 Refazer {step}
 Refletir
@@ -721,12 +767,14 @@ Definir como Mapa de ID de Cor
 Definir como Mapa de Ambiente
 Definir como Máscara
 Definindo Origem
+Ajustes
 Configuração
 Shader
 Sombras
 Forma
 Compartilhar Link do Player
 Compartilhado
+Compartilhado com a Oclusão de Ambiente
 Nitidez
 Mostrar Visualização 2D
 Mostrar Nomes dos Ativos
@@ -744,6 +792,7 @@ Conectado como
 Entrando...
 Seno
 Tamanho
+Mapa de Skew
 Slot
 Ícones Pequenos
 Suavizar
@@ -757,6 +806,7 @@ Ordenar
 Som
 Som importado:
 Sons
+Fonte
 Esfera
 Esférico
 Tela de Inicialização
@@ -802,6 +852,7 @@ Textura...
 Texturas
 Texturas exportadas
 Texturas...
+A camada está travada
 A malha mudou, as faces de algumas máscaras geométricas não valem mais
 Tema
 Tema importado:
@@ -893,6 +944,7 @@ Perfil da Onda
 Textura de Ondas
 Tipo de Onda
 O que há de Novo
+Onde nada foi pintado, os raios seguem as normais suavizadas da malha ou a normal de cada triângulo
 Máscara Branca
 Branqueamento
 Largura
@@ -900,6 +952,7 @@ Janela
 Aramado
 Área de Trabalho
 Mundo
+Normal no Espaço do Mundo
 Envolver Mouse
 Envolver mouse nas bordas da visualização durante controle da câmera
 X
@@ -913,6 +966,7 @@ Aumentar Zoom
 Diminuir Zoom
 Ajustar Zoom
 Tipo de Mistura
+pelo nome
 Espaço de Cor
 Ctrl+F para procurar
 Esc para cancelar
@@ -920,8 +974,10 @@ fBM
 Arquivo
 Memória GPU
 Tipo de Gradiente
+nome_low só é cozido a partir de nome_high, e objetos terminados em _high são high poly
 nós
 Operação
+desatualizado
 empacotado
 player
 extensão ativada

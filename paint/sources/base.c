@@ -241,6 +241,7 @@ void base_draw_dashed_rect(f32 x, f32 y, f32 w, f32 h) {
 }
 
 void base_update(void *_) {
+	util_bake_auto_update();
 	if (mouse_movement_x != 0 || mouse_movement_y != 0) {
 		iron_mouse_set_cursor(IRON_CURSOR_ARROW);
 	}

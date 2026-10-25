@@ -335,6 +335,7 @@ void ui_dock_reset() {
 	dock_default_leaf(sidebar1, TAB_MATERIALS);
 	dock_default_leaf(sidebar1, TAB_BRUSHES);
 	dock_default_leaf(sidebar1, TAB_PLUGINS);
+	dock_default_leaf(sidebar1, TAB_BAKING);
 
 	f32 scale     = g_config->window_scale;
 	i32 sidebar_w = math_floor(ui_sidebar_default_w * scale);
@@ -477,14 +478,24 @@ void ui_dock_load() {
 	dock_free(ui_dock_root);
 	ui_dock_root = root;
 
-	// Tabs added after the config was saved
+	// Tabs added after the config was saved go next to a tab of their default area
 	dock_node_t *leaves[DOCK_MAX_LEAVES];
-	dock_collect_leaves(ui_dock_root, leaves, 0);
+	i32          leaf_count = dock_collect_leaves(ui_dock_root, leaves, 0);
 	for (i32 i = 0; i < TAB_COUNT; ++i) {
 		tab_draw_t *tab = ui_base_get_tab(i);
 		if (tab != NULL && !docked[i]) {
-			tab->closed = tab->closed_default;
-			dock_leaf_add(leaves[0], i, -1);
+			tab->closed       = tab->closed_default;
+			dock_node_t *leaf = NULL;
+			for (i32 k = 0; k < leaf_count && leaf == NULL && tab->area >= 0; ++k) {
+				for (i32 j = 0; j < leaves[k]->tab_count; ++j) {
+					tab_draw_t *other = ui_base_get_tab(leaves[k]->tabs[j]);
+					if (other != NULL && other->area == tab->area) {
+						leaf = leaves[k];
+						break;
+					}
+				}
+			}
+			dock_leaf_add(leaf != NULL ? leaf : leaves[0], i, -1);
 		}
 	}
 	ui_dock_layout();

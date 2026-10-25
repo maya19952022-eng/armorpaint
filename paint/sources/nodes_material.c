@@ -13,6 +13,7 @@ void nodes_material_init() {
 	layer_node_init();
 	layer_mask_node_init();
 	material_node_init();
+	mesh_map_node_init();
 	object_info_node_init();
 	picker_node_init();
 	script_node_init();

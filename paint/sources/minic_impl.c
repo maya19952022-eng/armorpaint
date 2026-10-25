@@ -1528,6 +1528,170 @@ void script_bake_lightmap_cancel(void) {
 	render_path_raytrace_bake_lightmap_cancel();
 }
 
+// Queues a bake of the mesh map slot, see mesh_map_slot_t
+bool script_bake_mesh_map(i32 slot) {
+	return util_bake_run(slot, NULL, NULL);
+}
+
+void script_bake_mesh_maps(void) {
+	util_bake_run_all(NULL, NULL);
+}
+
+// The slots set in bake_settings_t.maps, checked in the Baking tab
+void script_bake_selected(void) {
+	util_bake_run_selected(NULL, NULL);
+}
+
+// Opens a dockable tab and brings it to front, see tab_id_t
+void script_show_tab(i32 tab) {
+	if (tab >= 0 && tab < TAB_COUNT) {
+		ui_base_show_tab(tab);
+	}
+}
+
+bool script_bake_busy(void) {
+	return util_bake_busy();
+}
+
+void script_bake_cancel(void) {
+	util_bake_cancel();
+}
+
+// bake_state_t of a mesh map slot: idle, queued or running
+i32 script_bake_state(i32 slot) {
+	return slot >= 0 && slot < MESH_MAP_COUNT ? util_bake_state(slot, NULL) : BAKE_STATE_IDLE;
+}
+
+// Marks a mesh as high poly: mesh maps are baked from it onto the other objects
+void script_bake_set_high_poly(object_t *o, bool high) {
+	if (o != NULL) {
+		util_bake_set_high_poly(o->name, high);
+	}
+}
+
+bool script_bake_is_high_poly(object_t *o) {
+	return o != NULL && util_bake_is_high_poly(o->name);
+}
+
+// Takes one slot out of the queue, or stops it when it is running
+void script_bake_cancel_slot(i32 slot) {
+	if (slot >= 0 && slot < MESH_MAP_COUNT) {
+		util_bake_cancel_job(slot, NULL);
+	}
+}
+
+f32 script_bake_progress(void) {
+	return util_bake_progress();
+}
+
+// Settings used by the next queued bakes, saved with the project
+bake_settings_t *script_bake_get_settings(void) {
+	return util_bake_get_settings();
+}
+
+gpu_texture_t *script_mesh_map_get(i32 slot) {
+	return util_bake_mesh_map(slot);
+}
+
+// Rgba floats in 0-1 of a baked slot, NULL when it is not baked
+f32_array_t *script_mesh_map_pixels(i32 slot) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	f32_array_t *pixels = util_bake_pixels(slot);
+	script_gpu_end(current, in_use);
+	return pixels;
+}
+
+void script_mesh_map_clear(i32 slot) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	util_bake_clear(slot);
+	script_gpu_end(current, in_use);
+}
+
+// Queues the bake of a Bake Texture node into the selected layer, with the bake type stored in its button
+void script_bake_node(ui_node_t *node) {
+	if (node != NULL && string_equals(node->type, "TEX_BAKE")) {
+		bake_texture_node_bake(node);
+	}
+}
+
+// The slot holds a map baked from other settings or another scene, or only a quick preview
+bool script_bake_outdated(i32 slot) {
+	return util_bake_outdated(slot);
+}
+
+// Queues the outdated maps, returns how many
+i32 script_bake_rebake_outdated(void) {
+	return util_bake_run_outdated();
+}
+
+// Selects the skew or cage map layer to paint it, made on top of the stack the first time
+slot_layer_t *script_bake_paint_role(i32 role) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	slot_layer_t *l = util_bake_paint_role(role);
+	script_gpu_end(current, in_use);
+	return l;
+}
+
+// Fills the skew or cage map with a gray value, or clears it to transparent when value is below 0
+void script_bake_role_fill(i32 role, f32 value) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	util_bake_role_fill(role, value);
+	script_gpu_end(current, in_use);
+}
+
+// Shows a mesh map in the viewport, MESH_MAP_COUNT for the directions of the rays to the high poly
+void script_set_viewport_mesh_map(i32 slot) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	context_set_viewport_mesh_map(slot);
+	script_gpu_end(current, in_use);
+}
+
+// Rgba floats of the ray directions shown by the viewport, NULL until they are made
+f32_array_t *script_bake_ray_directions_pixels(void) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	f32_array_t *pixels = util_bake_ray_directions_pixels();
+	script_gpu_end(current, in_use);
+	return pixels;
+}
+
+// Picks the export preset of the textures by its file name without .json, false when there is none
+bool script_export_set_preset(char *name) {
+	box_export_fetch_presets();
+	i32 i = string_array_index_of(box_export_files, name);
+	if (i < 0) {
+		return false;
+	}
+	box_export_preset_index = i;
+	box_export_parse_preset();
+	return true;
+}
+
+// Texels computed by the last mesh map bake: all of the uv islands, or those of the objects that changed
+i32 script_bake_texels_baked(void) {
+	return util_bake_texels_baked();
+}
+
+// Steps that undo can take back
+i32 script_history_undos(void) {
+	return history_undos;
+}
+
+gpu_texture_t *script_bake_node_texture(ui_node_t *node) {
+	return node != NULL && string_equals(node->type, "TEX_BAKE") ? bake_texture_node_texture(node) : NULL;
+}
+
 void script_quit(void) {
 	iron_stop();
 }

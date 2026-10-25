@@ -1,0 +1,13 @@
+{
+	"textures": [
+		{ "name": "normal_base", "channels": ["mesh_normal_r", "mesh_normal_g", "mesh_normal_b", "1.0"], "color_space": "linear" },
+		{ "name": "world_space_normals", "channels": ["mesh_world_normal_r", "mesh_world_normal_g", "mesh_world_normal_b", "1.0"], "color_space": "linear" },
+		{ "name": "id", "channels": ["mesh_id_r", "mesh_id_g", "mesh_id_b", "1.0"], "color_space": "linear" },
+		{ "name": "ambient_occlusion", "channels": ["mesh_ao", "mesh_ao", "mesh_ao", "1.0"], "color_space": "linear" },
+		{ "name": "curvature", "channels": ["mesh_curvature", "mesh_curvature", "mesh_curvature", "1.0"], "color_space": "linear" },
+		{ "name": "position", "channels": ["mesh_position_r", "mesh_position_g", "mesh_position_b", "1.0"], "color_space": "linear" },
+		{ "name": "thickness", "channels": ["mesh_thickness", "mesh_thickness", "mesh_thickness", "1.0"], "color_space": "linear" },
+		{ "name": "bent_normals", "channels": ["mesh_bent_normal_r", "mesh_bent_normal_g", "mesh_bent_normal_b", "1.0"], "color_space": "linear" },
+		{ "name": "opacity", "channels": ["mesh_opacity", "mesh_opacity", "mesh_opacity", "1.0"], "color_space": "linear" }
+	]
+}

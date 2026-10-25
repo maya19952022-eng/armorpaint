@@ -424,6 +424,57 @@ static bool layers_refill_after_paint(slot_layer_t *l, void *data) {
 	return slot_layer_is_effect(l) && layers_owner(l) == data;
 }
 
+static bool layers_canvas_reads_mesh_maps(ui_node_canvas_t *c, i32 depth) {
+	for (i32 i = 0; c != NULL && i < c->nodes->length; ++i) {
+		ui_node_t *n = c->nodes->buffer[i];
+		if (string_equals(n->type, "MESH_MAP")) {
+			return true;
+		}
+		if (string_equals(n->type, "GROUP") && depth < 8) {
+			for (i32 j = 0; j < g_project->_->material_groups->length; ++j) {
+				node_group_t *g = g_project->_->material_groups->buffer[j];
+				if (string_equals(g->canvas->name, n->name) && layers_canvas_reads_mesh_maps(g->canvas, depth + 1)) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+// The material samples a mesh map through a Mesh Map node, in its canvas or in its node groups
+bool layers_material_reads_mesh_maps(slot_material_t *m) {
+	return m != NULL && layers_canvas_reads_mesh_maps(m->canvas, 0);
+}
+
+// Fills that read mesh maps, and the effects of the layers that own one
+static bool layers_refill_mesh_map(slot_layer_t *l, void *data) {
+	if (layers_material_reads_mesh_maps(l->fill_material) || layers_material_linked(l->fill_material)) {
+		return true;
+	}
+	if (!slot_layer_is_effect(l)) {
+		return false;
+	}
+	slot_layer_t *owner = layers_owner(l);
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		slot_layer_t *f = g_project->_->layers->buffer[i];
+		if (layers_owner(f) == owner && layers_material_reads_mesh_maps(f->fill_material)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// A mesh map changed: refill whatever reads it, whichever material is selected
+void layers_update_mesh_map_layers() {
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		if (layers_material_reads_mesh_maps(g_project->_->layers->buffer[i]->fill_material)) {
+			layers_refill(&layers_refill_mesh_map, NULL);
+			return;
+		}
+	}
+}
+
 // Effects are refilled from the bottom of the stack up, so each one reads the fresh output of the one below it
 void layers_update_effects() {
 	layers_refill(&layers_refill_effect, NULL);
@@ -1390,6 +1441,9 @@ void layers_create_color_layer(i32 base_color, f32 occlusion, f32 roughness, f32
 }
 
 void layers_duplicate_layer(slot_layer_t *l) {
+	if (l->bake_role != BAKE_ROLE_NONE) {
+		return; // One skew map and one cage map per project
+	}
 	if (!slot_layer_is_group(l)) {
 		slot_layer_t *new_layer = slot_layer_duplicate(l);
 		context_set_layer(new_layer);
@@ -1424,7 +1478,10 @@ void layers_duplicate_layer(slot_layer_t *l) {
 		array_insert(g_project->_->layers, array_index_of(g_project->_->layers, l) + 1, new_group);
 		// group.show_panel = true;
 		for (i32 i = 0; i < slot_layer_get_children(l)->length; ++i) {
-			slot_layer_t         *c         = slot_layer_get_children(l)->buffer[i];
+			slot_layer_t *c = slot_layer_get_children(l)->buffer[i];
+			if (c->bake_role != BAKE_ROLE_NONE) {
+				continue; // Left out of the material, also of a flattened group
+			}
 			slot_layer_t_array_t *masks     = slot_layer_get_masks(c, false);
 			slot_layer_t         *new_layer = slot_layer_duplicate(c);
 			new_layer->parent               = new_group;
@@ -1928,7 +1985,8 @@ slot_layer_t *layers_flatten_group(slot_layer_t *group) {
 }
 
 void layers_merge_layer(slot_layer_t *l0, slot_layer_t *l1, bool use_mask) {
-	if (!l1->visible || slot_layer_is_group(l1) || (l1->effect && !slot_layer_is_visible(l1))) {
+	if (!l1->visible || slot_layer_is_group(l1) || (l1->effect && !slot_layer_is_visible(l1)) || l1->bake_role != BAKE_ROLE_NONE ||
+	    l0->bake_role != BAKE_ROLE_NONE) {
 		return;
 	}
 	slot_layer_t  v1;

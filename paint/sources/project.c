@@ -89,6 +89,7 @@ void project_save_as(bool save_and_quit) {
 
 void project_cleanup() {
 	render_path_raytrace_bake_lightmap_cancel();
+	util_bake_reset();
 	util_mesh_remove_merged();
 	nodes_mesh_reset();
 	util_path_tool_reset();
@@ -144,6 +145,7 @@ void project_new(bool reset_layers) {
 		any_array_push(g_project->_->layers, slot_layer_create("", LAYER_SLOT_TYPE_LAYER, NULL));
 		g_context->layer = g_project->_->layers->buffer[0];
 	}
+	context_update_role_view();
 
 	g_context->layer_preview_dirty = true;
 	g_context->layer_filter        = 0;

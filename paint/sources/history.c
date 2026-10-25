@@ -89,6 +89,8 @@ char *history_action_to_string(history_action_t action) {
 		return tr("Lock Layer");
 	case HISTORY_ACTION_LAYER_GEOMETRY_MASK:
 		return tr("Geometry Mask");
+	case HISTORY_ACTION_BAKE_MESH_MAP:
+		return tr("Bake Mesh Map");
 	}
 	return tr("Paint");
 }
@@ -359,6 +361,7 @@ void history_swap_canvas(history_step_t *step) {
 }
 
 void history_undo() {
+	util_bake_roles_changed(); // The step may touch a skew or cage map
 	if (history_undos > 0) {
 		i32             active = history_steps->length - 1 - history_redos;
 		history_step_t *step   = history_steps->buffer[active];
@@ -595,6 +598,9 @@ void history_undo() {
 			step->canvas        = g_context->material->canvas;
 			slot_material_delete(g_context->material);
 		}
+		else if (step->action == HISTORY_ACTION_BAKE_MESH_MAP) {
+			util_bake_swap_history(step);
+		}
 		else { // Paint operation
 			history_undo_i    = history_undo_i - 1 < 0 ? g_config->undo_steps - 1 : history_undo_i - 1;
 			slot_layer_t *lay = history_undo_slot(history_undo_i);
@@ -757,6 +763,7 @@ void history_swap_active() {
 }
 
 void history_redo() {
+	util_bake_roles_changed();
 	if (history_redos > 0) {
 		i32             active = history_steps->length - history_redos;
 		history_step_t *step   = history_steps->buffer[active];
@@ -942,6 +949,9 @@ void history_redo() {
 			ui_nodes_canvas_changed();
 			ui_nodes_hwnd->redraws = 2;
 		}
+		else if (step->action == HISTORY_ACTION_BAKE_MESH_MAP) {
+			util_bake_swap_history(step);
+		}
 		else { // Paint operation
 			slot_layer_t *lay = history_undo_slot(history_undo_i);
 			context_select_paint_object(g_project->_->paint_objects->buffer[step->object]);
@@ -975,13 +985,16 @@ void history_redo() {
 	base_redraw_status();
 }
 
-// Dropped steps own copies of geometry masks, with face bits they can be large
-static void history_step_free(history_step_t *s) {
-	slot_layer_geometry_mask_free(&s->layer_geometry);
-	if (s->layer_props != NULL) {
-		slot_layer_geometry_mask_free(&s->layer_props->geometry_mask);
+// Steps own the mesh map they keep for undo, and copies of geometry masks: with face bits they can be large
+static void history_step_free(history_step_t *step) {
+	if (step->mesh_map_tex != NULL) {
+		gpu_delete_texture(step->mesh_map_tex);
 	}
-	free(s);
+	slot_layer_geometry_mask_free(&step->layer_geometry);
+	if (step->layer_props != NULL) {
+		slot_layer_geometry_mask_free(&step->layer_props->geometry_mask);
+	}
+	free(step);
 }
 
 void history_reset() {
@@ -1004,6 +1017,7 @@ void history_reset() {
 }
 
 history_step_t *history_push(history_action_t action) {
+	util_bake_roles_changed();
 	char *name = history_action_to_string(action);
 #if defined(IRON_WINDOWS) || defined(IRON_LINUX) || defined(IRON_MACOS)
 	char *filename = string_equals(g_project->_->filepath, "") ? ui_files_filename
@@ -1233,6 +1247,7 @@ history_layer_props_t *history_layer_props(slot_layer_t *l) {
 	p->effect        = l->effect;
 	p->effect_paint  = l->effect_paint;
 	p->geometry_mask = slot_layer_geometry_mask_copy(&l->geometry_mask);
+	p->bake_role     = l->bake_role;
 	return p;
 }
 
@@ -1257,6 +1272,7 @@ void history_set_layer_props(history_layer_props_t *p, slot_layer_t *l) {
 	}
 	slot_layer_geometry_mask_free(&l->geometry_mask);
 	l->geometry_mask = slot_layer_geometry_mask_copy(&p->geometry_mask);
+	l->bake_role     = p->bake_role; // A skew or cage map comes back as one
 }
 
 void history_merge_layers() {

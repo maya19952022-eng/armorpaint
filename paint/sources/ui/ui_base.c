@@ -101,6 +101,24 @@ void ui_base_init() {
 	}
 }
 
+// The mesh maps and the ray directions as viewport modes, true when one was picked
+bool ui_base_draw_mesh_map_modes() {
+	ui_menu_separator();
+	ui_text(tr("Mesh Maps"), UI_ALIGN_RIGHT, 0x00000000);
+	i32  shown   = g_context->viewport_mode == VIEWPORT_MODE_MESH_MAP ? g_context->viewport_mesh_map : -1;
+	i32  picked  = shown;
+	bool changed = false;
+	for (i32 slot = 0; slot <= MESH_MAP_COUNT; ++slot) {
+		ui_radio(&picked, slot, slot < MESH_MAP_COUNT ? util_bake_slot_name(slot) : tr("Ray Directions"), "");
+		changed |= ui_item_changed();
+	}
+	if (changed && picked != shown) {
+		context_set_viewport_mesh_map(picked);
+		return true;
+	}
+	return false;
+}
+
 void ui_base_menu_draw_viewport_mode() {
 	i32  mode         = g_context->viewport_mode;
 	bool mode_changed = false;
@@ -115,6 +133,9 @@ void ui_base_menu_draw_viewport_mode() {
 	for (i32 i = 0; i < modes->length; ++i) {
 		ui_radio(&mode, i, modes->buffer[i], shortcuts->buffer[i]);
 		mode_changed |= ui_item_changed();
+	}
+	if (ui_base_draw_mesh_map_modes()) {
+		g_ui->changed = true;
 	}
 
 	i32 index = string_array_index_of(shortcuts, keyboard_key_code(g_ui->key_code));
@@ -236,6 +257,7 @@ void ui_base_init_tabs() {
 	_draw_callback_create(tab_materials_draw, TAB_MATERIALS, "Materials", TAB_AREA_SIDEBAR1);
 	_draw_callback_create(tab_brushes_draw, TAB_BRUSHES, "Brushes", TAB_AREA_SIDEBAR1);
 	_draw_callback_create(tab_plugins_draw, TAB_PLUGINS, "Plugins", TAB_AREA_SIDEBAR1);
+	_draw_callback_create(tab_baking_draw, TAB_BAKING, "Baking", TAB_AREA_SIDEBAR1)->closed_default = true;
 	_draw_callback_create(tab_browser_draw, TAB_BROWSER, "Browser", TAB_AREA_STATUS);
 	_draw_callback_create(tab_textures_draw, TAB_TEXTURES, "Textures", TAB_AREA_STATUS);
 	_draw_callback_create(tab_fonts_draw, TAB_FONTS, "Fonts", TAB_AREA_STATUS);
