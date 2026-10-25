@@ -17,7 +17,7 @@ static i32                 mesh_image_cache_cap   = 0;
 gpu_texture_t *mesh_image_node_texture(ui_node_t *node) {
 	i32 i = nodes_mesh_button(node, 0);
 	if (string_equals(node->type, "LAYER_MASK")) {
-		return i >= 0 && i < g_project->_->layers->length ? g_project->_->layers->buffer[i]->texpaint : NULL; // 9999 - Layer deleted
+		return i >= 0 && i < g_project->_->layers->length ? slot_layer_result(g_project->_->layers->buffer[i], 0) : NULL; // 9999 - Layer deleted
 	}
 	if (i < 0 || i >= g_project->_->assets->length) { // 9999 - Texture deleted
 		return NULL;

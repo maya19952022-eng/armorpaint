@@ -595,6 +595,7 @@ X2(script_layer_paste_mask, "p:slot_layer_t(p:slot_layer_t src,p:slot_layer_t ta
 X2(script_layer_set_locked, "v(p:slot_layer_t l,b locked)", v, p, b)
 X2(script_layer_set_visible, "v(p:slot_layer_t l,b visible)", v, p, b)
 X2(script_layer_add_effect, "p:slot_layer_t(p:slot_layer_t l,i type)", p, p, i)
+X2(script_layer_add_generator, "p:slot_layer_t(p:slot_layer_t l,i preset)", p, p, i)
 X2(script_layer_set_geometry_mode, "v(p:slot_layer_t l,i include0_exclude1)", v, p, i)
 X3(script_layer_set_geometry_object, "v(p:slot_layer_t l,p:object_t object,b selected)", v, p, p, b)
 X3(script_layer_set_geometry_tile, "v(p:slot_layer_t l,i tile,b selected)", v, p, i, b)

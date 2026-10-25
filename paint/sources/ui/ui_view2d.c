@@ -293,8 +293,9 @@ static f32           _ui_view2d_move_y     = 0.0;
 static bool          _ui_view2d_moving     = false;
 static bool          _ui_view2d_move_apply = false;
 
+// A paint effect is not moved: the move shifts its own textures, the stack shows its result
 static bool ui_view2d_layer_movable(slot_layer_t *l) {
-	return (slot_layer_is_layer(l) || slot_layer_is_mask(l)) && l->fill_material == NULL && l->texpaint_sculpt == NULL;
+	return (slot_layer_is_layer(l) || slot_layer_is_mask(l)) && l->fill_material == NULL && l->texpaint_sculpt == NULL && !slot_layer_is_paint_effect(l);
 }
 
 // Shift the texture contents, pixels moved out of the texture are discarded
@@ -630,6 +631,9 @@ void ui_view2d_update(void *_) {
 			else {
 				draw_set_color(color_from_floats(layer->mask_opacity, layer->mask_opacity, layer->mask_opacity, 1.0));
 			}
+
+			slot_layer_t view;
+			layer = slot_layer_result_view(layer, &view); // What the stack of a paint effect shows
 
 			tex = slot_layer_is_mask(g_context->layer)      ? layer->texpaint
 			      : ui_view2d_tex_type == PAINT_TEX_BASE    ? layer->texpaint

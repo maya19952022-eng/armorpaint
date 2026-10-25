@@ -57,14 +57,18 @@ typedef struct slot_layer {
 	char                 *name;
 	char                 *ext;
 	bool                  visible;
-	bool                  locked;   // Painting is blocked, masks and filters follow their layer
-	bool                  effect;   // Mask computed from the mask below it, see slot_layer_effect_base
-	struct slot_layer    *parent;   // Group (for layers) or layer (for masks and filters)
-	struct gpu_texture   *texpaint; // Base or mask
+	bool                  locked;       // Painting is blocked, masks and filters follow their layer
+	bool                  effect;       // Mask computed from the mask below it, see slot_layer_effect_base
+	bool                  effect_paint; // Paint effect: texpaint* hold the strokes, texpaint_result* what the stack shows
+	struct slot_layer    *parent;       // Group (for layers) or layer (for masks and filters)
+	struct gpu_texture   *texpaint;     // Base or mask
 	struct gpu_texture   *texpaint_nor;
 	struct gpu_texture   *texpaint_pack;
-	struct gpu_texture   *texpaint_preview; // Layer preview
-	f32                   mask_opacity;     // Opacity mask
+	struct gpu_texture   *texpaint_preview;     // Layer preview
+	struct gpu_texture   *texpaint_result;      // Paint effect: the input with the strokes over it, rebuilt, not saved
+	struct gpu_texture   *texpaint_result_nor;  // Layer stacks only
+	struct gpu_texture   *texpaint_result_pack; // Layer stacks only
+	f32                   mask_opacity;         // Opacity mask
 	struct slot_material *fill_material;
 	bool                  show_panel;
 	blend_type_t          blending[LAYER_CH_COUNT]; // Per channel, [LAYER_CH_BASE] first
@@ -559,6 +563,7 @@ typedef struct history_layer_props {
 	f32             opacity[LAYER_CH_COUNT];
 	i32             fill_material; // Index + 1, 0 for a paint layer
 	bool            effect;
+	bool            effect_paint;
 	geometry_mask_t geometry_mask;
 } history_layer_props_t;
 
@@ -766,6 +771,7 @@ typedef struct layer_data {
 	i32               geometry_mask_mode;    // geometry_mask_mode_t, the three geometry_mask fields are optional
 	i32_array_t      *geometry_mask_tiles;   // NULL when empty
 	string_array_t   *geometry_mask_objects; // Paint object names, NULL when empty
+	bool              effect_paint;          // Optional, the strokes of a paint effect are in texpaint*
 } layer_data_t;
 
 typedef struct timeline_layer_keyframe_data {

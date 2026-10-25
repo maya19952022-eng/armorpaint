@@ -596,7 +596,10 @@ void minic_register_builtins() {
 	           "BLEND_TYPE_NORMAL_COMBINE");
 	MINIC_ENUM("layer_channel_t", "LAYER_CH_BASE", "LAYER_CH_NOR", "LAYER_CH_OCC", "LAYER_CH_ROUGH", "LAYER_CH_MET", "LAYER_CH_HEIGHT", "LAYER_CH_COUNT");
 	MINIC_ENUM("effect_type_t", "EFFECT_TYPE_FILTER", "EFFECT_TYPE_FILL", "EFFECT_TYPE_LEVELS", "EFFECT_TYPE_HSV", "EFFECT_TYPE_COLOR_BALANCE",
-	           "EFFECT_TYPE_SHARPEN", "EFFECT_TYPE_BLUR", "EFFECT_TYPE_COMPARE_MASK", "EFFECT_TYPE_COLOR_SELECTION", "EFFECT_TYPE_ANCHOR", "EFFECT_TYPE_COUNT");
+	           "EFFECT_TYPE_SHARPEN", "EFFECT_TYPE_BLUR", "EFFECT_TYPE_COMPARE_MASK", "EFFECT_TYPE_COLOR_SELECTION", "EFFECT_TYPE_ANCHOR", "EFFECT_TYPE_PAINT",
+	           "EFFECT_TYPE_GENERATOR", "EFFECT_TYPE_COUNT");
+	MINIC_ENUM("generator_type_t", "GENERATOR_TYPE_EDGES", "GENERATOR_TYPE_GRADIENT", "GENERATOR_TYPE_FACING_UP", "GENERATOR_TYPE_NOISE",
+	           "GENERATOR_TYPE_COUNT");
 	MINIC_ENUM("geometry_mask_mode_t", "GEOMETRY_MASK_INCLUDE", "GEOMETRY_MASK_EXCLUDE");
 	MINIC_ENUM("tool_type_t", "TOOL_TYPE_BRUSH", "TOOL_TYPE_ERASER", "TOOL_TYPE_FILL", "TOOL_TYPE_DECAL", "TOOL_TYPE_TEXT", "TOOL_TYPE_CLONE", "TOOL_TYPE_BLUR",
 	           "TOOL_TYPE_PARTICLE", "TOOL_TYPE_COLORID", "TOOL_TYPE_PICKER", "TOOL_TYPE_MATERIAL", "TOOL_TYPE_CURSOR", "TOOL_TYPE_SELECT", "TOOL_TYPE_EMPTY",
@@ -682,6 +685,7 @@ void minic_register_builtins() {
 	MINIC_B(visible);
 	MINIC_B(locked);
 	MINIC_B(effect);
+	MINIC_B(effect_paint);
 	MINIC_O(parent, slot_layer_t);
 	MINIC_F(mask_opacity);
 	MINIC_O(fill_material, slot_material_t);
@@ -694,6 +698,7 @@ void minic_register_builtins() {
 	MINIC_B(path_text);
 	MINIC_O(path_material, slot_material_t);
 	MINIC_O(texpaint, gpu_texture_t);
+	MINIC_O(texpaint_result, gpu_texture_t);
 	MINIC_O(texpaint_sculpt, gpu_texture_t);
 	MINIC_END();
 

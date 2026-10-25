@@ -797,6 +797,9 @@ void script_layer_update(slot_layer_t *l) {
 	if (l->fill_material != NULL) {
 		script_layer_refill(l);
 	}
+	else if (slot_layer_is_paint_effect(l)) { // Its result follows the blending and opacity of its strokes
+		layers_update_effects_of(l);
+	}
 	make_material_parse_mesh_material();
 	script_gpu_end(current, in_use);
 	g_context->layers_preview_dirty = true;
@@ -901,6 +904,20 @@ slot_layer_t *script_layer_add_effect(slot_layer_t *l, i32 type) {
 	script_gpu_begin(&current, &in_use);
 	base_init_undo_layers();
 	slot_layer_t *e = layers_add_effect(l, type);
+	script_layer_op_end(current, in_use);
+	return e;
+}
+
+// New Generator effect on top of the effect stack of a layer or mask, preset is a generator_type_t
+slot_layer_t *script_layer_add_generator(slot_layer_t *l, i32 preset) {
+	if (!script_layer_valid(l)) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	base_init_undo_layers();
+	slot_layer_t *e = layers_add_generator(l, preset);
 	script_layer_op_end(current, in_use);
 	return e;
 }
@@ -1243,14 +1260,18 @@ void script_layer_clear(slot_layer_t *l) {
 	}
 	else {
 		history_clear_layer();
-		slot_layer_clear(l, slot_layer_is_mask(l) ? 0xffffffff : 0x00000000, NULL, 1.0, layers_default_rough, 0.0);
+		// A mask clears to white, the strokes of a mask paint effect to none
+		slot_layer_clear(l, slot_layer_is_mask(l) && !l->effect_paint ? 0xffffffff : 0x00000000, NULL, 1.0, layers_default_rough, 0.0);
 		util_layer_clear_path_points(l);
+	}
+	if (layers_has_effects()) { // Effects read what was cleared
+		layers_update_effects();
 	}
 	script_layer_op_end(current, in_use);
 }
 
 bool script_layer_invert_mask(slot_layer_t *m) {
-	if (!script_layer_valid(m) || !slot_layer_is_mask(m) || m->fill_material != NULL) {
+	if (!script_layer_valid(m) || !slot_layer_is_mask(m) || m->fill_material != NULL || m->effect_paint) {
 		return false;
 	}
 	gpu_texture_t *current;
@@ -1283,7 +1304,8 @@ slot_layer_t *script_layer_apply_mask(slot_layer_t *m) {
 
 bool script_layer_to_fill(slot_layer_t *l) {
 	// Fills with the current material
-	if (!script_layer_valid(l) || slot_layer_is_group(l) || l->fill_material != NULL || l->path_material != NULL || g_context->material == NULL) {
+	if (!script_layer_valid(l) || slot_layer_is_group(l) || l->fill_material != NULL || l->path_material != NULL || l->effect_paint ||
+	    g_context->material == NULL) {
 		return false;
 	}
 	gpu_texture_t *current;

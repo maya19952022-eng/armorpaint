@@ -277,7 +277,8 @@ buffer_t *export_arm_encode_project(char *path) {
 		                              .blending_ch        = i32_array_create(LAYER_CH_COUNT),
 		                              .opacity_ch         = f32_array_create(LAYER_CH_COUNT),
 		                              .locked             = l->locked,
-		                              .effect             = l->effect});
+		                              .effect             = l->effect,
+		                              .effect_paint       = l->effect_paint});
 		for (i32 j = 0; j < LAYER_CH_COUNT; ++j) {
 			d->blending_ch->buffer[j] = l->blending[j];
 			d->opacity_ch->buffer[j]  = l->opacity[j];

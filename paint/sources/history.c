@@ -735,6 +735,19 @@ void history_redo_new_black_mask(slot_layer_t *l) {
 	slot_layer_clear(l, 0x00000000, NULL, 1.0, layers_default_rough, 0.0);
 }
 
+// A paint effect created again starts without strokes, cleared right away unlike new masks
+static void history_redo_clear_strokes(slot_layer_t *l) {
+	gpu_texture_t *current = _draw_current;
+	bool           in_use  = gpu_in_use;
+	if (in_use) {
+		draw_end();
+	}
+	slot_layer_clear(l, 0x00000000, NULL, 1.0, layers_default_rough, 0.0);
+	if (in_use) {
+		draw_begin(current, false, 0);
+	}
+}
+
 void history_swap_active() {
 	slot_layer_t *undo_layer = history_undo_slot(history_undo_i);
 	slot_layer_swap(undo_layer, g_context->layer);
@@ -754,7 +767,8 @@ void history_redo() {
 			slot_layer_t *parent = step->layer_parent > 0 ? g_project->_->layers->buffer[step->layer_parent - 1] : NULL;
 			slot_layer_t *l      = slot_layer_create("", step->layer_type, parent);
 			array_insert(g_project->_->layers, step->layer, l);
-			if (step->action == HISTORY_ACTION_NEW_BLACK_MASK) {
+			bool paint_effect = step->layer_props != NULL && step->layer_props->effect_paint;
+			if (step->action == HISTORY_ACTION_NEW_BLACK_MASK && !paint_effect) {
 				sys_notify_on_next_frame(&history_redo_new_black_mask, l);
 			}
 			else if (step->action == HISTORY_ACTION_NEW_WHITE_MASK) {
@@ -766,6 +780,9 @@ void history_redo() {
 			}
 			if (step->layer_props != NULL) { // Effects keep their name and kind
 				history_set_layer_props(step->layer_props, l);
+			}
+			if (paint_effect) { // Empty strokes now, the redo of a paste in the same frame writes into them
+				history_redo_clear_strokes(l);
 			}
 			g_context->layer_preview_dirty = true;
 			context_set_layer(l);
@@ -1203,6 +1220,7 @@ history_layer_props_t *history_layer_props(slot_layer_t *l) {
 	memcpy(p->opacity, l->opacity, sizeof(p->opacity));
 	p->fill_material = l->fill_material != NULL ? array_index_of(g_project->_->materials, l->fill_material) + 1 : 0;
 	p->effect        = l->effect;
+	p->effect_paint  = l->effect_paint;
 	p->geometry_mask = slot_layer_geometry_mask_copy(&l->geometry_mask);
 	return p;
 }
@@ -1221,7 +1239,11 @@ void history_set_layer_props(history_layer_props_t *p, slot_layer_t *l) {
 	if (p->fill_material > 0 && p->fill_material <= g_project->_->materials->length) {
 		l->fill_material = g_project->_->materials->buffer[p->fill_material - 1];
 	}
-	l->effect = p->effect;
+	l->effect       = p->effect;
+	l->effect_paint = p->effect_paint;
+	if (l->effect_paint && l->texpaint_result == NULL) {
+		slot_layer_alloc_result(l); // Filled by the refill of the effects that follows undo and redo
+	}
 	slot_layer_geometry_mask_free(&l->geometry_mask);
 	l->geometry_mask = slot_layer_geometry_mask_copy(&p->geometry_mask);
 }
@@ -1362,10 +1384,14 @@ void history_object_transform(mesh_object_t *o, vec4_t loc, quat_t rot, vec4_t s
 }
 
 // Pixels written into the current layer outside of a stroke, undone like paint
-void history_paste_mask() {
+void history_paste_pixels(char *name) {
 	history_copy_to_undo(g_context->layer->id, history_undo_i, slot_layer_is_mask(g_context->layer));
 	history_step_t *step = history_push(HISTORY_ACTION_PAINT);
-	step->name           = tr("Paste as Mask");
+	step->name           = name;
+}
+
+void history_paste_mask() {
+	history_paste_pixels(tr("Paste as Mask"));
 }
 
 void history_layer_lock(slot_layer_t *l) {

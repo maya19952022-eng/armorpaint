@@ -284,8 +284,19 @@ typedef enum {
 	EFFECT_TYPE_COMPARE_MASK    = 7,
 	EFFECT_TYPE_COLOR_SELECTION = 8,
 	EFFECT_TYPE_ANCHOR          = 9,
-	EFFECT_TYPE_COUNT           = 10,
+	EFFECT_TYPE_PAINT           = 10, // Strokes painted over the element below, see slot_layer_is_paint_effect
+	EFFECT_TYPE_GENERATOR       = 11, // A fill whose factor is a generator_type_t node chain
+	EFFECT_TYPE_COUNT           = 12,
 } effect_type_t;
+
+// Presets of the Generator effect, each one a node chain driving the factor of a fill
+typedef enum {
+	GENERATOR_TYPE_EDGES     = 0, // Baked curvature of the mesh
+	GENERATOR_TYPE_GRADIENT  = 1, // World height
+	GENERATOR_TYPE_FACING_UP = 2, // World normal pointing up
+	GENERATOR_TYPE_NOISE     = 3,
+	GENERATOR_TYPE_COUNT     = 4,
+} generator_type_t;
 
 typedef enum {
 	TOOL_TYPE_BRUSH     = 0,

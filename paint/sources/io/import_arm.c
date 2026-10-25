@@ -726,6 +726,7 @@ static void import_arm_layer_channels(slot_layer_t *l, layer_data_t *ld) {
 // import_legacy.c, which fills in every field.
 #define IMPORT_ARM_LAYER_KEYS_EFFECT        41 // Keys up to effect
 #define IMPORT_ARM_LAYER_KEYS_GEOMETRY_MASK 44 // Keys up to geometry_mask_objects
+#define IMPORT_ARM_LAYER_KEYS_EFFECT_PAINT  45 // Keys up to effect_paint
 static i32 import_arm_layer_keys = -1;         // Keys of each layer map, -1 when every field was filled in
 
 static void import_arm_layer_geometry_mask(slot_layer_t *l, layer_data_t *ld) {
@@ -1024,6 +1025,10 @@ void import_arm_run_project(char *path) {
 		l->visible      = ld->visible;
 		l->locked       = ld->locked;
 		l->effect       = (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_EFFECT) && ld->effect; // Saved after effects
+		l->effect_paint = (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_EFFECT_PAINT) && ld->effect_paint;
+		if (l->effect_paint) {
+			slot_layer_alloc_result(l); // Filled once the stack is loaded, results are not saved
+		}
 		l->mask_opacity = ld->opacity_mask; // Groups have an opacity too
 		import_arm_layer_geometry_mask(l, ld);
 		any_array_push(g_project->_->layers, l);
@@ -1206,6 +1211,7 @@ void import_arm_run_project(char *path) {
 			l->path_material = ld->path_material > -1 ? g_project->_->materials->buffer[ld->path_material] : NULL;
 		}
 	}
+	layers_update_paint_effects(); // Other effects keep the output saved in their textures
 
 	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
 		if (g_project->_->layers->buffer[i]->texpaint_sculpt != NULL) {

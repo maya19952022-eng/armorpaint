@@ -190,6 +190,7 @@ void slot_layer_delete(slot_layer_t *raw) {
 }
 
 void slot_layer_unload(slot_layer_t *raw) {
+	slot_layer_free_result(raw);
 	if (raw->texpaint_geometry != NULL) {
 		gpu_delete_texture(raw->texpaint_geometry);
 		raw->texpaint_geometry = NULL;
@@ -391,10 +392,24 @@ slot_layer_t *slot_layer_duplicate(slot_layer_t *raw) {
 	}
 	else if (slot_layer_is_mask(raw)) {
 		draw_begin(l->texpaint, false, 0);
-		draw_set_pipeline(pipes_copy8);
+		draw_set_pipeline(raw->effect_paint ? pipes_copy : pipes_copy8); // The strokes of a paint effect keep their coverage in alpha
 		draw_image(raw->texpaint, 0, 0);
 		draw_set_pipeline(NULL);
 		draw_end();
+	}
+
+	l->effect_paint = raw->effect_paint;
+	if (raw->effect_paint && raw->texpaint_result != NULL) { // The copy shows the same result until its stack is refilled
+		slot_layer_alloc_result(l);
+		gpu_texture_t *from[] = {raw->texpaint_result, raw->texpaint_result_nor, raw->texpaint_result_pack};
+		gpu_texture_t *to[]   = {l->texpaint_result, l->texpaint_result_nor, l->texpaint_result_pack};
+		for (i32 i = 0; i < 3 && from[i] != NULL && to[i] != NULL; ++i) {
+			draw_begin(to[i], false, 0);
+			draw_set_pipeline(pipes_copy);
+			draw_image(from[i], 0, 0);
+			draw_set_pipeline(NULL);
+			draw_end();
+		}
 	}
 
 	if (l->texpaint_preview != NULL) {
@@ -449,6 +464,23 @@ static void slot_layer_draw_resized(gpu_texture_t *src, i32 res_x, i32 res_y) {
 	else {
 		draw_scaled_image(src, 0, 0, res_x, res_y);
 	}
+}
+
+// Result texture of a paint effect at the current resolution and format, scaled like the strokes, the old one is deleted
+static void slot_layer_resize_result(gpu_texture_t **t, char *name, gpu_texture_format_t format, gpu_pipeline_t *pipe, i32 res_x, i32 res_y) {
+	if (*t == NULL) {
+		return;
+	}
+	gpu_texture_t *_t = *t;
+	*t                = gpu_create_render_target(res_x, res_y, format);
+	draw_begin(*t, false, 0);
+	draw_set_pipeline(pipe);
+	slot_layer_draw_resized(_t, res_x, res_y);
+	draw_set_pipeline(NULL);
+	draw_end();
+	gpu_delete_texture(_t);
+	render_target_t *rt = any_map_get(render_path_render_targets, name);
+	rt->_image          = *t;
 }
 
 void slot_layer_resize_and_set_bits(slot_layer_t *raw) {
@@ -511,13 +543,17 @@ void slot_layer_resize_and_set_bits(slot_layer_t *raw) {
 			render_target_t *rt_pack = any_map_get(rts, string("texpaint_pack%s", raw->ext));
 			rt_pack->_image          = raw->texpaint_pack;
 		}
+
+		slot_layer_resize_result(&raw->texpaint_result, string_tmp("texpaint_result%s", raw->ext), format, pipe, res_x, res_y);
+		slot_layer_resize_result(&raw->texpaint_result_nor, string_tmp("texpaint_result_nor%s", raw->ext), format, pipe, res_x, res_y);
+		slot_layer_resize_result(&raw->texpaint_result_pack, string_tmp("texpaint_result_pack%s", raw->ext), format, pipe, res_x, res_y);
 	}
 	else if (slot_layer_is_mask(raw)) {
 		gpu_texture_t *_texpaint = raw->texpaint;
 		raw->texpaint            = gpu_create_render_target(res_x, res_y, GPU_TEXTURE_FORMAT_RGBA32);
 
 		draw_begin(raw->texpaint, false, 0);
-		draw_set_pipeline(pipes_copy8);
+		draw_set_pipeline(raw->effect_paint ? pipes_copy : pipes_copy8); // The strokes of a paint effect keep their coverage in alpha
 		slot_layer_draw_resized(_texpaint, res_x, res_y);
 		draw_set_pipeline(NULL);
 		draw_end();
@@ -526,6 +562,8 @@ void slot_layer_resize_and_set_bits(slot_layer_t *raw) {
 
 		render_target_t *rt = any_map_get(rts, string("texpaint%s", raw->ext));
 		rt->_image          = raw->texpaint;
+
+		slot_layer_resize_result(&raw->texpaint_result, string_tmp("texpaint_result%s", raw->ext), GPU_TEXTURE_FORMAT_RGBA32, pipes_copy, res_x, res_y);
 	}
 
 	// Clear and repack the base mesh
@@ -703,6 +741,79 @@ slot_layer_t_array_t *slot_layer_get_composite_masks(slot_layer_t *raw) {
 		}
 	}
 	return res->length > 0 ? res : NULL;
+}
+
+// Paint effect: an effect without material, its own textures hold strokes painted over the element below it in its
+// stack, the result textures what the stack shows. Out of a stack it is a plain layer or mask holding its strokes.
+bool slot_layer_is_paint_effect(slot_layer_t *raw) {
+	return raw->effect_paint && slot_layer_is_effect(raw);
+}
+
+static gpu_texture_t *slot_layer_create_result(char *name, char *format) {
+	render_target_t *t = render_target_create();
+	t->name            = name;
+	t->width           = config_get_texture_res_x();
+	t->height          = config_get_texture_res_y();
+	t->format          = string_copy(format);
+	return render_path_create_render_target(t)->_image;
+}
+
+// Result textures of a paint effect, filled by layers_update_paint_effect
+void slot_layer_alloc_result(slot_layer_t *raw) {
+	if (raw->texpaint_result != NULL || slot_layer_is_group(raw)) {
+		return;
+	}
+	if (slot_layer_is_mask(raw)) {
+		raw->texpaint_result = slot_layer_create_result(string("texpaint_result%s", raw->ext), "RGBA32");
+		return;
+	}
+	char *format              = base_bits == TEXTURE_BITS_BITS8 ? "RGBA32" : base_bits == TEXTURE_BITS_BITS16 ? "RGBA64" : "RGBA128";
+	raw->texpaint_result      = slot_layer_create_result(string("texpaint_result%s", raw->ext), format);
+	raw->texpaint_result_nor  = slot_layer_create_result(string("texpaint_result_nor%s", raw->ext), format);
+	raw->texpaint_result_pack = slot_layer_create_result(string("texpaint_result_pack%s", raw->ext), format);
+}
+
+void slot_layer_free_result(slot_layer_t *raw) {
+	if (raw->texpaint_result == NULL) {
+		return;
+	}
+	gpu_delete_texture(raw->texpaint_result);
+	map_delete(render_path_render_targets, string_tmp("texpaint_result%s", raw->ext));
+	if (raw->texpaint_result_nor != NULL) {
+		gpu_delete_texture(raw->texpaint_result_nor);
+		gpu_delete_texture(raw->texpaint_result_pack);
+		map_delete(render_path_render_targets, string_tmp("texpaint_result_nor%s", raw->ext));
+		map_delete(render_path_render_targets, string_tmp("texpaint_result_pack%s", raw->ext));
+	}
+	raw->texpaint_result      = NULL;
+	raw->texpaint_result_nor  = NULL;
+	raw->texpaint_result_pack = NULL;
+}
+
+// Texture the stack shows: 0 base or mask, 1 normal, 2 pack. The result of a paint effect, the own one otherwise.
+gpu_texture_t *slot_layer_result(slot_layer_t *raw, i32 tex) {
+	bool result = slot_layer_is_paint_effect(raw) && raw->texpaint_result != NULL;
+	if (tex == 1) {
+		return result ? raw->texpaint_result_nor : raw->texpaint_nor;
+	}
+	if (tex == 2) {
+		return result ? raw->texpaint_result_pack : raw->texpaint_pack;
+	}
+	return result ? raw->texpaint_result : raw->texpaint;
+}
+
+// Copy of a paint effect in tmp with its result as textures, raw itself otherwise. For reading textures only: the opacity
+// and effect base of a mask effect need the slot of the stack.
+slot_layer_t *slot_layer_result_view(slot_layer_t *raw, slot_layer_t *tmp) {
+	if (!slot_layer_is_paint_effect(raw) || raw->texpaint_result == NULL) {
+		return raw;
+	}
+	*tmp               = *raw;
+	tmp->texpaint      = raw->texpaint_result;
+	tmp->texpaint_nor  = raw->texpaint_result_nor;
+	tmp->texpaint_pack = raw->texpaint_result_pack;
+	tmp->effect_paint  = false;
+	return tmp;
 }
 
 slot_layer_t_array_t *slot_layer_get_children(slot_layer_t *raw) {

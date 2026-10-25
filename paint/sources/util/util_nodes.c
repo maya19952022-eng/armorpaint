@@ -62,7 +62,7 @@ gpu_texture_t *ui_nodes_get_node_preview_image(ui_node_t *n) {
 	if (string_equals(n->type, "LAYER") || string_equals(n->type, "LAYER_MASK")) {
 		i32 id = n->buttons->buffer[0]->default_value->buffer[0];
 		if (id < g_project->_->layers->length) {
-			img = g_project->_->layers->buffer[id]->texpaint;
+			img = slot_layer_result(g_project->_->layers->buffer[id], 0);
 		}
 	}
 	else if (string_equals(n->type, "MATERIAL")) {

@@ -351,6 +351,8 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 		if (!bake_material) {
 			mask = util_geometry_mask_apply(l1, mask);
 		}
+		slot_layer_t view;
+		l1 = slot_layer_result_view(l1, &view); // A paint effect on top of the stack shows its result
 
 		// Shared layers of udim tiles are cropped out of the atlas, tile layers go into the atlas when exporting it whole
 		if (!bake_material && udim_slot >= 0 && util_mesh_udim_layer(l1)) {
