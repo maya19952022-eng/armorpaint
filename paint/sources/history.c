@@ -83,6 +83,12 @@ char *history_action_to_string(history_action_t action) {
 		return tr("Edit Swatch");
 	case HISTORY_ACTION_OBJECT_TRANSFORM:
 		return tr("Transform Object");
+	case HISTORY_ACTION_FLATTEN_GROUP:
+		return tr("Flatten Group");
+	case HISTORY_ACTION_LAYER_LOCK:
+		return tr("Lock Layer");
+	case HISTORY_ACTION_LAYER_GEOMETRY_MASK:
+		return tr("Geometry Mask");
 	}
 	return tr("Paint");
 }
@@ -91,6 +97,8 @@ void history_undo_invert_mask(history_step_t *step) {
 	g_context->layer = g_project->_->layers->buffer[step->layer];
 	slot_layer_invert_mask(g_context->layer);
 }
+
+static void history_swap_order(history_step_t *step);
 
 void history_undo_delete_layer_group(void *_) {
 	i32 active = history_steps->length - 1 - history_redos;
@@ -116,10 +124,49 @@ void history_layer_object_clear(slot_layer_t *l) {
 	layers_update_fill_layers();
 }
 
+// Exchanges the per channel blending or opacity of a layer with the ones stored in the step
+static void history_swap_channels(history_step_t *step, slot_layer_t *l, bool blending, bool opacity) {
+	for (i32 i = 0; i < LAYER_CH_COUNT; ++i) {
+		if (blending) {
+			i32 t                   = l->blending[i];
+			l->blending[i]          = step->layer_blending[i];
+			step->layer_blending[i] = t;
+		}
+		if (opacity) {
+			f32 t                     = l->opacity[i];
+			l->opacity[i]             = step->layer_opacity_ch[i];
+			step->layer_opacity_ch[i] = t;
+		}
+	}
+}
+
+// Restores the per channel blending and opacity stored in the step
+static void history_set_channels(history_step_t *step, slot_layer_t *l) {
+	for (i32 i = 0; i < LAYER_CH_COUNT; ++i) {
+		l->blending[i] = step->layer_blending[i];
+		l->opacity[i]  = step->layer_opacity_ch[i];
+	}
+}
+
 void history_swap_layer_props(history_step_t *step) {
 	slot_layer_t *l = g_project->_->layers->buffer[step->layer];
 
-	if (step->action == HISTORY_ACTION_LAYER_VISIBLE) {
+	if (step->action == HISTORY_ACTION_LAYER_LOCK) {
+		context_set_layer(l);
+		l->locked = !l->locked;
+	}
+	else if (step->action == HISTORY_ACTION_LAYER_GEOMETRY_MASK) {
+		geometry_mask_t t    = l->geometry_mask;
+		l->geometry_mask     = step->layer_geometry;
+		step->layer_geometry = t;
+		context_set_layer(l);
+		util_geometry_mask_epoch++;
+		make_material_parse_mesh_material();
+		make_material_parse_paint_material(false);
+		g_context->layers_preview_dirty = true;
+		g_context->ddirty               = 2;
+	}
+	else if (step->action == HISTORY_ACTION_LAYER_VISIBLE) {
 		context_set_layer(l);
 		l->visible = !l->visible;
 		make_material_parse_mesh_material();
@@ -341,8 +388,11 @@ void history_undo() {
 			slot_layer_t *lay = history_undo_slot(history_undo_i);
 			slot_layer_swap(l, lay);
 			l->mask_opacity = step->layer_opacity;
-			l->blending     = step->layer_blending;
-			l->object_mask  = step->layer_object;
+			history_set_channels(step, l);
+			l->object_mask = step->layer_object;
+			if (step->layer_props != NULL) {
+				history_set_layer_props(step->layer_props, l);
+			}
 			make_material_parse_mesh_material();
 
 			// Undo at least second time in order to avoid empty groups
@@ -369,9 +419,12 @@ void history_undo() {
 			slot_layer_delete(g_context->layer);
 		}
 		else if (step->action == HISTORY_ACTION_ORDER_LAYERS) {
-			slot_layer_t *target                           = g_project->_->layers->buffer[step->prev_order];
-			g_project->_->layers->buffer[step->prev_order] = g_project->_->layers->buffer[step->layer];
-			g_project->_->layers->buffer[step->layer]      = target;
+			if (step->layer_order != NULL) {
+				history_apply_layer_order(step, true);
+			}
+			else {
+				history_swap_order(step);
+			}
 		}
 		else if (step->action == HISTORY_ACTION_MERGE_LAYERS) {
 			g_context->layer = g_project->_->layers->buffer[step->layer];
@@ -385,6 +438,9 @@ void history_undo() {
 			history_undo_i    = history_undo_i - 1 < 0 ? g_config->undo_steps - 1 : history_undo_i - 1;
 			slot_layer_t *lay = history_undo_slot(history_undo_i);
 			slot_layer_swap(g_context->layer, lay);
+			if (step->layer_props != NULL) {
+				history_set_layer_props(step->layer_props, l);
+			}
 
 			l = slot_layer_create("", step->layer_type, parent);
 			array_insert(g_project->_->layers, step->layer + 1, l);
@@ -395,8 +451,12 @@ void history_undo() {
 			slot_layer_swap(g_context->layer, lay);
 
 			g_context->layer->mask_opacity  = step->layer_opacity;
-			g_context->layer->blending      = step->layer_blending;
+			history_set_channels(step, g_context->layer);
 			g_context->layer->object_mask   = step->layer_object;
+			g_context->layer->geometry_mask = slot_layer_geometry_mask_copy(&step->layer_geometry);
+			if (step->layer_name != NULL) {
+				g_context->layer->name = string_copy(step->layer_name);
+			}
 			g_context->layers_preview_dirty = true;
 			make_material_parse_mesh_material();
 		}
@@ -471,17 +531,17 @@ void history_undo() {
 			f32 t                          = g_context->layer->mask_opacity;
 			g_context->layer->mask_opacity = step->layer_opacity;
 			step->layer_opacity            = t;
+			history_swap_channels(step, g_context->layer, false, true);
 			make_material_parse_mesh_material();
 		}
 		else if (step->action == HISTORY_ACTION_LAYER_BLENDING) {
 			context_set_layer(g_project->_->layers->buffer[step->layer]);
-			blend_type_t t             = g_context->layer->blending;
-			g_context->layer->blending = step->layer_blending;
-			step->layer_blending       = t;
+			history_swap_channels(step, g_context->layer, true, false);
 			make_material_parse_mesh_material();
 		}
-		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_NAME || step->action == HISTORY_ACTION_LAYER_OBJECT ||
-		         step->action == HISTORY_ACTION_LAYER_SCALE || step->action == HISTORY_ACTION_LAYER_ANGLE || step->action == HISTORY_ACTION_LAYER_UV_TYPE) {
+		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_LOCK || step->action == HISTORY_ACTION_LAYER_NAME ||
+		         step->action == HISTORY_ACTION_LAYER_OBJECT || step->action == HISTORY_ACTION_LAYER_SCALE || step->action == HISTORY_ACTION_LAYER_ANGLE ||
+		         step->action == HISTORY_ACTION_LAYER_UV_TYPE || step->action == HISTORY_ACTION_LAYER_GEOMETRY_MASK) {
 			history_swap_layer_props(step);
 		}
 		else if (step->action == HISTORY_ACTION_NEW_BRUSH || step->action == HISTORY_ACTION_DUPLICATE_BRUSH) {
@@ -504,6 +564,14 @@ void history_undo() {
 		}
 		else if (step->action == HISTORY_ACTION_OBJECT_TRANSFORM) {
 			history_swap_object_transform(step);
+		}
+		else if (step->action == HISTORY_ACTION_FLATTEN_GROUP) {
+			// The flattened layer is right above the group
+			slot_layer_delete(g_project->_->layers->buffer[step->layer + 1]);
+			slot_layer_t *group = g_project->_->layers->buffer[step->layer];
+			group->visible      = step->layer_visible;
+			context_set_layer(group);
+			make_material_parse_mesh_material();
 		}
 		else if (step->action == HISTORY_ACTION_DELETE_NODE_GROUP) {
 			node_group_t *ng = ALLOC_INIT(node_group_t, {.canvas = NULL, .nodes = ui_nodes_create()});
@@ -553,6 +621,10 @@ void history_undo() {
 		}
 	}
 	nodes_mesh_request_refresh(); // Layer masks used by mesh nodes
+	if (layers_has_effects()) {
+		// Effects read layers the step changed, refilled after the parts of the step that run on the next frame
+		sys_notify_on_next_frame(&layers_update_effects_on_next_frame, NULL);
+	}
 	base_redraw_status();
 }
 
@@ -665,6 +737,19 @@ void history_redo_new_black_mask(slot_layer_t *l) {
 	slot_layer_clear(l, 0x00000000, NULL, 1.0, layers_default_rough, 0.0);
 }
 
+// A paint effect created again starts without strokes, cleared right away unlike new masks
+static void history_redo_clear_strokes(slot_layer_t *l) {
+	gpu_texture_t *current = _draw_current;
+	bool           in_use  = gpu_in_use;
+	if (in_use) {
+		draw_end();
+	}
+	slot_layer_clear(l, 0x00000000, NULL, 1.0, layers_default_rough, 0.0);
+	if (in_use) {
+		draw_begin(current, false, 0);
+	}
+}
+
 void history_swap_active() {
 	slot_layer_t *undo_layer = history_undo_slot(history_undo_i);
 	slot_layer_swap(undo_layer, g_context->layer);
@@ -684,7 +769,8 @@ void history_redo() {
 			slot_layer_t *parent = step->layer_parent > 0 ? g_project->_->layers->buffer[step->layer_parent - 1] : NULL;
 			slot_layer_t *l      = slot_layer_create("", step->layer_type, parent);
 			array_insert(g_project->_->layers, step->layer, l);
-			if (step->action == HISTORY_ACTION_NEW_BLACK_MASK) {
+			bool paint_effect = step->layer_props != NULL && step->layer_props->effect_paint;
+			if (step->action == HISTORY_ACTION_NEW_BLACK_MASK && !paint_effect) {
 				sys_notify_on_next_frame(&history_redo_new_black_mask, l);
 			}
 			else if (step->action == HISTORY_ACTION_NEW_WHITE_MASK) {
@@ -693,6 +779,12 @@ void history_redo() {
 			else if (step->action == HISTORY_ACTION_NEW_FILL_MASK) {
 				g_context->material = g_project->_->materials->buffer[step->material];
 				sys_notify_on_next_frame(&history_redo_new_fill_mask, l);
+			}
+			if (step->layer_props != NULL) { // Effects keep their name and kind
+				history_set_layer_props(step->layer_props, l);
+			}
+			if (paint_effect) { // Empty strokes now, the redo of a paste in the same frame writes into them
+				history_redo_clear_strokes(l);
 			}
 			g_context->layer_preview_dirty = true;
 			context_set_layer(l);
@@ -729,9 +821,12 @@ void history_redo() {
 			sys_notify_on_next_frame(&history_redo_duplicate_layer, NULL);
 		}
 		else if (step->action == HISTORY_ACTION_ORDER_LAYERS) {
-			slot_layer_t *target                           = g_project->_->layers->buffer[step->prev_order];
-			g_project->_->layers->buffer[step->prev_order] = g_project->_->layers->buffer[step->layer];
-			g_project->_->layers->buffer[step->layer]      = target;
+			if (step->layer_order != NULL) {
+				history_apply_layer_order(step, false);
+			}
+			else {
+				history_swap_order(step);
+			}
 		}
 		else if (step->action == HISTORY_ACTION_MERGE_LAYERS) {
 			g_context->layer = g_project->_->layers->buffer[step->layer + 1];
@@ -787,17 +882,17 @@ void history_redo() {
 			f32 t                          = g_context->layer->mask_opacity;
 			g_context->layer->mask_opacity = step->layer_opacity;
 			step->layer_opacity            = t;
+			history_swap_channels(step, g_context->layer, false, true);
 			make_material_parse_mesh_material();
 		}
 		else if (step->action == HISTORY_ACTION_LAYER_BLENDING) {
 			context_set_layer(g_project->_->layers->buffer[step->layer]);
-			blend_type_t t             = g_context->layer->blending;
-			g_context->layer->blending = step->layer_blending;
-			step->layer_blending       = t;
+			history_swap_channels(step, g_context->layer, true, false);
 			make_material_parse_mesh_material();
 		}
-		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_NAME || step->action == HISTORY_ACTION_LAYER_OBJECT ||
-		         step->action == HISTORY_ACTION_LAYER_SCALE || step->action == HISTORY_ACTION_LAYER_ANGLE || step->action == HISTORY_ACTION_LAYER_UV_TYPE) {
+		else if (step->action == HISTORY_ACTION_LAYER_VISIBLE || step->action == HISTORY_ACTION_LAYER_LOCK || step->action == HISTORY_ACTION_LAYER_NAME ||
+		         step->action == HISTORY_ACTION_LAYER_OBJECT || step->action == HISTORY_ACTION_LAYER_SCALE || step->action == HISTORY_ACTION_LAYER_ANGLE ||
+		         step->action == HISTORY_ACTION_LAYER_UV_TYPE || step->action == HISTORY_ACTION_LAYER_GEOMETRY_MASK) {
 			history_swap_layer_props(step);
 		}
 		else if (step->action == HISTORY_ACTION_NEW_BRUSH || step->action == HISTORY_ACTION_DUPLICATE_BRUSH) {
@@ -820,6 +915,9 @@ void history_redo() {
 		}
 		else if (step->action == HISTORY_ACTION_OBJECT_TRANSFORM) {
 			history_swap_object_transform(step);
+		}
+		else if (step->action == HISTORY_ACTION_FLATTEN_GROUP) {
+			layers_flatten_group(g_project->_->layers->buffer[step->layer]);
 		}
 		else if (step->action == HISTORY_ACTION_DELETE_NODE_GROUP) {
 			history_swap_canvas(step);
@@ -870,13 +968,26 @@ void history_redo() {
 		}
 	}
 	nodes_mesh_request_refresh(); // Layer masks used by mesh nodes
+	if (layers_has_effects()) {
+		// Effects read layers the step changed, refilled after the parts of the step that run on the next frame
+		sys_notify_on_next_frame(&layers_update_effects_on_next_frame, NULL);
+	}
 	base_redraw_status();
+}
+
+// Dropped steps own copies of geometry masks, with face bits they can be large
+static void history_step_free(history_step_t *s) {
+	slot_layer_geometry_mask_free(&s->layer_geometry);
+	if (s->layer_props != NULL) {
+		slot_layer_geometry_mask_free(&s->layer_props->geometry_mask);
+	}
+	free(s);
 }
 
 void history_reset() {
 	if (history_steps != NULL) {
 		for (i32 i = 0; i < history_steps->length; ++i) {
-			free(history_steps->buffer[i]);
+			history_step_free(history_steps->buffer[i]);
 		}
 		array_free(history_steps);
 		free(history_steps);
@@ -911,7 +1022,7 @@ history_step_t *history_push(history_action_t action) {
 	}
 	if (history_redos > 0) {
 		for (i32 i = 0; i < history_redos; ++i) {
-			free(array_pop(history_steps));
+			history_step_free(array_pop(history_steps));
 		}
 		history_redos = 0;
 	}
@@ -922,24 +1033,28 @@ history_step_t *history_push(history_action_t action) {
 	i32 bpos = array_index_of(g_project->_->brushes, g_context->brush);
 
 	history_step_t *step =
-	    ALLOC_INIT(history_step_t, {.name           = name,
-	                                .action         = action,
-	                                .layer          = lpos,
-	                                .layer_type     = slot_layer_is_mask(g_context->layer)    ? LAYER_SLOT_TYPE_MASK
-	                                                  : slot_layer_is_group(g_context->layer) ? LAYER_SLOT_TYPE_GROUP
-	                                                                                          : LAYER_SLOT_TYPE_LAYER,
-	                                .layer_parent   = g_context->layer->parent == NULL ? -1 : array_index_of(g_project->_->layers, g_context->layer->parent),
-	                                .object         = opos,
-	                                .material       = mpos,
-	                                .brush          = bpos,
-	                                .layer_opacity  = g_context->layer->mask_opacity,
-	                                .layer_object   = g_context->layer->object_mask,
-	                                .layer_blending = g_context->layer->blending});
+	    ALLOC_INIT(history_step_t, {.name          = name,
+	                                .action        = action,
+	                                .layer         = lpos,
+	                                .layer_type    = slot_layer_is_mask(g_context->layer)    ? LAYER_SLOT_TYPE_MASK
+	                                                 : slot_layer_is_group(g_context->layer) ? LAYER_SLOT_TYPE_GROUP
+	                                                                                         : LAYER_SLOT_TYPE_LAYER,
+	                                .layer_parent  = g_context->layer->parent == NULL ? -1 : array_index_of(g_project->_->layers, g_context->layer->parent),
+	                                .object        = opos,
+	                                .material      = mpos,
+	                                .brush         = bpos,
+	                                .layer_opacity = g_context->layer->mask_opacity,
+	                                .layer_object  = g_context->layer->object_mask});
+	for (i32 i = 0; i < LAYER_CH_COUNT; ++i) {
+		step->layer_blending[i]   = g_context->layer->blending[i];
+		step->layer_opacity_ch[i] = g_context->layer->opacity[i];
+	}
+	step->layer_geometry = slot_layer_geometry_mask_copy(&g_context->layer->geometry_mask);
 
 	any_array_push(history_steps, step);
 
 	while (history_steps->length > g_config->undo_steps + 1) {
-		free(array_shift(history_steps));
+		history_step_free(array_shift(history_steps));
 	}
 	return history_steps->buffer[history_steps->length - 1];
 }
@@ -986,7 +1101,8 @@ void history_duplicate_layer() {
 
 void history_delete_layer() {
 	history_swap_active();
-	history_push(HISTORY_ACTION_DELETE_LAYER);
+	history_step_t *step = history_push(HISTORY_ACTION_DELETE_LAYER);
+	step->layer_props    = history_layer_props(g_context->layer);
 }
 
 void history_clear_layer() {
@@ -999,15 +1115,164 @@ void history_order_layers(i32 prev_order) {
 	step->prev_order     = prev_order;
 }
 
+// Old undo of a move by one position, skipped when the positions are gone
+static void history_swap_order(history_step_t *step) {
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	if (step->prev_order < 0 || step->prev_order >= layers->length || step->layer < 0 || step->layer >= layers->length) {
+		return;
+	}
+	slot_layer_t *target             = layers->buffer[step->prev_order];
+	layers->buffer[step->prev_order] = layers->buffer[step->layer];
+	layers->buffer[step->layer]      = target;
+}
+
+static slot_layer_t_array_t *history_order_layers_before  = NULL;
+static slot_layer_t_array_t *history_order_parents_before = NULL;
+
+// Layers and parents before a move, history_order_layers_end stores them in the last step
+void history_order_layers_begin() {
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	history_order_layers_before  = any_array_create_from_raw((void *[]){}, 0);
+	history_order_parents_before = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < layers->length; ++i) {
+		any_array_push(history_order_layers_before, layers->buffer[i]);
+		any_array_push(history_order_parents_before, layers->buffer[i]->parent);
+	}
+}
+
+// A move can skip several layers and change the parent, the step keeps the whole order to undo it exactly
+void history_order_layers_end() {
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	slot_layer_t_array_t *before = history_order_layers_before;
+	history_order_layers_before  = NULL;
+	if (before == NULL || history_steps->length == 0) {
+		return;
+	}
+	history_step_t *step = history_steps->buffer[history_steps->length - 1];
+	if (step->action != HISTORY_ACTION_ORDER_LAYERS) {
+		return;
+	}
+	i32          n       = layers->length;
+	i32          nb      = before->length;
+	i32_array_t *order   = i32_array_create(n);
+	i32_array_t *parents = i32_array_create(nb + n);
+	for (i32 j = 0; j < n; ++j) {
+		order->buffer[j] = array_index_of(before, layers->buffer[j]);
+		if (order->buffer[j] < 0) {
+			return; // Not a pure move, the step keeps the old swap
+		}
+		parents->buffer[nb + j] = layers->buffer[j]->parent == NULL ? 0 : array_index_of(layers, layers->buffer[j]->parent) + 1;
+	}
+	for (i32 i = 0; i < nb; ++i) {
+		slot_layer_t *p    = history_order_parents_before->buffer[i];
+		parents->buffer[i] = p == NULL ? 0 : array_index_of(before, p) + 1;
+	}
+	// Groups the move left empty were removed, undo puts them back
+	slot_layer_t_array_t *removed = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < nb; ++i) {
+		if (array_index_of(layers, before->buffer[i]) < 0) {
+			any_array_push(removed, before->buffer[i]);
+		}
+	}
+	step->layer_order   = order;
+	step->layer_parents = parents;
+	step->layer_removed = removed->length > 0 ? removed : NULL;
+}
+
+void history_apply_layer_order(history_step_t *step, bool undo) {
+	slot_layer_t_array_t *layers  = g_project->_->layers;
+	i32                   n       = step->layer_order->length;
+	i32                   removed = step->layer_removed != NULL ? step->layer_removed->length : 0;
+	if (layers->length != (undo ? n : n + removed)) {
+		return;
+	}
+	slot_layer_t_array_t *old = tab_layers_init_layer_map();
+	if (undo) {
+		layers->length = 0;
+		for (i32 i = 0; i < n + removed; ++i) {
+			any_array_push(layers, NULL);
+		}
+		for (i32 j = 0; j < n; ++j) {
+			layers->buffer[step->layer_order->buffer[j]] = old->buffer[j];
+		}
+		for (i32 i = 0, k = 0; i < n + removed; ++i) {
+			if (layers->buffer[i] == NULL) {
+				layers->buffer[i] = step->layer_removed->buffer[k++];
+			}
+		}
+	}
+	else {
+		layers->length = 0;
+		for (i32 j = 0; j < n; ++j) {
+			any_array_push(layers, old->buffer[step->layer_order->buffer[j]]);
+		}
+	}
+	i32 *parents = step->layer_parents->buffer + (undo ? 0 : n + removed);
+	for (i32 i = 0; i < layers->length; ++i) {
+		layers->buffer[i]->parent = parents[i] > 0 ? layers->buffer[parents[i] - 1] : NULL;
+	}
+	tab_layers_remap_all_layer_pointers(old);
+	if (array_index_of(layers, g_context->layer) < 0) {
+		g_context->layer = layers->buffer[0];
+	}
+	ui_dock_redraw(TAB_AREA_SIDEBAR0);
+}
+
+// The last step remembers the properties of l, redo of a new layer step gives them back
+void history_keep_layer_props(slot_layer_t *l) {
+	history_steps->buffer[history_steps->length - 1]->layer_props = history_layer_props(l);
+}
+
+history_layer_props_t *history_layer_props(slot_layer_t *l) {
+	history_layer_props_t *p =
+	    ALLOC_INIT(history_layer_props_t,
+	               {.name = string_copy(l->name), .visible = l->visible, .locked = l->locked, .mask_opacity = l->mask_opacity, .object_mask = l->object_mask});
+	memcpy(p->blending, l->blending, sizeof(p->blending));
+	memcpy(p->opacity, l->opacity, sizeof(p->opacity));
+	p->fill_material = l->fill_material != NULL ? array_index_of(g_project->_->materials, l->fill_material) + 1 : 0;
+	p->effect        = l->effect;
+	p->effect_paint  = l->effect_paint;
+	p->geometry_mask = slot_layer_geometry_mask_copy(&l->geometry_mask);
+	return p;
+}
+
+void history_set_layer_props(history_layer_props_t *p, slot_layer_t *l) {
+	char *old_name  = l->name;
+	l->name         = string_copy(p->name);
+	tab_stages_rename_layer(old_name, l->name);
+	tab_stages_add_layer(l->name);
+	l->visible      = p->visible;
+	l->locked       = p->locked;
+	l->mask_opacity = p->mask_opacity;
+	l->object_mask  = p->object_mask;
+	memcpy(l->blending, p->blending, sizeof(l->blending));
+	memcpy(l->opacity, p->opacity, sizeof(l->opacity));
+	if (p->fill_material > 0 && p->fill_material <= g_project->_->materials->length) {
+		l->fill_material = g_project->_->materials->buffer[p->fill_material - 1];
+	}
+	l->effect       = p->effect;
+	l->effect_paint = p->effect_paint;
+	if (l->effect_paint && l->texpaint_result == NULL) {
+		slot_layer_alloc_result(l); // Filled by the refill of the effects that follows undo and redo
+	}
+	slot_layer_geometry_mask_free(&l->geometry_mask);
+	l->geometry_mask = slot_layer_geometry_mask_copy(&p->geometry_mask);
+}
+
 void history_merge_layers() {
 	history_copy_merging_layers();
 
 	history_step_t *step = history_push(HISTORY_ACTION_MERGE_LAYERS);
 	step->layer -= 1; // Merge down
-	if (slot_layer_has_masks(g_context->layer, true)) {
-		step->layer -= slot_layer_get_masks(g_context->layer, true)->length;
+	if (slot_layer_has_masks(g_context->layer, false)) {
+		// Own masks are below the layer and get applied first, group masks are above it
+		step->layer -= slot_layer_get_masks(g_context->layer, false)->length;
 	}
-	array_shift(history_steps); // Merge consumes 2 steps
+	step->layer_name = string_copy(g_context->layer->name);
+	if (step->layer >= 0 && step->layer < g_project->_->layers->length) {
+		step->layer_props = history_layer_props(g_project->_->layers->buffer[step->layer]);
+	}
+	history_step_free(array_shift(history_steps)); // Merge consumes 2 steps
 	history_undos--;
 	// TODO: use undo layer in app_merge_down to save memory
 }
@@ -1127,6 +1392,37 @@ void history_object_transform(mesh_object_t *o, vec4_t loc, quat_t rot, vec4_t s
 	step->object_loc   = loc;
 	step->object_rot   = rot;
 	step->object_scale = scale;
+}
+
+// Pixels written into the current layer outside of a stroke, undone like paint
+void history_paste_pixels(char *name) {
+	history_copy_to_undo(g_context->layer->id, history_undo_i, slot_layer_is_mask(g_context->layer));
+	history_step_t *step = history_push(HISTORY_ACTION_PAINT);
+	step->name           = name;
+}
+
+void history_paste_mask() {
+	history_paste_pixels(tr("Paste as Mask"));
+}
+
+void history_layer_lock(slot_layer_t *l) {
+	slot_layer_t *prev = g_context->layer;
+	g_context->layer   = l;
+	history_push(HISTORY_ACTION_LAYER_LOCK);
+	g_context->layer = prev;
+}
+
+// Geometry mask of l before an edit
+void history_layer_geometry_mask(slot_layer_t *l) {
+	slot_layer_t *prev = g_context->layer;
+	g_context->layer   = l;
+	history_push(HISTORY_ACTION_LAYER_GEOMETRY_MASK);
+	g_context->layer = prev;
+}
+
+void history_flatten_group() {
+	history_step_t *step = history_push(HISTORY_ACTION_FLATTEN_GROUP);
+	step->layer_visible  = g_context->layer->visible;
 }
 
 void history_new_swatch() {

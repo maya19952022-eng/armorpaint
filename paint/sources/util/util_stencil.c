@@ -2,6 +2,9 @@
 #include "../global.h"
 
 void util_stencil_transform() {
+	if (g_context->tool == TOOL_TYPE_SELECT && g_context->select_faces) {
+		return; // Ctrl removes faces
+	}
 	if (g_context->brush_stencil_image != NULL && keymap_shortcut(any_map_get(g_keymap, "stencil_transform"), SHORTCUT_TYPE_DOWN)) {
 		rect_t *r = ui_base_get_brush_stencil_rect();
 		if (mouse_started("left")) {

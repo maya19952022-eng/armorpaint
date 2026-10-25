@@ -1,6 +1,6 @@
 (comprimido)
+(malha alterada)
 Empacotado
-+
 -X
 -Y
 -Z
@@ -8,6 +8,7 @@ Empacotado
 2D
 Visualização 2D
 3D
+Gradiente 3D
 Visualização 3D
 A
 Sobre
@@ -15,6 +16,7 @@ Sobre...
 Absoluto
 Adicionar
 Adicionar Animação
+Adicionar Efeito
 Adicionar Amostra
 Adicionar nova amostra
 Adicionar cor selecionada às amostras
@@ -24,6 +26,7 @@ Permitir Câmera Invertida
 Alfa
 Descartar Alfa
 Quantidade
+Ponto de Âncora
 Ângulo
 Rejeição de Ângulo
 Animação
@@ -36,16 +39,19 @@ Aplicar Máscara
 Aplicar Nós
 Aplicar Escultura
 Aplicar Skinning
+Aplicar Transformação
 Arcocosseno
 Arcoseno
 Arctan2
 Arco tangente
 Matriz
 Ativo
+Recursos
 Atlas
 Atlas
 Atributo
 Automático
+Executar Scripts Automaticamente
 Média
 Eixo
 B
@@ -55,7 +61,6 @@ Cozinhar Material
 Cozinhar Textura
 Cozinhar para Texturas
 Faixas
-Base
 Cor Base
 Normal Dobrada
 Chanfro
@@ -65,6 +70,7 @@ Máscara Preta
 Executável do Blender
 Caminho do executável do Blender não definido
 Mistura
+Canal da Mistura
 Brilho Emissivo
 Borrão
 Borrar Mapa de Ambiente
@@ -96,6 +102,7 @@ Velocidade de Rotação da Câmera
 Textura da Câmera
 Velocidade de Zoom da Câmera
 Cancelar
+Cápsula
 Capturar Fundo
 Capturar Saída
 Capturar Tela
@@ -103,6 +110,7 @@ Capturar Vídeo
 Teto
 Tamanho da célula em pixels
 Centro
+Canal
 Canais
 Checar Atualizações...
 Textura Quadriculada
@@ -111,11 +119,12 @@ Limitar Fator
 Limitar Resultado
 Argila
 Limpar
+Limpar Faces
+Limpar Máscara Geométrica
 Limpar Camada
 Limpar Amostras
 Fim do Recorte
 Início do Recorte
-Recorte
 Clonar
 Fechar
 Tecido
@@ -126,17 +135,24 @@ Projetos na nuvem
 Cor
 Cor 1
 Cor 2
+Cor 3
+Cor 4
+Equilíbrio de Cor
 ID de Cor
 Mapa de ID de Cor
 Máscara de Cor
 Rampa de Cores
+Seleção de Cor
 Espaço de Cor
 ID de Cor
 Combinar
 Combinar Cor
 Combinar XYZ
+Máscara de Comparação
 Bússola
+Cone
 Confirmar
+Conectadas
 Console
 Modelo do Console
 Constante
@@ -151,9 +167,12 @@ Cosseno
 Não foi possível baixar
 Contagem
 Vinco
+Criar Material Cozinhado
 Criar Camada de Cor
 Criar Material
+Recortar
 Produto Vetorial
+Cubo
 Descartar Faces de Trás
 Cursor
 Curvatura
@@ -162,6 +181,7 @@ Curva
 Curvado
 Personalizado
 Cortar
+Cilindro
 Escurecer
 Depuração
 Decalque
@@ -176,6 +196,7 @@ Apagar Pincel
 Apagar Camada
 Apagar Material
 Apagar Grupo de Nós
+Apagar Selecionadas
 Apagar Amostra
 Apagar Não Usadas
 Delta
@@ -219,6 +240,7 @@ Duplicar Pincel
 Duplicar Camada
 Duplicar Material
 Duplicar Amostra
+Bordas
 Editar
 Editar Imagem
 Editar Nós
@@ -237,6 +259,7 @@ Ambiente
 Mapa de Ambiente
 Esferas do Envmap
 Mapa de Ambiente...
+Igual
 Borracha
 Erro: Esperado arquivo .arm
 Erro: Esperado arquivo .hdr
@@ -245,6 +268,7 @@ Erro: Não foi possível localizar a textura
 Erro: Falha ao ler dados da fonte
 Erro: Falha ao ler dados da malha
 Erro: Formato de ativo desconhecido
+Excluir
 Exclusão
 Sair
 Recursos Experimentais
@@ -256,6 +280,7 @@ Exportar Material
 Exportar Malha
 Exportar Player
 Exportar Texturas
+Exportar como .arm
 Exportar amostras
 Exportar arquivos de textura
 Exportando malha
@@ -264,6 +289,9 @@ F1
 F2
 Fat
 Face
+Faces
+Não foi possível ler as faces da máscara geométrica:
+Voltado para Cima
 Fator
 Falha ao importar material
 Falha ao ler o som:
@@ -278,6 +306,9 @@ Filtro
 Filtrar Texturas
 Plano
 Achatar
+Achatar Grupo
+Achatar Selecionadas
+Achatada
 Curva de Float
 Chão
 Módulo Piso
@@ -300,13 +331,16 @@ Atrito
 Do Máximo
 Do Mínimo
 Frente
+Descarte por Frustum
 Completo
 Borrosidade
 G
 Textura Gabor
 Gama
 Gerada
+Gerador
 Geometria
+Máscara Geométrica
 Geometria para Origem
 Começar
 Agarrar
@@ -314,19 +348,22 @@ Textura de Gradiente
 Gravidade X
 Gravidade Y
 Gravidade Z
+Maior
 Maior Que
+Grade
 Célula da Grade
 Ajuste à Grade
 Grupo
 Entrada de Grupo
 Saída de Grupo
+Agrupar Selecionadas
 Dureza
 Altura
-Mistura de Altura
 Ajuda
-Ocultar Visualização 3D
 Alto Polígonos
+Realces
 Histórico
+Segure ctrl para alternar entre adicionar e remover
 Segure {action_paint} para apagar\nSegure {brush_ruler} e pressione {action_paint} para apagar uma linha reta (modo régua)
 Segure {action_paint} para pintar\nSegure {brush_ruler} e pressione {action_paint} para pintar uma linha reta (modo régua)
 Mantenha {brush_opacity} e mova o mouse para a esquerda para diminuir a opacidade\nMantenha {brush_opacity} e mova o mouse para a direita para aumentar a opacidade
@@ -354,6 +391,9 @@ Importar arquivo de textura
 Importar...
 Importando malha
 Entrada
+Preto de Entrada
+Branco de Entrada
+Incluir
 Entrada
 Inflar
 Info: Ativo já importado
@@ -379,6 +419,7 @@ Mapa de Teclas
 Mapa de teclas importado:
 Lacunaridade
 Idioma
+Ícones Grandes
 Camada
 Ângulo da Camada
 Mistura de Camada
@@ -393,6 +434,7 @@ Raio Preguiçoso
 Passo Preguiçoso
 Esquerda
 Comprimento
+Menor
 Menor Que
 Níveis
 Tempo de Vida
@@ -404,6 +446,8 @@ Iluminado
 Pré-visualização do Pincel ao Vivo
 Pré-visualização de Material ao Vivo
 Localização
+Travar Camada
+Travada
 Logaritmo
 Textura Mágica
 Tornar Único
@@ -432,6 +476,7 @@ Saída de Malha
 Malha...
 Malhas
 Metálico
+Meios-tons
 Mínimo
 Mínimo Máximo
 Mínimo
@@ -445,12 +490,14 @@ Modelo
 Modelos
 Diretório de Modelos...
 Modificador
+Modificadores
 Modificar
 Modificar Animação
 Módulo
 Argamassa
 Tamanho da Argamassa
 Suavização da Argamassa
+Mover
 Multiplicar
 Nome
 Neural
@@ -476,15 +523,16 @@ Sem resposta
 Nó
 Pré-visualizações de Nós
 Nós
+Ruído
 Grão de Ruído
 Textura de Ruído
 Nenhum
 Normal
-Mistura de Normal
 Mapa de Normais
 Mapa de Normais 1
 Mapa de Normais 2
 Normalizar
+Diferente
 Não disponível na compilação de depuração
 Não implementado
 OK
@@ -493,6 +541,7 @@ ID de Objeto
 Índice de Objeto
 Informação do Objeto
 Normal do Objeto
+Objetos
 Oclusão
 Deslocamento
 Cor Antiga
@@ -515,8 +564,9 @@ Orientação 3D
 Origem para Geometria
 Ortográfica
 Saída
+Preto de Saída
+Branco de Saída
 Sobrepor
-PBR
 Empacotar Ativos
 Empacotar no Projeto
 Preenchimento
@@ -527,7 +577,9 @@ Paramétrico
 Pai
 Derivada Parcial
 Partícula
+Passagem Direta
 Colar
+Colar como Máscara
 Caminho
 Traçado de Caminho
 Traçador de Caminho
@@ -547,6 +599,7 @@ Beliscar
 Ping-Pong
 Pivô
 Tamanho do Pixel
+Plano
 Platô
 Reproduzir
 Player
@@ -555,15 +608,18 @@ Extensão importada:
 Extensões
 Ponto
 Pontualidade
+Polígono
 Posição
 Pós-processamento
 Potência
 Preferências
 Preferências...
+Preservar Luminosidade
 Pré-definição
 Pré-definição importada:
 Pré-definições
 Controles de Pressão
+Prévia
 Anterior
 Pasta anterior
 Processando...
@@ -574,6 +630,7 @@ Prompt
 Qualidade
 Quantizar
 R
+RGB
 Curvas RGB
 RGB para P&B
 RGBA
@@ -587,6 +644,7 @@ Recente
 Refazer {step}
 Refletir
 Atualizar
+Região
 Reimportar
 Reimportar Malha
 Reimportar Texturas
@@ -605,10 +663,11 @@ Sugerir Recurso
 Resetar
 Resetar Mapa de Ambiente
 Resetar Layout
+Redimensionar
+Redimensionar...
 Resolução
 Restaurar
 Restaurar Amostras
-Restaurar amostras padrão
 Direita
 Anéis
 Rotacionar
@@ -618,6 +677,7 @@ Arredondar
 Altura da Linha
 Executar
 Executar no Player
+Executar nós de script ao abrir um projeto sem perguntar
 Executando...
 SSAO
 Amostras
@@ -641,11 +701,13 @@ Script aberto
 Scripts
 Escultura
 Camada de Escultura
+Sem Emendas
 Procurar
 Procurar por Nós
 Segmentos
 Selecionar
 Selecionar Tudo
+Selecionar Faces
 Selecionar Ocultos
 Selecionar Material
 Selecionar Visíveis
@@ -661,9 +723,11 @@ Definir como Máscara
 Definindo Origem
 Configuração
 Shader
+Sombras
 Forma
 Compartilhar Link do Player
 Compartilhado
+Nitidez
 Mostrar Visualização 2D
 Mostrar Nomes dos Ativos
 Mostrar Grade
@@ -681,7 +745,9 @@ Entrando...
 Seno
 Tamanho
 Slot
+Ícones Pequenos
 Suavizar
+Suavidade
 Borrar
 Ajustar
 Trechos
@@ -711,12 +777,14 @@ Reto
 Força
 Esticar
 Subdividir
+Submalha
 Subsuperfície
 Subtrair
 Super Amostragem
 Amostras
 Amostras...
 Simetria
+Abas
 Tangente
 Destino
 Modelo
@@ -734,9 +802,11 @@ Textura...
 Texturas
 Texturas exportadas
 Texturas...
+A malha mudou, as faces de algumas máscaras geométricas não valem mais
 Tema
 Tema importado:
 Espessura
+Limiar
 Bloco
 Bloco X
 Bloco Y
@@ -758,9 +828,11 @@ Para Camada de Pintura
 Para Máscara de Pintura
 Para Radianos
 Alternar Tela Cheia
-Alternar cabeçalho
+Alternar Cabeçalho
+Tolerância
 Ferramentas
 Superior
+Toro
 Interface Touch
 Transformar
 Transformar Objeto
@@ -780,6 +852,7 @@ UV
 Ilha UV
 Mapa UV
 Escala UV
+Tiles UV
 Desenrolar UV
 Mapa UV
 Não foi possível verificar atualizações.\nPor favor visite {url}.
@@ -854,9 +927,9 @@ player
 extensão ativada
 Prompt
 sRGB
+selecionadas
 Origem
 triângulos
 tipo
 sem título
-x
 {shortcut} e mover mouse

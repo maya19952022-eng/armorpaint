@@ -68,29 +68,27 @@ slot_layer_t *slot_layer_create_undo(char *ext) {
 }
 
 slot_layer_t *slot_layer_create(char *ext, layer_slot_type_t type, slot_layer_t *parent) {
-	slot_layer_t *raw       = ALLOC_INIT(slot_layer_t, {0});
-	raw->id                 = 0;
-	raw->ext                = "";
-	raw->visible            = true;
-	raw->mask_opacity       = 1.0; // Opacity mask
-	raw->show_panel         = true;
-	raw->blending           = BLEND_TYPE_MIX;
-	raw->object_mask        = 0;
-	raw->scale              = 1.0;
-	raw->angle              = 0.0;
-	raw->uv_type            = UV_TYPE_UVMAP;
-	raw->paint_base         = true;
-	raw->paint_opac         = true;
-	raw->paint_occ          = true;
-	raw->paint_rough        = true;
-	raw->paint_met          = true;
-	raw->paint_nor          = true;
-	raw->paint_nor_blend    = true;
-	raw->paint_height       = true;
-	raw->paint_height_blend = true;
-	raw->paint_emis         = true;
-	raw->paint_subs         = true;
-	raw->decal_mat          = mat4_identity(); // Decal layer
+	slot_layer_t *raw = ALLOC_INIT(slot_layer_t, {0});
+	raw->id           = 0;
+	raw->ext          = "";
+	raw->visible      = true;
+	raw->mask_opacity = 1.0; // Opacity mask
+	raw->show_panel   = true;
+	raw->object_mask  = 0;
+	raw->scale        = 1.0;
+	raw->angle        = 0.0;
+	raw->uv_type      = UV_TYPE_UVMAP;
+	raw->paint_base   = true;
+	raw->paint_opac   = true;
+	raw->paint_occ    = true;
+	raw->paint_rough  = true;
+	raw->paint_met    = true;
+	raw->paint_nor    = true;
+	raw->paint_height = true;
+	raw->paint_emis   = true;
+	raw->paint_subs   = true;
+	raw->decal_mat    = mat4_identity(); // Decal layer
+	slot_layer_reset_channels(raw);
 
 	if (string_equals(ext, "")) {
 		raw->id = 0;
@@ -125,10 +123,9 @@ slot_layer_t *slot_layer_create(char *ext, layer_slot_type_t type, slot_layer_t 
 	}
 
 	else { // Mask
-		i32 id        = (raw->id + 1);
-		raw->name     = string("Mask %d", id);
-		char *format  = "RGBA32"; // Full bits for undo support, R8 is used
-		raw->blending = BLEND_TYPE_MIX;
+		i32 id       = (raw->id + 1);
+		raw->name    = string("Mask %d", id);
+		char *format = "RGBA32"; // Full bits for undo support, R8 is used
 
 		{
 			render_target_t *t = render_target_create();
@@ -155,6 +152,12 @@ void slot_layer_delete(slot_layer_t *raw) {
 			for (i32 i = 0; i < masks->length; ++i) {
 				slot_layer_t *m = masks->buffer[i];
 				slot_layer_delete(m);
+			}
+		}
+		slot_layer_t_array_t *filters = slot_layer_get_filters(raw, false); // Effects go with their layer
+		if (filters != NULL) {
+			for (i32 i = 0; i < filters->length; ++i) {
+				slot_layer_delete(filters->buffer[i]);
 			}
 		}
 	}
@@ -187,6 +190,12 @@ void slot_layer_delete(slot_layer_t *raw) {
 }
 
 void slot_layer_unload(slot_layer_t *raw) {
+	slot_layer_free_result(raw);
+	if (raw->texpaint_geometry != NULL) {
+		gpu_delete_texture(raw->texpaint_geometry);
+		raw->texpaint_geometry = NULL;
+	}
+
 	if (slot_layer_is_group(raw)) {
 		if (raw->texpaint_preview != NULL) {
 			gpu_delete_texture(raw->texpaint_preview);
@@ -383,10 +392,24 @@ slot_layer_t *slot_layer_duplicate(slot_layer_t *raw) {
 	}
 	else if (slot_layer_is_mask(raw)) {
 		draw_begin(l->texpaint, false, 0);
-		draw_set_pipeline(pipes_copy8);
+		draw_set_pipeline(raw->effect_paint ? pipes_copy : pipes_copy8); // The strokes of a paint effect keep their coverage in alpha
 		draw_image(raw->texpaint, 0, 0);
 		draw_set_pipeline(NULL);
 		draw_end();
+	}
+
+	l->effect_paint = raw->effect_paint;
+	if (raw->effect_paint && raw->texpaint_result != NULL) { // The copy shows the same result until its stack is refilled
+		slot_layer_alloc_result(l);
+		gpu_texture_t *from[] = {raw->texpaint_result, raw->texpaint_result_nor, raw->texpaint_result_pack};
+		gpu_texture_t *to[]   = {l->texpaint_result, l->texpaint_result_nor, l->texpaint_result_pack};
+		for (i32 i = 0; i < 3 && from[i] != NULL && to[i] != NULL; ++i) {
+			draw_begin(to[i], false, 0);
+			draw_set_pipeline(pipes_copy);
+			draw_image(from[i], 0, 0);
+			draw_set_pipeline(NULL);
+			draw_end();
+		}
 	}
 
 	if (l->texpaint_preview != NULL) {
@@ -397,26 +420,28 @@ slot_layer_t *slot_layer_duplicate(slot_layer_t *raw) {
 		draw_end();
 	}
 
-	l->visible            = raw->visible;
-	l->mask_opacity       = raw->mask_opacity;
-	l->fill_material      = raw->fill_material;
-	l->object_mask        = raw->object_mask;
-	l->blending           = raw->blending;
-	l->uv_type            = raw->uv_type;
-	l->decal_mat          = raw->decal_mat;
-	l->scale              = raw->scale;
-	l->angle              = raw->angle;
-	l->paint_base         = raw->paint_base;
-	l->paint_opac         = raw->paint_opac;
-	l->paint_occ          = raw->paint_occ;
-	l->paint_rough        = raw->paint_rough;
-	l->paint_met          = raw->paint_met;
-	l->paint_nor          = raw->paint_nor;
-	l->paint_nor_blend    = raw->paint_nor_blend;
-	l->paint_height       = raw->paint_height;
-	l->paint_height_blend = raw->paint_height_blend;
-	l->paint_emis         = raw->paint_emis;
-	l->paint_subs         = raw->paint_subs;
+	l->visible       = raw->visible;
+	l->locked        = raw->locked;
+	l->effect        = raw->effect;
+	l->mask_opacity  = raw->mask_opacity;
+	l->fill_material = raw->fill_material;
+	l->object_mask   = raw->object_mask;
+	memcpy(l->blending, raw->blending, sizeof(raw->blending));
+	memcpy(l->opacity, raw->opacity, sizeof(raw->opacity));
+	l->uv_type      = raw->uv_type;
+	l->decal_mat    = raw->decal_mat;
+	l->scale        = raw->scale;
+	l->angle        = raw->angle;
+	l->paint_base   = raw->paint_base;
+	l->paint_opac   = raw->paint_opac;
+	l->paint_occ    = raw->paint_occ;
+	l->paint_rough  = raw->paint_rough;
+	l->paint_met    = raw->paint_met;
+	l->paint_nor    = raw->paint_nor;
+	l->paint_height = raw->paint_height;
+	l->paint_emis   = raw->paint_emis;
+	l->paint_subs   = raw->paint_subs;
+	l->geometry_mask = slot_layer_geometry_mask_copy(&raw->geometry_mask);
 
 	if (raw->path_points != NULL) {
 		l->path_points        = f32_array_create_from_raw(raw->path_points->buffer, raw->path_points->length);
@@ -439,6 +464,23 @@ static void slot_layer_draw_resized(gpu_texture_t *src, i32 res_x, i32 res_y) {
 	else {
 		draw_scaled_image(src, 0, 0, res_x, res_y);
 	}
+}
+
+// Result texture of a paint effect at the current resolution and format, scaled like the strokes, the old one is deleted
+static void slot_layer_resize_result(gpu_texture_t **t, char *name, gpu_texture_format_t format, gpu_pipeline_t *pipe, i32 res_x, i32 res_y) {
+	if (*t == NULL) {
+		return;
+	}
+	gpu_texture_t *_t = *t;
+	*t                = gpu_create_render_target(res_x, res_y, format);
+	draw_begin(*t, false, 0);
+	draw_set_pipeline(pipe);
+	slot_layer_draw_resized(_t, res_x, res_y);
+	draw_set_pipeline(NULL);
+	draw_end();
+	gpu_delete_texture(_t);
+	render_target_t *rt = any_map_get(render_path_render_targets, name);
+	rt->_image          = *t;
 }
 
 void slot_layer_resize_and_set_bits(slot_layer_t *raw) {
@@ -501,13 +543,17 @@ void slot_layer_resize_and_set_bits(slot_layer_t *raw) {
 			render_target_t *rt_pack = any_map_get(rts, string("texpaint_pack%s", raw->ext));
 			rt_pack->_image          = raw->texpaint_pack;
 		}
+
+		slot_layer_resize_result(&raw->texpaint_result, string_tmp("texpaint_result%s", raw->ext), format, pipe, res_x, res_y);
+		slot_layer_resize_result(&raw->texpaint_result_nor, string_tmp("texpaint_result_nor%s", raw->ext), format, pipe, res_x, res_y);
+		slot_layer_resize_result(&raw->texpaint_result_pack, string_tmp("texpaint_result_pack%s", raw->ext), format, pipe, res_x, res_y);
 	}
 	else if (slot_layer_is_mask(raw)) {
 		gpu_texture_t *_texpaint = raw->texpaint;
 		raw->texpaint            = gpu_create_render_target(res_x, res_y, GPU_TEXTURE_FORMAT_RGBA32);
 
 		draw_begin(raw->texpaint, false, 0);
-		draw_set_pipeline(pipes_copy8);
+		draw_set_pipeline(raw->effect_paint ? pipes_copy : pipes_copy8); // The strokes of a paint effect keep their coverage in alpha
 		slot_layer_draw_resized(_texpaint, res_x, res_y);
 		draw_set_pipeline(NULL);
 		draw_end();
@@ -516,6 +562,8 @@ void slot_layer_resize_and_set_bits(slot_layer_t *raw) {
 
 		render_target_t *rt = any_map_get(rts, string("texpaint%s", raw->ext));
 		rt->_image          = raw->texpaint;
+
+		slot_layer_resize_result(&raw->texpaint_result, string_tmp("texpaint_result%s", raw->ext), GPU_TEXTURE_FORMAT_RGBA32, pipes_copy, res_x, res_y);
 	}
 
 	// Clear and repack the base mesh
@@ -559,8 +607,213 @@ void slot_layer_to_paint_layer(slot_layer_t *raw) {
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 
+// Masks and filters follow the lock of their layer, layers the lock of their group
+bool slot_layer_is_locked(slot_layer_t *raw) {
+	return raw->locked || (raw->parent != NULL && slot_layer_is_locked(raw->parent));
+}
+
+// The active tool would change a locked layer, pickers only read it
+bool slot_layer_is_paint_locked(slot_layer_t *raw) {
+	tool_type_t t = g_context->tool;
+	return slot_layer_is_locked(raw) && t != TOOL_TYPE_PICKER && t != TOOL_TYPE_MATERIAL && t != TOOL_TYPE_COLORID && t != TOOL_TYPE_CURSOR;
+}
+
 bool slot_layer_is_visible(slot_layer_t *raw) {
-	return raw->visible && (raw->parent == NULL || raw->parent->visible);
+	if (slot_layer_is_mask(raw) && raw->effect) { // Hiding a mask hides its effects
+		slot_layer_t *base = slot_layer_effect_base(raw);
+		if (base != NULL && !base->visible) {
+			return false;
+		}
+	}
+	return raw->visible && (raw->parent == NULL || slot_layer_is_visible(raw->parent)); // A hidden group hides the effects of its layers
+}
+
+// The layer has filters, or the mask has effects right above it
+bool slot_layer_has_effects(slot_layer_t *raw) {
+	if (slot_layer_is_layer(raw) && !slot_layer_is_filter(raw)) {
+		return slot_layer_get_filters(raw, false) != NULL;
+	}
+	if (slot_layer_is_mask(raw)) {
+		i32 i = array_index_of(g_project->_->layers, raw) + 1;
+		if (i > 0 && i < g_project->_->layers->length) {
+			slot_layer_t *l = g_project->_->layers->buffer[i];
+			return slot_layer_is_mask(l) && l->parent == raw->parent && l->effect;
+		}
+	}
+	return false;
+}
+
+// Effect chains: the filters of a layer, oldest at the bottom right below the masks, and the masks marked as effect
+// right above the mask they change. Each effect is a fill whose material reads the visible element below it in the
+// chain, only the top visible element of a chain is composited.
+
+bool slot_layer_is_effect(slot_layer_t *raw) {
+	return slot_layer_is_filter(raw) || (slot_layer_is_mask(raw) && raw->effect);
+}
+
+// The layer of a filter, the mask a mask effect changes, NULL when the mask effect lost its mask
+slot_layer_t *slot_layer_effect_base(slot_layer_t *raw) {
+	if (slot_layer_is_filter(raw)) {
+		return raw->parent;
+	}
+	if (!slot_layer_is_mask(raw) || !raw->effect) {
+		return NULL;
+	}
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	for (i32 i = array_index_of(layers, raw) - 1; i >= 0; --i) {
+		slot_layer_t *l = layers->buffer[i];
+		if (!slot_layer_is_mask(l) || l->parent != raw->parent) {
+			return NULL;
+		}
+		if (!l->effect) {
+			return l;
+		}
+	}
+	return NULL;
+}
+
+// What an effect reads: the nearest visible effect below it in its chain, else the layer or mask of the chain
+slot_layer_t *slot_layer_effect_input(slot_layer_t *raw) {
+	slot_layer_t *base = slot_layer_effect_base(raw);
+	if (base == NULL) {
+		return NULL;
+	}
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	for (i32 i = array_index_of(layers, raw) - 1; i >= 0; --i) {
+		slot_layer_t *l = layers->buffer[i];
+		if (l == base) {
+			return base;
+		}
+		bool same_chain = slot_layer_is_filter(raw) ? (slot_layer_is_filter(l) && l->parent == raw->parent) : true;
+		if (same_chain && l->visible) {
+			return l;
+		}
+	}
+	return base;
+}
+
+// A visible effect above it in its chain replaces it in the composite
+bool slot_layer_is_covered(slot_layer_t *raw) {
+	slot_layer_t_array_t *layers = g_project->_->layers;
+	i32                   index  = array_index_of(layers, raw);
+	if (slot_layer_is_filter(raw)) {
+		for (i32 i = index + 1; i < layers->length; ++i) {
+			slot_layer_t *l = layers->buffer[i];
+			if (l == raw->parent) {
+				break;
+			}
+			if (slot_layer_is_filter(l) && l->parent == raw->parent && l->visible) {
+				return true;
+			}
+		}
+		return false;
+	}
+	if (slot_layer_is_layer(raw)) {
+		return slot_layer_has_visible_filter(raw);
+	}
+	if (slot_layer_is_mask(raw)) {
+		for (i32 i = index + 1; i < layers->length; ++i) {
+			slot_layer_t *l = layers->buffer[i];
+			if (!slot_layer_is_mask(l) || l->parent != raw->parent || !l->effect) {
+				break;
+			}
+			if (l->visible) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+// Masks of the composite of a layer: those of its layer for a filter, and of each mask chain only the top
+slot_layer_t_array_t *slot_layer_get_composite_masks(slot_layer_t *raw) {
+	if (slot_layer_is_filter(raw)) {
+		raw = raw->parent;
+	}
+	slot_layer_t_array_t *masks = slot_layer_get_masks(raw, true);
+	if (masks == NULL) {
+		return NULL;
+	}
+	slot_layer_t_array_t *res = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < masks->length; ++i) {
+		if (!slot_layer_is_covered(masks->buffer[i])) {
+			any_array_push(res, masks->buffer[i]);
+		}
+	}
+	return res->length > 0 ? res : NULL;
+}
+
+// Paint effect: an effect without material, its own textures hold strokes painted over the element below it in its
+// stack, the result textures what the stack shows. Out of a stack it is a plain layer or mask holding its strokes.
+bool slot_layer_is_paint_effect(slot_layer_t *raw) {
+	return raw->effect_paint && slot_layer_is_effect(raw);
+}
+
+static gpu_texture_t *slot_layer_create_result(char *name, char *format) {
+	render_target_t *t = render_target_create();
+	t->name            = name;
+	t->width           = config_get_texture_res_x();
+	t->height          = config_get_texture_res_y();
+	t->format          = string_copy(format);
+	return render_path_create_render_target(t)->_image;
+}
+
+// Result textures of a paint effect, filled by layers_update_paint_effect
+void slot_layer_alloc_result(slot_layer_t *raw) {
+	if (raw->texpaint_result != NULL || slot_layer_is_group(raw)) {
+		return;
+	}
+	if (slot_layer_is_mask(raw)) {
+		raw->texpaint_result = slot_layer_create_result(string("texpaint_result%s", raw->ext), "RGBA32");
+		return;
+	}
+	char *format              = base_bits == TEXTURE_BITS_BITS8 ? "RGBA32" : base_bits == TEXTURE_BITS_BITS16 ? "RGBA64" : "RGBA128";
+	raw->texpaint_result      = slot_layer_create_result(string("texpaint_result%s", raw->ext), format);
+	raw->texpaint_result_nor  = slot_layer_create_result(string("texpaint_result_nor%s", raw->ext), format);
+	raw->texpaint_result_pack = slot_layer_create_result(string("texpaint_result_pack%s", raw->ext), format);
+}
+
+void slot_layer_free_result(slot_layer_t *raw) {
+	if (raw->texpaint_result == NULL) {
+		return;
+	}
+	gpu_delete_texture(raw->texpaint_result);
+	map_delete(render_path_render_targets, string_tmp("texpaint_result%s", raw->ext));
+	if (raw->texpaint_result_nor != NULL) {
+		gpu_delete_texture(raw->texpaint_result_nor);
+		gpu_delete_texture(raw->texpaint_result_pack);
+		map_delete(render_path_render_targets, string_tmp("texpaint_result_nor%s", raw->ext));
+		map_delete(render_path_render_targets, string_tmp("texpaint_result_pack%s", raw->ext));
+	}
+	raw->texpaint_result      = NULL;
+	raw->texpaint_result_nor  = NULL;
+	raw->texpaint_result_pack = NULL;
+}
+
+// Texture the stack shows: 0 base or mask, 1 normal, 2 pack. The result of a paint effect, the own one otherwise.
+gpu_texture_t *slot_layer_result(slot_layer_t *raw, i32 tex) {
+	bool result = slot_layer_is_paint_effect(raw) && raw->texpaint_result != NULL;
+	if (tex == 1) {
+		return result ? raw->texpaint_result_nor : raw->texpaint_nor;
+	}
+	if (tex == 2) {
+		return result ? raw->texpaint_result_pack : raw->texpaint_pack;
+	}
+	return result ? raw->texpaint_result : raw->texpaint;
+}
+
+// Copy of a paint effect in tmp with its result as textures, raw itself otherwise. For reading textures only: the opacity
+// and effect base of a mask effect need the slot of the stack.
+slot_layer_t *slot_layer_result_view(slot_layer_t *raw, slot_layer_t *tmp) {
+	if (!slot_layer_is_paint_effect(raw) || raw->texpaint_result == NULL) {
+		return raw;
+	}
+	*tmp               = *raw;
+	tmp->texpaint      = raw->texpaint_result;
+	tmp->texpaint_nor  = raw->texpaint_result_nor;
+	tmp->texpaint_pack = raw->texpaint_result_pack;
+	tmp->effect_paint  = false;
+	return tmp;
 }
 
 slot_layer_t_array_t *slot_layer_get_children(slot_layer_t *raw) {
@@ -713,6 +966,13 @@ bool slot_layer_has_visible_filter(slot_layer_t *raw) {
 
 f32 slot_layer_get_opacity(slot_layer_t *raw) {
 	f32 f = raw->mask_opacity;
+	if (slot_layer_is_filter(raw)) { // The filter shows in place of its layer
+		return f * slot_layer_get_opacity(raw->parent);
+	}
+	if (slot_layer_is_mask(raw) && raw->effect) {
+		slot_layer_t *base = slot_layer_effect_base(raw);
+		return base != NULL ? f * base->mask_opacity : f;
+	}
 	if (slot_layer_is_layer(raw) && raw->parent != NULL) {
 		f *= raw->parent->mask_opacity;
 	}
@@ -723,8 +983,239 @@ i32 slot_layer_get_object_mask(slot_layer_t *raw) {
 	return (slot_layer_is_mask(raw) || slot_layer_is_filter(raw)) ? raw->parent->object_mask : raw->object_mask;
 }
 
-i32 slot_layer_get_blending(slot_layer_t *raw) {
-	return slot_layer_is_filter(raw) ? raw->parent->blending : raw->blending;
+// Geometry mask (LAY-11)
+
+bool slot_layer_geometry_mask_is_empty(geometry_mask_t *g) {
+	return (g->tiles == NULL || g->tiles->length == 0) && (g->objects == NULL || g->objects->length == 0) && (g->faces == NULL || g->faces->length == 0);
+}
+
+static geometry_mask_faces_t *slot_layer_geometry_mask_faces_copy(geometry_mask_faces_t *f) {
+	geometry_mask_faces_t *c = ALLOC_INIT(geometry_mask_faces_t, {.object = string_copy(f->object), .triangles = f->triangles, .count = f->count});
+	c->bits                  = u8_array_create_from_array(f->bits);
+	return c;
+}
+
+void slot_layer_geometry_mask_faces_free(geometry_mask_faces_t *f) {
+	free(f->object);
+	array_delete(f->bits);
+	free(f);
+}
+
+// Copy with its own arrays, empty lists and face entries become NULL
+geometry_mask_t slot_layer_geometry_mask_copy(geometry_mask_t *g) {
+	geometry_mask_t c = {.mode    = g->mode == GEOMETRY_MASK_EXCLUDE ? GEOMETRY_MASK_EXCLUDE : GEOMETRY_MASK_INCLUDE,
+	                     .tiles   = NULL,
+	                     .objects = NULL,
+	                     .faces   = NULL};
+	if (g->tiles != NULL && g->tiles->length > 0) {
+		c.tiles = i32_array_create(0);
+		for (i32 i = 0; i < g->tiles->length; ++i) {
+			i32_array_push(c.tiles, g->tiles->buffer[i]);
+		}
+	}
+	if (g->objects != NULL && g->objects->length > 0) {
+		c.objects = string_array_create(0);
+		for (i32 i = 0; i < g->objects->length; ++i) {
+			string_array_push(c.objects, string_copy(g->objects->buffer[i]));
+		}
+	}
+	for (i32 i = 0; g->faces != NULL && i < g->faces->length; ++i) {
+		if (g->faces->buffer[i]->count <= 0) {
+			continue;
+		}
+		if (c.faces == NULL) {
+			c.faces = (geometry_mask_faces_t_array_t *)any_array_create(0);
+		}
+		any_array_push((any_array_t *)c.faces, slot_layer_geometry_mask_faces_copy(g->faces->buffer[i]));
+	}
+	return c;
+}
+
+void slot_layer_geometry_mask_free(geometry_mask_t *g) {
+	if (g->tiles != NULL) {
+		array_delete(g->tiles);
+		g->tiles = NULL;
+	}
+	if (g->objects != NULL) {
+		for (i32 i = 0; i < g->objects->length; ++i) {
+			free(g->objects->buffer[i]);
+		}
+		array_delete(g->objects);
+		g->objects = NULL;
+	}
+	if (g->faces != NULL) {
+		for (i32 i = 0; i < g->faces->length; ++i) {
+			slot_layer_geometry_mask_faces_free(g->faces->buffer[i]);
+		}
+		array_delete(g->faces);
+		g->faces = NULL;
+	}
+}
+
+// UDIM tile of a paint object, objects without a tile suffix are in tile 1001
+i32 slot_layer_geometry_tile(mesh_object_t *o) {
+	i32 tile = util_mesh_udim_tile(o->base->name);
+	return tile < 0 ? 1001 : tile;
+}
+
+// Face entry of the object, with valid_only NULL when the object has a different triangle count than when
+// its faces were selected
+geometry_mask_faces_t *slot_layer_geometry_mask_faces(geometry_mask_t *g, mesh_object_t *o, bool valid_only) {
+	for (i32 i = 0; g->faces != NULL && i < g->faces->length; ++i) {
+		geometry_mask_faces_t *f = g->faces->buffer[i];
+		if (!string_equals(f->object, o->base->name)) {
+			continue;
+		}
+		if (valid_only && (o->data == NULL || f->triangles != (i32)(o->data->index_array->length / 3))) {
+			return NULL;
+		}
+		return f;
+	}
+	return NULL;
+}
+
+// Part of the object the mask selects, before its mode. Faces and objects add up, a selected object
+// means all of its faces, and the tiles restrict both.
+static geometry_mask_cover_t slot_layer_geometry_mask_selects(geometry_mask_t *g, mesh_object_t *o) {
+	if (g->tiles != NULL && g->tiles->length > 0 && i32_array_index_of(g->tiles, slot_layer_geometry_tile(o)) < 0) {
+		return GEOMETRY_MASK_COVER_NONE;
+	}
+	bool no_objects = g->objects == NULL || g->objects->length == 0;
+	bool no_faces   = g->faces == NULL || g->faces->length == 0;
+	if ((no_objects && no_faces) || (!no_objects && string_array_index_of(g->objects, o->base->name) >= 0)) {
+		return GEOMETRY_MASK_COVER_ALL;
+	}
+	geometry_mask_faces_t *f = slot_layer_geometry_mask_faces(g, o, true);
+	if (f == NULL || f->count <= 0) {
+		return GEOMETRY_MASK_COVER_NONE;
+	}
+	return f->count >= f->triangles ? GEOMETRY_MASK_COVER_ALL : GEOMETRY_MASK_COVER_SOME;
+}
+
+// Part of the object a mask selects by itself, without its mode, NONE for an empty mask
+geometry_mask_cover_t slot_layer_geometry_mask_selection(geometry_mask_t *g, mesh_object_t *o) {
+	return slot_layer_geometry_mask_is_empty(g) ? GEOMETRY_MASK_COVER_NONE : slot_layer_geometry_mask_selects(g, o);
+}
+
+// Exclude keeps the layer where the mask does not select
+static geometry_mask_cover_t slot_layer_geometry_mask_mode_cover(geometry_mask_t *g, geometry_mask_cover_t c) {
+	if (g->mode != GEOMETRY_MASK_EXCLUDE || c == GEOMETRY_MASK_COVER_SOME) {
+		return c;
+	}
+	return c == GEOMETRY_MASK_COVER_NONE ? GEOMETRY_MASK_COVER_ALL : GEOMETRY_MASK_COVER_NONE;
+}
+
+// Layer or group whose geometry mask applies, masks and filters follow their layer
+slot_layer_t *slot_layer_geometry_owner(slot_layer_t *raw) {
+	if ((slot_layer_is_mask(raw) || slot_layer_is_filter(raw)) && raw->parent != NULL) {
+		return raw->parent;
+	}
+	return raw;
+}
+
+static slot_layer_t *slot_layer_geometry_group(slot_layer_t *owner) {
+	return owner->parent != NULL && slot_layer_is_group(owner->parent) ? owner->parent : NULL;
+}
+
+// The layer or its group has a geometry mask
+bool slot_layer_has_geometry_mask(slot_layer_t *raw) {
+	slot_layer_t *owner = slot_layer_geometry_owner(raw);
+	slot_layer_t *group = slot_layer_geometry_group(owner);
+	return !slot_layer_geometry_mask_is_empty(&owner->geometry_mask) || (group != NULL && !slot_layer_geometry_mask_is_empty(&group->geometry_mask));
+}
+
+// Part of the paint object where the layer applies, with the geometry masks of the layer and of its group. With
+// e, the masks that select some of the faces are kept for slot_layer_geometry_mask_eval_triangle.
+geometry_mask_cover_t slot_layer_geometry_mask_eval(slot_layer_t *raw, mesh_object_t *o, geometry_mask_eval_t *e) {
+	slot_layer_t *owner   = slot_layer_geometry_owner(raw);
+	slot_layer_t *slots[] = {owner, slot_layer_geometry_group(owner)};
+	bool          all     = true;
+	if (e != NULL) {
+		e->count = 0;
+	}
+	for (i32 i = 0; i < 2; ++i) {
+		if (slots[i] == NULL || slot_layer_geometry_mask_is_empty(&slots[i]->geometry_mask)) {
+			continue;
+		}
+		geometry_mask_t      *g = &slots[i]->geometry_mask;
+		geometry_mask_cover_t c = slot_layer_geometry_mask_mode_cover(g, slot_layer_geometry_mask_selects(g, o));
+		if (c == GEOMETRY_MASK_COVER_NONE) {
+			if (e != NULL) {
+				e->count = 0;
+			}
+			return GEOMETRY_MASK_COVER_NONE;
+		}
+		if (c == GEOMETRY_MASK_COVER_SOME) {
+			all = false;
+			if (e != NULL) {
+				e->faces[e->count]   = slot_layer_geometry_mask_faces(g, o, true);
+				e->include[e->count] = g->mode == GEOMETRY_MASK_INCLUDE;
+				e->count++;
+			}
+		}
+	}
+	return all ? GEOMETRY_MASK_COVER_ALL : GEOMETRY_MASK_COVER_SOME;
+}
+
+geometry_mask_cover_t slot_layer_geometry_mask_cover(slot_layer_t *raw, mesh_object_t *o) {
+	return slot_layer_geometry_mask_eval(raw, o, NULL);
+}
+
+// Triangle t of the object resolved by slot_layer_geometry_mask_eval is in the part where the layer applies
+bool slot_layer_geometry_mask_eval_triangle(geometry_mask_eval_t *e, i32 t) {
+	for (i32 i = 0; i < e->count; ++i) {
+		bool bit = (e->faces[i]->bits->buffer[t >> 3] >> (t & 7)) & 1;
+		if (bit != e->include[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// The layer applies on triangle t of the paint object
+bool slot_layer_geometry_mask_triangle(slot_layer_t *raw, mesh_object_t *o, i32 t) {
+	geometry_mask_eval_t  e;
+	geometry_mask_cover_t c = slot_layer_geometry_mask_eval(raw, o, &e);
+	if (c != GEOMETRY_MASK_COVER_SOME) {
+		return c == GEOMETRY_MASK_COVER_ALL;
+	}
+	return t >= 0 && t < (i32)(o->data->index_array->length / 3) && slot_layer_geometry_mask_eval_triangle(&e, t);
+}
+
+// The layer contributes somewhere on the paint object, with the geometry masks of the layer and of its group
+bool slot_layer_geometry_mask_object(slot_layer_t *raw, mesh_object_t *o) {
+	return slot_layer_geometry_mask_cover(raw, o) != GEOMETRY_MASK_COVER_NONE;
+}
+
+// Texels outside of every uv island keep the layer when all of its geometry masks exclude
+bool slot_layer_geometry_mask_keeps_empty(slot_layer_t *raw) {
+	slot_layer_t *owner   = slot_layer_geometry_owner(raw);
+	slot_layer_t *slots[] = {owner, slot_layer_geometry_group(owner)};
+	for (i32 i = 0; i < 2; ++i) {
+		if (slots[i] != NULL && !slot_layer_geometry_mask_is_empty(&slots[i]->geometry_mask) && slots[i]->geometry_mask.mode == GEOMETRY_MASK_INCLUDE) {
+			return false;
+		}
+	}
+	return true;
+}
+
+i32 slot_layer_get_blending(slot_layer_t *raw, layer_channel_t ch) {
+	return slot_layer_is_filter(raw) ? raw->parent->blending[ch] : raw->blending[ch];
+}
+
+// Layer opacity times the opacity of one channel
+f32 slot_layer_get_channel_opacity(slot_layer_t *raw, layer_channel_t ch) {
+	f32 f = slot_layer_is_filter(raw) ? raw->parent->opacity[ch] : raw->opacity[ch];
+	return slot_layer_get_opacity(raw) * f;
+}
+
+void slot_layer_reset_channels(slot_layer_t *raw) {
+	for (i32 i = 0; i < LAYER_CH_COUNT; ++i) {
+		raw->blending[i] = BLEND_TYPE_MIX;
+		raw->opacity[i]  = 1.0;
+	}
+	raw->blending[LAYER_CH_NOR]    = BLEND_TYPE_NORMAL_COMBINE;
+	raw->blending[LAYER_CH_HEIGHT] = BLEND_TYPE_ADD;
 }
 
 bool slot_layer_is_layer(slot_layer_t *raw) {
@@ -894,7 +1385,11 @@ void slot_layer_move(slot_layer_t *raw, i32 to) {
 	}
 
 	context_set_layer(raw);
-	history_order_layers(to);
+	bool record = !history_order_batch;
+	if (record) {
+		history_order_layers_begin();
+		history_order_layers(to);
+	}
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 
 	array_remove(g_project->_->layers, raw);
@@ -986,4 +1481,10 @@ void slot_layer_move(slot_layer_t *raw, i32 to) {
 	}
 
 	tab_layers_remap_all_layer_pointers(pointers);
+	if (record) {
+		history_order_layers_end();
+		if (layers_has_effects()) { // Effects read the element below them
+			layers_update_effects();
+		}
+	}
 }

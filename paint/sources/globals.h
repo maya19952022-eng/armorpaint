@@ -7,7 +7,7 @@
 
 char *manifest_title           = "ArmorPaint";
 char *manifest_version         = "1.1alpha";
-char *manifest_version_project = "21";
+char *manifest_version_project = "22";
 char *manifest_version_config  = "1";
 char *manifest_url             = "https://armorpaint.org";
 char *manifest_url_android     = "https://play.google.com/store/apps/details?id=org.armorpaint";
@@ -65,6 +65,8 @@ i32              pipes_texa;
 i32              pipes_opac;
 i32              pipes_blending;
 i32              pipes_tex1w;
+i32              pipes_opac_ch;
+i32              pipes_blend_ch;
 i32              pipes_tex0_mask;
 i32              pipes_texa_mask;
 i32              pipes_opac_apply_mask;
@@ -176,6 +178,11 @@ i32                     history_undos       = 0;     // Undos available
 i32                     history_redos       = 0;     // Redos available
 bool                    history_push_undo   = false; // Store undo on next paint
 slot_layer_t_array_t   *history_undo_layers = NULL;
+bool                    history_order_batch = false; // Layer moves are recorded by the caller as one step
+
+slot_layer_t         *tab_layers_clipboard = NULL; // Copied layer, group or mask
+slot_layer_t_array_t *layers_selected      = NULL; // Layers selected along with g_context->layer
+
 char                   *tab_scripts_text    = "";
 i32                     tab_scripts_line; // Active line of the script text area
 bool                    tab_scripts_minimap_dirty = true;
@@ -249,6 +256,7 @@ char                     *parser_material_sample_uv_scale       = "1.0";
 bool                      parser_material_transform_color_space = true;
 bool                      parser_material_blur_passthrough      = false;
 bool                      parser_material_warp_passthrough      = false;
+ui_node_t                *parser_material_sharpen_passthrough   = NULL; // Sharpen node baking its input
 bool                      parser_material_bake_passthrough      = false;
 ui_node_canvas_t         *parser_material_start_group           = NULL;
 ui_node_t_array_t        *parser_material_start_parents         = NULL;
@@ -371,6 +379,7 @@ char           *tab_layers_layer_name = "";
 char           *tab_meshes_mesh_name  = "";
 slot_layer_t   *tab_layers_l;
 paint_tex_t     tab_layers_preview_tex           = PAINT_TEX_BASE;
+layer_channel_t tab_layers_channel               = LAYER_CH_BASE; // Channel edited by the blending combo of a layer row
 gpu_texture_t  *util_uv_uvmap                    = NULL;
 bool            util_uv_uvmap_cached             = false;
 gpu_texture_t  *util_uv_trianglemap              = NULL;
@@ -381,6 +390,8 @@ gpu_texture_t  *util_uv_uvislandmap              = NULL;
 bool            util_uv_uvislandmap_cached       = false;
 bool            util_uv_seammap_cached           = false;
 bool            util_mesh_merged_stale           = false;
+u32             util_geometry_mask_epoch         = 0;     // Bumped when a geometry mask, a mesh or its uvs change
+bool            util_geometry_mask_dragging      = false; // A face selection stroke of the select tool is in progress
 i32             render_path_raytrace_frame       = 0;
 bool            render_path_raytrace_ready       = false;
 bool            render_path_raytrace_init_shader = true;
@@ -436,6 +447,14 @@ float3 hue_sat(float3 col, float4 shift) { \
 	hsv.y *= shift.y; \
 	hsv.z *= shift.z; \
 	return lerp(hsv_to_rgb(hsv), col, shift.w); \
+} \
+";
+
+// Flag in the alpha of texpaint_nor: 0 normal, 1 emission, 2 subsurface
+char *str_layer_flag = "\
+float layer_flag(float a) { \
+	float id = floor(a * 255.0 + 0.5); \
+	return id - 3.0 * floor(id / 3.0 + 0.001); \
 } \
 ";
 

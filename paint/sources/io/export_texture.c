@@ -235,6 +235,20 @@ static void export_texture_set_channel(f32 value, buffer_t *to, i32 to_channel, 
 	}
 }
 
+// Texture of one object: a layer whose geometry mask leaves the object out does not contribute
+static bool export_texture_geometry_skips(slot_layer_t *l, char *object_name) {
+	if (string_equals(object_name, "") || !slot_layer_has_geometry_mask(l)) {
+		return false;
+	}
+	for (i32 i = 0; i < g_project->_->paint_objects->length; ++i) {
+		mesh_object_t *o = g_project->_->paint_objects->buffer[i];
+		if (string_equals(o->base->name, object_name)) {
+			return !slot_layer_geometry_mask_object(l, o);
+		}
+	}
+	return false;
+}
+
 static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, char *object_name, bool bake_material) {
 	i32 texture_size_x = config_get_texture_res_x();
 	i32 texture_size_y = config_get_texture_res_y();
@@ -305,7 +319,7 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 		if (!slot_layer_is_layer(l1)) {
 			continue;
 		}
-		if (slot_layer_has_visible_filter(l1)) {
+		if (slot_layer_is_covered(l1)) {
 			continue;
 		}
 
@@ -318,9 +332,12 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 				continue;
 			}
 		}
+		if (!bake_material && g_context->layers_export == EXPORT_MODE_PER_OBJECT && export_texture_geometry_skips(l1, object_name)) {
+			continue;
+		}
 
 		gpu_texture_t        *mask    = empty;
-		slot_layer_t_array_t *l1masks = slot_layer_get_masks(l1, true);
+		slot_layer_t_array_t *l1masks = slot_layer_get_composite_masks(l1);
 		if (l1masks != NULL && !bake_material) {
 			layers_make_temp_mask_img();
 			draw_begin(pipes_temp_mask_image, true, 0xffffffff);
@@ -331,13 +348,18 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 			}
 			mask = pipes_temp_mask_image;
 		}
+		if (!bake_material) {
+			mask = util_geometry_mask_apply(l1, mask);
+		}
+		slot_layer_t view;
+		l1 = slot_layer_result_view(l1, &view); // A paint effect on top of the stack shows its result
 
 		// Shared layers of udim tiles are cropped out of the atlas, tile layers go into the atlas when exporting it whole
 		if (!bake_material && udim_slot >= 0 && util_mesh_udim_layer(l1)) {
-			l1 = layers_udim_remap(l1, l1masks != NULL ? &mask : NULL, udim_slot, true);
+			l1 = layers_udim_remap(l1, mask != empty ? &mask : NULL, udim_slot, true);
 		}
 		else if (!bake_material && udim_slot < 0 && layers_udim_tile_slot(l1) >= 0) {
-			l1 = layers_udim_remap(l1, l1masks != NULL ? &mask : NULL, layers_udim_tile_slot(l1), false);
+			l1 = layers_udim_remap(l1, mask != empty ? &mask : NULL, layers_udim_tile_slot(l1), false);
 		}
 
 		if (l1->paint_base) {
@@ -353,9 +375,9 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 			gpu_set_texture(pipes_tex1, empty);
 			gpu_set_texture(pipes_texmask, mask);
 			gpu_set_texture(pipes_texa, layers_temp_image);
-			gpu_set_float(pipes_opac, slot_layer_get_opacity(l1));
+			gpu_set_float(pipes_opac, slot_layer_get_channel_opacity(l1, LAYER_CH_BASE));
 			gpu_set_float(pipes_tex1w, empty->width);
-			gpu_set_int(pipes_blending, layers->length > 1 ? slot_layer_get_blending(l1) : 0);
+			gpu_set_int(pipes_blending, layers->length > 1 ? slot_layer_get_blending(l1, LAYER_CH_BASE) : 0);
 			gpu_set_vertex_buffer(const_data_screen_aligned_vb);
 			gpu_set_index_buffer(const_data_screen_aligned_ib);
 			gpu_draw();
@@ -375,9 +397,9 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 			gpu_set_texture(pipes_tex1, l1->texpaint_nor);
 			gpu_set_texture(pipes_texmask, mask);
 			gpu_set_texture(pipes_texa, layers_temp_image);
-			gpu_set_float(pipes_opac, slot_layer_get_opacity(l1));
+			gpu_set_float(pipes_opac, slot_layer_get_channel_opacity(l1, LAYER_CH_NOR));
 			gpu_set_float(pipes_tex1w, l1->texpaint_nor->width);
-			gpu_set_int(pipes_blending, l1->paint_nor_blend ? 102 : 101);
+			gpu_set_int(pipes_blending, layers_nor_merge_mode(l1));
 			gpu_set_vertex_buffer(const_data_screen_aligned_vb);
 			gpu_set_index_buffer(const_data_screen_aligned_ib);
 			gpu_draw();
@@ -391,18 +413,7 @@ static void export_texture_run_layers(char *path, slot_layer_t_array_t *layers, 
 			draw_set_pipeline(NULL);
 			draw_end();
 
-			if (l1->paint_occ && l1->paint_rough && l1->paint_met && l1->paint_height) {
-				layers_commands_merge_pack(pipes_merge, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask,
-				                           l1->paint_height_blend ? 103 : 101);
-			}
-			else {
-				if (l1->paint_occ)
-					layers_commands_merge_pack(pipes_merge_r, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-				if (l1->paint_rough)
-					layers_commands_merge_pack(pipes_merge_g, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-				if (l1->paint_met)
-					layers_commands_merge_pack(pipes_merge_b, layers_expc, l1->texpaint, l1->texpaint_pack, slot_layer_get_opacity(l1), mask, 101);
-			}
+			layers_commands_merge_pack(layers_expc, l1, mask);
 		}
 	}
 

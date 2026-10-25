@@ -1,6 +1,6 @@
 (compressed)
+(mesh changed)
 (packed)
-+
 -X
 -Y
 -Z
@@ -8,6 +8,7 @@
 2D
 2D View
 3D
+3D Gradient
 3D View
 A
 About
@@ -15,6 +16,7 @@ About...
 Absolute
 Add
 Add Animation
+Add Effect
 Add Swatch
 Add new swatch
 Add picked color to swatches
@@ -24,6 +26,7 @@ Allow Upside Down Camera
 Alpha
 Alpha Discard
 Amount
+Anchor Point
 Angle
 Angle Reject
 Animation
@@ -36,16 +39,19 @@ Apply Mask
 Apply Nodes
 Apply Sculpt
 Apply Skinning
+Apply Transform
 Arccosine
 Arcsine
 Arctan2
 Arctangent
 Array
 Asset
+Assets
 Atlas
 Atlases
 Attribute
 Auto
+Auto Run Scripts
 Average
 Axis
 B
@@ -55,7 +61,6 @@ Bake Material...
 Bake Texture
 Bake to Textures
 Bands
-Base
 Base Color
 Bent Normal
 Bevel
@@ -65,6 +70,7 @@ Black Mask
 Blender Executable
 Blender executable path not set
 Blending
+Blending Channel
 Bloom
 Blur
 Blur Envmap
@@ -96,6 +102,7 @@ Camera Rotation Speed
 Camera Texture
 Camera Zoom Speed
 Cancel
+Capsule
 Capture Background
 Capture Output
 Capture Screenshot
@@ -103,6 +110,7 @@ Capture Video
 Ceil
 Cell size in pixels
 Center
+Channel
 Channels
 Check for Updates...
 Checker Texture
@@ -111,11 +119,12 @@ Clamp Factor
 Clamp Result
 Clay
 Clear
+Clear Faces
+Clear Geometry Mask
 Clear Layer
 Clear Swatches
 Clip End
 Clip Start
-Clipping
 Clone
 Close
 Cloth
@@ -126,17 +135,24 @@ Cloud projects
 Color
 Color 1
 Color 2
+Color 3
+Color 4
+Color Balance
 Color ID
 Color ID Map
 Color Mask
 Color Ramp
+Color Selection
 Color Space
 ColorID
 Combine
 Combine Color
 Combine XYZ
+Compare Mask
 Compass
+Cone
 Confirm
+Connected
 Console
 Console Model
 Constant
@@ -151,9 +167,12 @@ Cosine
 Could not download
 Count
 Crease
+Create Baked Material
 Create Color Layer
 Create Material
+Crop
 Cross Product
+Cube
 Cull Backfaces
 Cursor
 Curvature
@@ -162,6 +181,7 @@ Curve
 Curved
 Custom
 Cut
+Cylinder
 Darken
 Debug
 Decal
@@ -176,6 +196,7 @@ Delete Brush
 Delete Layer
 Delete Material
 Delete Node Group
+Delete Selected
 Delete Swatch
 Delete Unused
 Delta
@@ -219,6 +240,7 @@ Duplicate Brush
 Duplicate Layer
 Duplicate Material
 Duplicate Swatch
+Edges
 Edit
 Edit Image
 Edit Nodes
@@ -237,6 +259,7 @@ Environment Angle
 Envmap
 Envmap Spheres
 Envmap...
+Equal
 Eraser
 Error: .arm file expected
 Error: .hdr file expected
@@ -245,6 +268,7 @@ Error: Could not locate texture
 Error: Failed to read font data
 Error: Failed to read mesh data
 Error: Unknown asset format
+Exclude
 Exclusion
 Exit
 Experimental Features
@@ -256,6 +280,7 @@ Export Material
 Export Mesh
 Export Player
 Export Textures
+Export as .arm
 Export swatches
 Export texture files
 Exporting mesh
@@ -264,6 +289,9 @@ F1
 F2
 Fac
 Face
+Faces
+Faces of the geometry mask could not be read:
+Facing Up
 Factor
 Failed to import material
 Failed to read sound:
@@ -278,6 +306,9 @@ Filter
 Filter Textures
 Flat
 Flatten
+Flatten Group
+Flatten Selected
+Flattened
 Float Curve
 Floor
 Floored Modulo
@@ -300,13 +331,16 @@ Friction
 From Max
 From Min
 Front
+Frustum Culling
 Full
 Fuzziness
 G
 Gabor Texture
 Gamma
 Generated
+Generator
 Geometry
+Geometry Mask
 Geometry to Origin
 Get Started
 Grab
@@ -314,19 +348,22 @@ Gradient Texture
 Gravity X
 Gravity Y
 Gravity Z
+Greater
 Greater Than
+Grid
 Grid Cell
 Grid Snap
 Group
 Group Input
 Group Output
+Group Selected
 Hardness
 Height
-Height Blend
 Help
-Hide 3D View
 High Poly
+Highlights
 History
+Hold ctrl to switch between add and remove
 Hold {action_paint} to erase\nHold {brush_ruler} and press {action_paint} to erase a straight line (ruler mode)
 Hold {action_paint} to paint\nHold {brush_ruler} and press {action_paint} to paint a straight line (ruler mode)
 Hold {brush_opacity} and move mouse to the left to decrease the opacity\nHold {brush_opacity} and move mouse to the right to increase the opacity
@@ -354,6 +391,9 @@ Import texture file
 Import...
 Importing mesh
 In
+In Black
+In White
+Include
 Incoming
 Inflate
 Info: Asset already imported
@@ -379,6 +419,7 @@ Keymap
 Keymap imported:
 Lacunarity
 Language
+Large Icons
 Layer
 Layer Angle
 Layer Blending
@@ -393,6 +434,7 @@ Lazy Radius
 Lazy Step
 Left
 Length
+Less
 Less Than
 Levels
 Lifetime
@@ -404,6 +446,8 @@ Lit
 Live Brush Preview
 Live Material Preview
 Location
+Lock Layer
+Locked
 Logarithm
 Magic Texture
 Make Unique
@@ -432,6 +476,7 @@ Mesh Output
 Mesh...
 Meshes
 Metallic
+Midtones
 Min
 Min Max
 Minimum
@@ -445,12 +490,14 @@ Model
 Models
 Models Directory...
 Modifier
+Modifiers
 Modify
 Modify Animation
 Modulo
 Mortar
 Mortar Size
 Mortar Smooth
+Move
 Multiply
 Name
 Neural
@@ -476,15 +523,16 @@ No response
 Node
 Node Previews
 Nodes
+Noise
 Noise Grain
 Noise Texture
 None
 Normal
-Normal Blend
 Normal Map
 Normal Map 1
 Normal Map 2
 Normalize
+Not Equal
 Not available in debug build
 Not implemented
 OK
@@ -493,6 +541,7 @@ Object ID
 Object Index
 Object Info
 Object Normal
+Objects
 Occlusion
 Offset
 Old Color
@@ -515,8 +564,9 @@ Orientation 3D
 Origin to Geometry
 Orthographic
 Out
+Out Black
+Out White
 Overlay
-PBR
 Pack Assets
 Pack into Project
 Padding
@@ -527,7 +577,9 @@ Parametric
 Parent
 Partial Derivative
 Particle
+Pass Through
 Paste
+Paste as Mask
 Path
 Path Traced
 Path Tracer
@@ -547,6 +599,7 @@ Pinch
 Ping-Pong
 Pivot
 Pixel Size
+Plane
 Plateau
 Play
 Player
@@ -555,15 +608,18 @@ Plugin imported:
 Plugins
 Point
 Pointiness
+Polygon
 Position
 Post Process
 Power
 Preferences
 Preferences...
+Preserve Luminosity
 Preset
 Preset imported:
 Presets
 Pressure controls
+Preview
 Previous
 Previous folder
 Processing...
@@ -574,6 +630,7 @@ Prompt
 Quality
 Quantize
 R
+RGB
 RGB Curves
 RGB to BW
 RGBA
@@ -587,6 +644,7 @@ Recent
 Redo {step}
 Reflect
 Refresh
+Region
 Reimport
 Reimport Mesh
 Reimport Textures
@@ -605,10 +663,11 @@ Request Feature
 Reset
 Reset Envmap
 Reset Layout
+Resize
+Resize...
 Resolution
 Restore
 Restore Swatches
-Restore default swatches
 Right
 Rings
 Rotate
@@ -618,6 +677,7 @@ Round
 Row Height
 Run
 Run in Player
+Run script nodes when opening a project without asking
 Running...
 SSAO
 Samples
@@ -641,11 +701,13 @@ Script opened
 Scripts
 Sculpt
 Sculpt Layer
+Seamless
 Search
 Search for nodes
 Segments
 Select
 Select All
+Select Faces
 Select Hidden
 Select Material
 Select Visible
@@ -661,9 +723,11 @@ Set as Mask
 Setting Source
 Setup
 Shader
+Shadows
 Shape
 Share Player Link
 Shared
+Sharpen
 Show 2D View
 Show Asset Names
 Show Grid
@@ -681,7 +745,9 @@ Signing in...
 Sine
 Size
 Slot
+Small Icons
 Smooth
+Smoothness
 Smudge
 Snap
 Snippets
@@ -711,12 +777,14 @@ Straight
 Strength
 Stretch
 Subdivide
+Submesh
 Subsurface
 Subtract
 Super Sample
 Swatches
 Swatches...
 Symmetry
+Tabs
 Tangent
 Target
 Template
@@ -734,9 +802,11 @@ Texture...
 Textures
 Textures exported
 Textures...
+The mesh changed, the faces of some geometry masks no longer apply
 Theme
 Theme imported:
 Thickness
+Threshold
 Tile
 Tile X
 Tile Y
@@ -758,9 +828,11 @@ To Paint Layer
 To Paint Mask
 To Radians
 Toggle Fullscreen
-Toggle header
+Toggle Header
+Tolerance
 Tools
 Top
+Torus
 Touch UI
 Transform
 Transform Object
@@ -780,6 +852,7 @@ UV
 UV Island
 UV Map
 UV Scale
+UV Tiles
 UV Unwrap
 UVMap
 Unable to check for updates.\nPlease visit {url}.
@@ -854,9 +927,9 @@ player
 plugin enabled
 prompt
 sRGB
+selected
 source
 triangles
 type
 untitled
-x
 {shortcut} and move mouse

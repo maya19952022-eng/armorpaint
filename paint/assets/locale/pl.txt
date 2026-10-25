@@ -1,6 +1,6 @@
 (skompresowane)
+
 (spakowane)
-+
 -X
 -Y
 -Z
@@ -8,6 +8,7 @@
 2D
 Podgląd 2D
 3D
+
 Podgląd 3D
 A
 O programie
@@ -15,6 +16,7 @@ O...
 Bezwględna
 Dodaj
 Dodaj animację
+
 Dodaj próbkę
 Dodaj nową próbkę
 Dodaj wybrany kolor do próbek
@@ -24,6 +26,7 @@ Zezwól na odwróconą kamerę
 Alfa
 Odrzucenie alfy
 Ilość
+
 Kąt
 Odrzucenie kątu
 Animacja
@@ -36,16 +39,19 @@ Zatwierdź maskę
 Zastosuj węzły
 Zatwierdź rzeźbienie
 Zastosuj skinning
+
 Arcus cosinus
 Arcus sinus
 Arcus tangens 2
 Arcus tangens
 Szyk
 Zasób
+
 Atlas
 Atlasy
 Atrybut
 Automatyczny
+
 Średnia
 Oś
 B
@@ -55,7 +61,6 @@ Wypalanie materiału...
 Wypalanie tekstury
 Wypal do tekstur
 Pasma
-Podstawowy
 Kolor bazowy
 Wygięta normalna
 Ścięcie
@@ -65,6 +70,7 @@ Czarna maska
 Plik wykonywalny Blendera
 Ścieżka do pliku wykonywalnego Blendera nie ustawiona
 Mieszanie
+
 Bloom
 Rozmycie
 Rozmyj Envmapę
@@ -96,6 +102,7 @@ Prędkość obracania kamery
 Tekstura kamery
 Prędkość zoomu kamery
 Anuluj
+
 Przechwyć tło
 Przechwyć wyjście
 Przechwyć zrzut ekranu
@@ -103,6 +110,7 @@ Przechwyć wideo
 Zaokrąglij w górę
 Rozmiar komórki w pikselach
 Środek
+
 Kanały
 Sprawdź dostępność aktualizacji...
 Tekstura szachownicy
@@ -111,11 +119,12 @@ Ogranicz współczynnik
 Ogranicz wynik
 Glina
 Wyczyść
+
+
 Wyczyść warstwę
 Wyczyść próbki kolorów
 Koniec clipu
 Początek clipu
-Przycinanie
 Klonowanie
 Bliski
 Tkanina
@@ -126,17 +135,24 @@ Projekty w chmurze
 Kolor
 Kolor 1
 Kolor 2
+
+
+
 ID koloru
 Mapa ID koloru
 Maska koloru
 Rampa koloru
+
 Przestrzeń kolorów
 IDKoloru
 Łączenie
 Połącz kolor
 Połącz XYZ
+
 Kompas
+
 Potwierdź
+
 Konsola
 Model konsoli
 Stała
@@ -151,9 +167,12 @@ Cosinus
 Nie można pobrać
 Liczba
 Zagięcie
+
 Utwórz warstwę koloru
 Utwórz materiał
+
 Iloczyn wektorowy
+
 Ukrywanie backface'ów
 Kursor
 Krzywizna
@@ -162,6 +181,7 @@ Krzywa
 Wygięte
 Własne
 Wytnij
+
 Przyciemnienie
 Debugowanie
 Dekal
@@ -176,6 +196,7 @@ Usuń pędzel
 Usuń warstwę
 Usuń materiał
 Usuń grupę węzłów
+
 Usuń próbkę koloru
 Usuń nieużywane
 Delta
@@ -219,6 +240,7 @@ Duplikuj pędzel
 Duplikuj warstwę
 Duplikuj materiał
 Duplikuj próbkę koloru
+
 Edytuj
 Edytuj obraz
 Edytuj węzły
@@ -237,6 +259,7 @@ Kąt środowiska
 Envmapa
 Kule mapy otoczenia
 Envmapa...
+
 Gumka
 Błąd: oczekiwano pliku .arm
 Błąd: oczekiwano pliku .hdr
@@ -245,6 +268,7 @@ Błąd: Nie można zlokalizować tekstury
 Błąd: Nie udało się odczytać danych czcionki
 Błąd: Nie udało się odczytać danych modelu
 Błąd: Nieznany format zasobu
+
 Wykluczenie
 Wyjście
 Funkcje eksperymentalne
@@ -256,6 +280,7 @@ Eksportuj materiał
 Eksportuj model
 Eksportuj odtwarzacz
 Eksportuj tekstury
+
 Eksportuj próbki
 Eksportuj pliki tekstur
 Eksportowanie modelu
@@ -264,6 +289,9 @@ F1
 F2
 Wsp.
 Ściana
+
+
+
 Współczynnik
 Nie udało się zaimportować materiału
 Nie udało się odczytać dźwięku:
@@ -278,6 +306,9 @@ Filtr
 Filtruj tekstury
 Płaski
 Spłaszcz
+
+
+
 Krzywa liczby
 Zaokrąglij w dół
 Modulo z podłogą
@@ -300,13 +331,16 @@ Tarcie
 Od maksimum
 Od minimum
 Przód
+
 Pełny
 Rozmycie
 G
 Tekstura Gabora
 Gamma
 Wygenerowane
+
 Geometria
+
 Geometria do początku układu
 Rozpocznij
 Chwytaj
@@ -314,19 +348,22 @@ Tekstura gradientowa
 Grawitacja X
 Grawitacja Y
 Grawitacja Z
+
 Więcej niż
+
 Komórka siatki
 Przyciąganie do siatki
 Grupa
 Wejście grupy
 Wyjście grupy
+
 Twardość
 Wysokość
-Mieszanie wysokości
 Pomoc
-Ukryj widok 3D
 Wysoki poly
+
 Historia
+
 Przytrzymaj {action_paint}, aby gumkować\nPrzytrzymaj {brush_ruler} i naciśnij {action_paint}, aby gumkować prostą linię (tryb linijki)
 Przytrzymaj {action_paint}, aby malować\nPrzytrzymaj {brush_ruler} i naciśnij {action_paint}, aby malować prostą linię (tryb linijki)
 Przytrzymaj {brush_opacity} i przesuń mysz w lewo, aby zmniejszyć krycie\nPrzytrzymaj {brush_opacity} i przesuń mysz w prawo, aby zwiększyć krycie
@@ -354,6 +391,9 @@ Importuj plik tekstury
 Importuj...
 Importowanie modelu
 Wejście
+
+
+
 Przychodzące
 Nadmuchaj
 Informacja: Zasób już zaimportowany
@@ -379,6 +419,7 @@ Mapa klawiszy
 Mapa klawiszy zaimportowana:
 Lakunarność
 Język
+
 Warstwa
 Kąt warstwy
 Mieszanie warstw
@@ -393,6 +434,7 @@ Promień leniwy
 Krok leniwy
 Lewy
 Długość
+
 Mniej niż
 Poziomy
 Czas życia
@@ -404,6 +446,8 @@ Oświetlony
 Podgląd pędzla na żywo
 Podgląd materiału na żywo
 Pozycja
+
+
 Logarytm
 Tekstura magiczna
 Uczyń unikalnym
@@ -432,6 +476,7 @@ Wyjście modelu
 Model...
 Modele
 Metaliczność
+
 Min
 Min Maks
 Minimum
@@ -445,12 +490,14 @@ Model
 Modele
 Katalog modeli...
 Modyfikator
+
 Zmodyfikuj
 Zmodyfikuj animację
 Modulo
 Zaprawa
 Rozmiar zaprawy
 Wygładzenie zaprawy
+
 Mnożenie
 Nazwa
 Neuronowy
@@ -476,15 +523,16 @@ Brak odpowiedzi
 Węzeł
 Podglądy węzłów
 Węzły
+
 Ziarnistość szumu
 Tekstura szumu
 Brak
 Normalna
-Mieszanie normalnych
 Mapa normalnych
 Mapa normalnych 1
 Mapa normalnych 2
 Normalizuj
+
 Niedostępne w kompilacji debugowania
 Nie zaimplementowano
 OK
@@ -493,6 +541,7 @@ ID obiektu
 Indeks obiektu
 Informacje o obiekcie
 Normalna obiektu
+
 Okluzja
 Przesunięcie
 Stary kolor
@@ -515,8 +564,9 @@ Orientacja 3D
 Środek do geometrii
 Ortograficzny
 Wyjście
+
+
 Nakładka
-PBR
 Spakuj zasoby
 Spakuj do projektu
 Wypełnienie
@@ -527,7 +577,9 @@ Parametryczny
 Rodzic
 Częściowa pochodna
 Cząsteczka
+
 Wklej
+
 Ścieżka
 Śledzenie ścieżek
 Śledzenie ścieżek
@@ -547,6 +599,7 @@ Przypnij do nagłówka
 Ping-Pong
 Punkt obrotu
 Rozmiar piksela
+
 Płaskowyż
 Odtwórz
 Odtwarzacz
@@ -555,15 +608,18 @@ Plugin zaimportowany:
 Pluginy
 Punkt
 Ostrość
+
 Pozycja
 Postprodukcja
 Potęga
 Preferencje
 Preferencje...
+
 Preset
 Preset zaimportowany:
 Presety
 Kontrola nacisku
+
 Poprzedni
 Poprzedni folder
 Przetwarzanie...
@@ -574,6 +630,7 @@ Prompt
 Jakość
 Kwantyzuj
 R
+
 Krzywe RGB
 RGB do BW
 RGBA
@@ -587,6 +644,7 @@ Ostatnie
 Powtórz {step}
 Odbij
 Odśwież
+
 Zaimportuj ponownie
 Zaimportuj model ponownie
 Zaimportuj tekstury ponownie
@@ -605,10 +663,11 @@ Zaproponuj funkcję
 Resetuj
 Resetuj Envmapę
 Resetuj układ
+
+
 Rozdzielczość
 Przywróć
 Przywróć próbki kolorów
-Przywróć domyślne próbki
 Prawy
 Pierścienie
 Obracaj
@@ -618,6 +677,7 @@ Zaokrąglij
 Wysokość rzędu
 Uruchom
 Uruchom w odtwarzaczu
+
 Uruchomiono...
 SSAO
 Próbki
@@ -641,11 +701,13 @@ Skrypt otwarty
 Skrypty
 Rzeźbienie
 Warstwa rzeźbienia
+
 Szukaj
 Szukaj węzłów
 Segmenty
 Zaznacz
 Zaznacz wszystko
+
 Zaznacz ukryte
 Wybierz materiał
 Zaznacz widoczne
@@ -661,9 +723,11 @@ Ustaw jako maskę
 Ustawianie źródła
 Ustawienia
 Shader
+
 Kształt
 Udostępnij link do odtwarzacza
 Współdzielone
+
 Pokaż podgląd 2D
 Pokaż nazwy zasobów
 Pokaż siatkę
@@ -681,7 +745,9 @@ Logowanie...
 Sinus
 Rozmiar
 Slot
+
 Wygładzanie
+
 Rozmazanie
 Przyciągaj
 Fragmenty
@@ -711,12 +777,14 @@ Prosty
 Siła
 Rozciągnij
 Podziel
+
 Podpowierzchniowe
 Odejmowanie
 Superpróbkowanie
 Próbki kolorów
 Próbki...
 Symetria
+
 Tangens
 Cel
 Szablon
@@ -734,9 +802,11 @@ Tekstura...
 Tekstury
 Tekstury wyeksportowane
 Tekstury...
+
 Motyw
 Motyw zaimportowany:
 Grubość
+
 Kafelek
 Kafelek X
 Kafelek Y
@@ -758,9 +828,11 @@ Do warstwy malowania
 Do maski malowania
 Do radianów
 Przełącz pełny ekran
-Przełącz nagłówek
+
+
 Narzędzia
 Góra
+
 Interfejs dotykowy
 Transformacja
 Przekształć obiekt
@@ -780,6 +852,7 @@ UV
 Wyspa UV
 Mapa UV
 Skala UV
+
 Rozwijanie UV
 Mapa UV
 Nie można sprawdzić aktualizacji.\nOdwiedź {url}.
@@ -854,9 +927,9 @@ player
 Plugin włączony
 Zapytanie
 sRGB
+
 źródło
 trójkąty
 typ
 bez tytułu
-x
 {shortcut} i poruszaj myszą

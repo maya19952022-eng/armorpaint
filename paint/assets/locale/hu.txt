@@ -1,6 +1,6 @@
 (tömörített)
+
 (csomagolva)
-+
 -X
 -Y
 -Z
@@ -8,6 +8,7 @@
 2D
 2D Nézet
 3D
+
 3D Nézet
 A
 Névjegy
@@ -15,6 +16,7 @@ Névjegy...
 Abszolút
 Hozzáadás
 Animáció hozzáadása
+
 Színminta hozzáadása
 Új színminta hozzáadása
 Kiválasztott szín hozzáadása a mintákhoz
@@ -24,6 +26,7 @@ Fejjel lefelé álló kamera engedélyezése
 Alfa
 Alfa eldobása
 Mennyiség
+
 Szög
 Szög elvetése
 Animáció
@@ -36,16 +39,19 @@ Maszk alkalmazása
 Csomópontok alkalmazása
 Szobrászat alkalmazása
 Skinning alkalmazása
+
 Arkusz koszinusz
 Arkusz szinusz
 Arkusz tangens 2
 Arkusz tangens
 Tömb
 Asset
+
 Atlasz
 Atlaszok
 Attribútum
 Auto
+
 Átlag
 Tengely
 B
@@ -55,7 +61,6 @@ Anyag sütése...
 Textúra sütése
 Sütés textúrákra
 Sávok
-Alap
 Alapszín
 Hajlított normál
 Élletörés
@@ -65,6 +70,7 @@ Fekete maszk
 Blender futtatható fájl
 A Blender elérési útja nincs beállítva
 Keverés
+
 Ragyogás (Bloom)
 Elmosás (Blur)
 Környezeti térkép elmosása
@@ -96,6 +102,7 @@ Kamera forgási sebesség
 Kamera textúra
 Kamera nagyítási sebesség
 Mégse
+
 Háttér rögzítése
 Kimenet rögzítése
 Képernyőkép rögzítése
@@ -103,6 +110,7 @@ Videó rögzítése
 Plafon (Ceil)
 Cella mérete pixelben
 Középpont
+
 Csatornák
 Frissítések keresése...
 Sakktábla textúra
@@ -111,11 +119,12 @@ Faktor szorítása
 Eredmény szorítása
 Agyag
 Törlés
+
+
 Réteg törlése
 Színminták törlése
 Vágás vége
 Vágás kezdete
-Vágás (Clipping)
 Klónozás
 Bezárás
 Szövet
@@ -126,17 +135,24 @@ Felhőprojektek
 Szín
 Szín 1
 Szín 2
+
+
+
 Szín ID
 Szín ID térkép
 Szín maszk
 Színátmenet (Ramp)
+
 Színtér
 SzínID
 Kombinálás
 Szín egyesítése
 XYZ egyesítése
+
 Iránytű
+
 Megerősítés
+
 Konzol
 Konzol modell
 Állandó
@@ -151,9 +167,12 @@ Koszinusz
 Nem sikerült letölteni:
 Darabszám
 Gyűrés
+
 Színréteg létrehozása
 Anyag létrehozása
+
 Vektoriális szorzat
+
 Hátoldalak elrejtése
 Kurzor
 Görbület
@@ -162,6 +181,7 @@ Görbe
 Görbített
 Egyéni
 Kivágás
+
 Sötétítés
 Hibakeresés
 Matrica
@@ -176,6 +196,7 @@ Ecset törlése
 Réteg törlése
 Anyag törlése
 Csomópont csoport törlése
+
 Színminta törlése
 Nem használtak törlése
 Delta
@@ -219,6 +240,7 @@ Ecset duplikálása
 Réteg duplikálása
 Anyag duplikálása
 Színminta duplikálása
+
 Szerkesztés
 Kép szerkesztése
 Csomópontok szerkesztése
@@ -237,6 +259,7 @@ Környezet szöge
 Környezeti térkép
 Környezeti térkép gömbök
 Környezeti térkép...
+
 Radír
 Hiba: .arm fájl szükséges
 Hiba: .hdr fájl szükséges
@@ -245,6 +268,7 @@ Hiba: A textúra nem található
 Hiba: Nem sikerült beolvasni a betűtípus adatokat
 Hiba: Nem sikerült beolvasni a háló adatokat
 Hiba: Ismeretlen asset formátum
+
 Kizárás
 Kilépés
 Kísérleti funkciók
@@ -256,6 +280,7 @@ Anyag exportálása
 Háló exportálása
 Player exportálása
 Textúrák exportálása
+
 Színminták exportálása
 Textúra fájlok exportálása
 Háló exportálása...
@@ -264,6 +289,9 @@ F1
 F2
 Fak
 Lap
+
+
+
 Faktor
 Az anyag importálása nem sikerült
 Nem sikerült beolvasni a hangot:
@@ -278,6 +306,9 @@ Szűrő
 Textúrák szűrése
 Lapos
 Lapítás
+
+
+
 Float görbe
 Padló
 Lefelé kerekített modulo
@@ -300,13 +331,16 @@ Súrlódás
 Maximumból
 Minimumból
 Elöl
+
 Teljes
 Bolyhosság
 G
 Gabor textúra
 Gamma
 Generált
+
 Geometria
+
 Geometria az origóba
 Kezdés
 Megfogás
@@ -314,19 +348,22 @@ Színátmenet textúra
 Gravitáció X
 Gravitáció Y
 Gravitáció Z
+
 Nagyobb mint
+
 Rácscella
 Rácshoz igazítás
 Csoport
 Csoport bemenet
 Csoport kimenet
+
 Keménység
 Magasság
-Magasság keverése
 Súgó
-3D Nézet elrejtése
 High Poly
+
 Előzmények
+
 Tartsa lenyomva a(z) {action_paint} gombot a törléshez\nTartsa lenyomva a(z) {brush_ruler} és {action_paint} gombokat egyenes vonal törléséhez (vonalzó mód)
 Tartsa lenyomva a(z) {action_paint} gombot a festéshez\nTartsa lenyomva a(z) {brush_ruler} és {action_paint} gombokat egyenes vonal festéséhez (vonalzó mód)
 Tartsa lenyomva a {brush_opacity} gombot és mozgassa az egeret balra az átlátszatlanság csökkentéséhez\nTartsa lenyomva a {brush_opacity} gombot és mozgassa az egeret jobbra az átlátszatlanság növeléséhez
@@ -354,6 +391,9 @@ Textúra fájl importálása
 Importálás...
 Háló importálása...
 Bemenet
+
+
+
 Bejövő
 Felfújás
 Infó: Az asset már importálva van
@@ -379,6 +419,7 @@ Billentyűkiosztás
 Billentyűkiosztás importálva:
 Lakunaritás
 Nyelv
+
 Réteg
 Réteg szöge
 Réteg keverés
@@ -393,6 +434,7 @@ Lusta sugár
 Lusta lépés
 Balra
 Hossz
+
 Kisebb mint
 Szintek
 Élettartam
@@ -404,6 +446,8 @@ Megvilágított
 Élő ecset előnézet
 Élő anyag előnézet
 Helyzet
+
+
 Logaritmus
 Mágikus textúra
 Egyedivé tétel
@@ -432,6 +476,7 @@ Háló kimenet
 Háló...
 Hálók
 Fémes (Metallic)
+
 Min
 Min Max
 Minimum
@@ -445,12 +490,14 @@ Modell
 Modellek
 Modellek könyvtára...
 Módosító
+
 Módosítás
 Animáció módosítása
 Modulo
 Habarcs
 Habarcs mérete
 Habarcs simítása
+
 Szorzás
 Név
 Neurális
@@ -476,15 +523,16 @@ Nincs válasz
 Csomópont
 Csomópont előnézetek
 Csomópontok
+
 Zaj szemcse
 Zaj textúra
 Nincs
 Normál
-Normál keverés
 Normal Map
 Normal Map 1
 Normal Map 2
 Normalizálás
+
 Nem elérhető hibakereső változatban
 Nincs megvalósítva
 OK
@@ -493,6 +541,7 @@ Objektum ID
 Objektum Index
 Objektum Infó
 Objektum Normál
+
 Okklúzió (AO)
 Eltolás
 Régi szín
@@ -515,8 +564,9 @@ Rétegek sorrendje
 Origó a geometriához
 Ortografikus
 Kimenet
+
+
 Átfedés (Overlay)
-PBR
 Assetek becsomagolása
 Csomagolás a projektbe
 Kitöltés (Padding)
@@ -527,7 +577,9 @@ Parametrikus
 Szülő
 Parciális derivált
 Részecske
+
 Beillesztés
+
 Útvonal
 Path Traced
 Path Tracer
@@ -547,6 +599,7 @@ Csípés
 Ping-Pong
 Középpont (Pivot)
 Pixel méret
+
 Plató
 Lejátszás
 Player
@@ -555,15 +608,18 @@ Bővítmény importálva:
 Bővítmények
 Pont
 Hegyesség (Pointiness)
+
 Pozíció
 Utófeldolgozás
 Hatvány
 Beállítások
 Beállítások...
+
 Előbeállítás
 Előbeállítás importálva:
 Előbeállítások
 Nyomás érzékenység
+
 Előző
 Előző mappa
 Feldolgozás...
@@ -574,6 +630,7 @@ Prompt
 Minőség
 Kvantálás
 R
+
 RGB görbék
 RGB -> Fekete-fehér
 RGBA
@@ -587,6 +644,7 @@ Legutóbbi
 Mégsem von vissza: {step}
 Visszatükröződés
 Frissítés
+
 Újraimportálás
 Háló újraimportálása
 Textúrák újraimportálása
@@ -605,10 +663,11 @@ Funkció kérése
 Visszaállítás
 Környezeti térkép visszaállítása
 Elrendezés visszaállítása
+
+
 Felbontás
 Visszaállítás
 Színminták visszaállítása
-Alapértelmezett színminták visszaállítása
 Jobbra
 Gyűrűk
 Forgatás
@@ -618,6 +677,7 @@ Kerekítés
 Sor magassága
 Futtatás
 Futtatás a Playerben
+
 Fut...
 SSAO
 Minták
@@ -641,11 +701,13 @@ Szkript megnyitva
 Szkriptek
 Szobrászat
 Szobrász réteg
+
 Keresés
 Csomópontok keresése
 Szegmensek
 Kijelölés
 Összes kijelölése
+
 Rejtettek kijelölése
 Anyag kiválasztása
 Láthatók kijelölése
@@ -661,9 +723,11 @@ Beállítás maszkként
 Forrás beállítása...
 Beállítás
 Shader
+
 Alakzat
 Player hivatkozás megosztása
 Megosztott
+
 2D Nézet megjelenítése
 Asset nevek mutatása
 Rács megjelenítése
@@ -681,7 +745,9 @@ Bejelentkezés folyamatban...
 Szinusz
 Méret
 Hely
+
 Simítás
+
 Elkenés
 Illesztés
 Kódrészletek
@@ -711,12 +777,14 @@ Egyenes
 Erősség
 Nyújtás
 Felosztás
+
 Felszín alatti (Subsurface)
 Kivonás
 Szuperminta (Super Sample)
 Színminták
 Színminták...
 Szimmetria
+
 Tangens
 Cél
 Sablon
@@ -734,9 +802,11 @@ Textúra...
 Textúrák
 Textúrák exportálva
 Textúrák...
+
 Téma
 Téma importálva:
 Vastagság
+
 Mozaik
 Mozaik X
 Mozaik Y
@@ -758,9 +828,11 @@ Festő réteggé
 Festő maszkká
 Radiánra
 Teljes képernyő ki/be
-Fejléc ki/be
+
+
 Eszközök
 Fent
+
 Érintőképernyős UI
 Transzformáció
 Objektum transzformálása
@@ -780,6 +852,7 @@ UV
 UV sziget
 UV térkép
 UV méretezés
+
 UV kibontás
 UV térkép
 Nem sikerült ellenőrizni a frissítéseket.\nKérjük látogasson el a {url} oldalra.
@@ -854,9 +927,9 @@ player
 Bővítmény engedélyezve
 Kérés (Prompt)
 sRGB
+
 Forrás
 Háromszögek
 típus
 Névtelen
-x
 {shortcut} és egér mozgatása

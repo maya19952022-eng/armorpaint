@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 void *armpack_decode(buffer_t *b);
+int   armpack_array_map_key_count(buffer_t *b, char *key);
 
 void armpack_encode_start(void *encoded);
 int  armpack_encode_end();

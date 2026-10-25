@@ -451,6 +451,27 @@ gpu_texture_t *uniforms_ext_tex_link(object_t *object, shader_data_t *mat, char 
 	else if (string_equals(link, "_texdilatemap")) {
 		return util_uv_dilatemap;
 	}
+	else if (string_equals(link, "_texgeometrymask")) {
+		// Built before the paint pass by render_path_paint_commands_paint
+		gpu_texture_t *t = util_geometry_mask_cached(g_context->layer);
+		if (t == NULL) {
+			render_target_t *rt = any_map_get(render_path_render_targets, "empty_white");
+			return rt->_image;
+		}
+		return t;
+	}
+	else if (starts_with(link, "_texgeometry_layer")) {
+		// Objects with some of their faces in the geometry mask, built by util_geometry_mask_prepare_viewport
+		i32 id = parse_int(link + string_length("_texgeometry_layer"));
+		for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+			slot_layer_t *l = g_project->_->layers->buffer[i];
+			if (l->id == id && util_geometry_mask_cached(l) != NULL) {
+				return util_geometry_mask_cached(l);
+			}
+		}
+		render_target_t *rt = any_map_get(render_path_render_targets, "empty_white");
+		return rt->_image;
+	}
 	if (starts_with(link, "_texpaint_pack_vert")) {
 		render_target_t *rt = any_map_get(render_path_render_targets, string_tmp("texpaint_pack%c", link[string_length(link) - 1]));
 		return rt->_image;
@@ -464,14 +485,14 @@ gpu_texture_t *uniforms_ext_tex_link(object_t *object, shader_data_t *mat, char 
 		}
 		return NULL;
 	}
-	// Layer and Layer Mask nodes, the index follows the prefix
+	// Layer and Layer Mask nodes, the index follows the prefix. They read what the stack of a paint effect shows.
 	if (starts_with(link, "_texpaint_nor")) {
 		i32 tid = parse_int(link + string_length("_texpaint_nor"));
-		return tid < g_project->_->layers->length ? uniforms_layer_tex(g_project->_->layers->buffer[tid]->texpaint_nor) : NULL;
+		return tid < g_project->_->layers->length ? uniforms_layer_tex(slot_layer_result(g_project->_->layers->buffer[tid], 1)) : NULL;
 	}
 	if (starts_with(link, "_texpaint_pack")) {
 		i32 tid = parse_int(link + string_length("_texpaint_pack"));
-		return tid < g_project->_->layers->length ? uniforms_layer_tex(g_project->_->layers->buffer[tid]->texpaint_pack) : NULL;
+		return tid < g_project->_->layers->length ? uniforms_layer_tex(slot_layer_result(g_project->_->layers->buffer[tid], 2)) : NULL;
 	}
 	if (string_equals(link, "_texpaint_sculpt_base")) {
 		render_target_t *rt = any_map_get(render_path_render_targets, "texpaint_sculpt_base");
@@ -483,7 +504,7 @@ gpu_texture_t *uniforms_ext_tex_link(object_t *object, shader_data_t *mat, char 
 	}
 	if (starts_with(link, "_texpaint")) {
 		i32 tid = parse_int(link + string_length("_texpaint"));
-		return tid < g_project->_->layers->length ? uniforms_layer_tex(g_project->_->layers->buffer[tid]->texpaint) : NULL;
+		return tid < g_project->_->layers->length ? uniforms_layer_tex(slot_layer_result(g_project->_->layers->buffer[tid], 0)) : NULL;
 	}
 	if (starts_with(link, "_texblur_")) {
 		char *id = link + 9;

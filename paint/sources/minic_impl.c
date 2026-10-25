@@ -414,7 +414,7 @@ static bool script_paint_allowed(void) {
 	if (g_context == NULL || g_context->layer == NULL || g_context->material == NULL) {
 		return false;
 	}
-	if (slot_layer_is_group(g_context->layer)) {
+	if (slot_layer_is_group(g_context->layer) || slot_layer_is_paint_locked(g_context->layer)) {
 		return false;
 	}
 	if (g_context->layer->fill_material != NULL && g_context->tool != TOOL_TYPE_PICKER && g_context->tool != TOOL_TYPE_MATERIAL &&
@@ -535,7 +535,7 @@ void script_fill_layer(void) {
 	if (g_context == NULL || g_context->layer == NULL || g_context->material == NULL) {
 		return;
 	}
-	if (slot_layer_is_group(g_context->layer)) {
+	if (slot_layer_is_group(g_context->layer) || slot_layer_is_locked(g_context->layer)) {
 		return;
 	}
 
@@ -695,8 +695,8 @@ i32 script_layer_index(slot_layer_t *l) {
 }
 
 slot_layer_t *script_layer_new_mask(slot_layer_t *l, i32 type) {
-	// type: 0 black, 1 white, 2 fill with the current material
-	if (!script_layer_valid(l) || type < 0 || type > 2) {
+	// type: 0 black, 1 white, 2 fill with the current material, 3 fill with a new white material like Fill Mask in the layers tab
+	if (!script_layer_valid(l) || type < 0 || type > 3) {
 		return NULL;
 	}
 	if (type == 2 && g_context->material == NULL) {
@@ -709,6 +709,9 @@ slot_layer_t *script_layer_new_mask(slot_layer_t *l, i32 type) {
 	bool           in_use;
 	script_gpu_begin(&current, &in_use);
 	base_init_undo_layers();
+	if (type == 3) {
+		layers_new_mask_material(string_tmp("%s %s", l->name, tr("Mask")));
+	}
 	context_set_layer(l);
 	slot_layer_t_array_t *pointers = tab_layers_init_layer_map();
 	slot_layer_t         *m        = layers_new_mask(false, l, -1);
@@ -794,11 +797,409 @@ void script_layer_update(slot_layer_t *l) {
 	if (l->fill_material != NULL) {
 		script_layer_refill(l);
 	}
+	else if (slot_layer_is_paint_effect(l)) { // Its result follows the blending and opacity of its strokes
+		layers_update_effects_of(l);
+	}
 	make_material_parse_mesh_material();
 	script_gpu_end(current, in_use);
 	g_context->layers_preview_dirty = true;
 	g_context->rtdirty              = 1;
 	g_context->ddirty               = 2;
+}
+
+// Blending and opacity of one layer_channel_t, a negative blending keeps the current one
+void script_layer_set_channel(slot_layer_t *l, i32 channel, i32 blending, f32 opacity) {
+	if (!script_layer_valid(l) || channel < 0 || channel >= LAYER_CH_COUNT) {
+		return;
+	}
+	bool normal = channel == LAYER_CH_NOR;
+	bool valid  = normal ? (blending == BLEND_TYPE_MIX || blending == BLEND_TYPE_NORMAL_COMBINE) : (blending >= 0 && blending <= BLEND_TYPE_VALUE);
+	opacity     = opacity < 0.0 ? 0.0 : opacity > 1.0 ? 1.0 : opacity;
+	context_set_layer(l);
+	if (valid && l->blending[channel] != blending) {
+		history_layer_blending();
+		l->blending[channel] = blending;
+	}
+	if (l->opacity[channel] != opacity) {
+		history_layer_opacity();
+		l->opacity[channel] = opacity;
+	}
+	script_layer_update(l);
+}
+
+static void script_layer_op_end(gpu_texture_t *current, bool in_use);
+
+// Merged copy of the group above it, the group is hidden and kept
+slot_layer_t *script_layer_flatten_group(slot_layer_t *group) {
+	if (!script_layer_valid(group) || !slot_layer_is_group(group) || slot_layer_get_children(group) == NULL) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	context_set_layer(group);
+	history_flatten_group();
+	slot_layer_t *flat = layers_flatten_group(group);
+	script_layer_op_end(current, in_use);
+	return flat;
+}
+
+// Copy of a layer or group above target, like copy and paste in the layers tab
+bool script_layer_paste(slot_layer_t *src, slot_layer_t *target) {
+	if (!script_layer_valid(src) || !script_layer_valid(target)) {
+		return false;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	base_init_undo_layers();
+	bool ok = layers_paste(src, target);
+	script_layer_op_end(current, in_use);
+	return ok;
+}
+
+// New mask on target with the pixels of the mask src
+slot_layer_t *script_layer_paste_mask(slot_layer_t *src, slot_layer_t *target) {
+	if (!script_layer_valid(src) || !script_layer_valid(target)) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	base_init_undo_layers();
+	slot_layer_t *m = layers_paste_mask(src, target);
+	script_layer_op_end(current, in_use);
+	return m;
+}
+
+void script_layer_set_locked(slot_layer_t *l, bool locked) {
+	if (!script_layer_valid(l) || l->locked == locked) {
+		return;
+	}
+	history_layer_lock(l);
+	l->locked = locked;
+	ui_dock_redraw(TAB_AREA_SIDEBAR0);
+}
+
+// Shows or hides a layer, mask or effect like its eye button, an undo step
+void script_layer_set_visible(slot_layer_t *l, bool visible) {
+	if (!script_layer_valid(l) || l->visible == visible) {
+		return;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	tab_layers_layer_toggle_visible(l);
+	script_gpu_end(current, in_use);
+	g_context->ddirty = 2;
+}
+
+// New effect on top of the effect stack of a layer or mask, type is an effect_type_t
+slot_layer_t *script_layer_add_effect(slot_layer_t *l, i32 type) {
+	if (!script_layer_valid(l)) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	base_init_undo_layers();
+	slot_layer_t *e = layers_add_effect(l, type);
+	script_layer_op_end(current, in_use);
+	return e;
+}
+
+// New Generator effect on top of the effect stack of a layer or mask, preset is a generator_type_t
+slot_layer_t *script_layer_add_generator(slot_layer_t *l, i32 preset) {
+	if (!script_layer_valid(l)) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	base_init_undo_layers();
+	slot_layer_t *e = layers_add_generator(l, preset);
+	script_layer_op_end(current, in_use);
+	return e;
+}
+
+// Geometry mask: masks and filters edit the one of their layer, each change is an undo step
+
+static mesh_object_t *script_paint_object(object_t *object) {
+	for (i32 i = 0; object != NULL && i < g_project->_->paint_objects->length; ++i) {
+		if (g_project->_->paint_objects->buffer[i]->base == object) {
+			return g_project->_->paint_objects->buffer[i];
+		}
+	}
+	return NULL;
+}
+
+void script_layer_set_geometry_mode(slot_layer_t *l, i32 mode) {
+	if (!script_layer_valid(l) || (mode != GEOMETRY_MASK_INCLUDE && mode != GEOMETRY_MASK_EXCLUDE)) {
+		return;
+	}
+	util_geometry_mask_set_mode(l, mode);
+}
+
+void script_layer_set_geometry_object(slot_layer_t *l, object_t *object, bool selected) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL) {
+		return;
+	}
+	util_geometry_mask_set_object(l, o->base->name, selected);
+}
+
+void script_layer_set_geometry_tile(slot_layer_t *l, i32 tile, bool selected) {
+	if (!script_layer_valid(l) || tile < 1001) {
+		return;
+	}
+	util_geometry_mask_set_tile(l, tile, selected);
+}
+
+void script_layer_clear_geometry_mask(slot_layer_t *l) {
+	if (!script_layer_valid(l)) {
+		return;
+	}
+	util_geometry_mask_clear(l);
+}
+
+i32 script_layer_get_geometry_mode(slot_layer_t *l) {
+	return script_layer_valid(l) ? slot_layer_geometry_owner(l)->geometry_mask.mode : -1;
+}
+
+bool script_layer_get_geometry_object(slot_layer_t *l, object_t *object) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL) {
+		return false;
+	}
+	string_array_t *objects = slot_layer_geometry_owner(l)->geometry_mask.objects;
+	return objects != NULL && string_array_index_of(objects, o->base->name) >= 0;
+}
+
+bool script_layer_get_geometry_tile(slot_layer_t *l, i32 tile) {
+	if (!script_layer_valid(l)) {
+		return false;
+	}
+	i32_array_t *tiles = slot_layer_geometry_owner(l)->geometry_mask.tiles;
+	return tiles != NULL && i32_array_index_of(tiles, tile) >= 0;
+}
+
+// The layer contributes on the object with its geometry mask and the one of its group
+bool script_layer_geometry_applies(slot_layer_t *l, object_t *object) {
+	mesh_object_t *o = script_paint_object(object);
+	return script_layer_valid(l) && o != NULL && slot_layer_geometry_mask_object(l, o);
+}
+
+// Faces of the geometry mask, a face is a triangle of the index array of the object
+
+void script_layer_set_geometry_faces(slot_layer_t *l, object_t *object, i32 first, i32 count, bool selected) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL) {
+		return;
+	}
+	util_geometry_mask_set_faces(l, o->base->name, first, count, selected);
+}
+
+// The face is selected in the mask of the layer, without its mode, objects, tiles and group
+bool script_layer_get_geometry_face(slot_layer_t *l, object_t *object, i32 triangle) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL || triangle < 0) {
+		return false;
+	}
+	geometry_mask_faces_t *f = slot_layer_geometry_mask_faces(&slot_layer_geometry_owner(l)->geometry_mask, o, true);
+	return f != NULL && triangle < f->triangles && (f->bits->buffer[triangle >> 3] & (1 << (triangle & 7))) != 0;
+}
+
+// The layer contributes on the face, with every list and mode of its geometry mask and the one of its group
+bool script_layer_geometry_face_applies(slot_layer_t *l, object_t *object, i32 triangle) {
+	mesh_object_t *o = script_paint_object(object);
+	return script_layer_valid(l) && o != NULL && slot_layer_geometry_mask_triangle(l, o, triangle);
+}
+
+// Selected faces of the object, 0 when they were selected on a mesh with a different triangle count
+i32 script_layer_get_geometry_face_count(slot_layer_t *l, object_t *object) {
+	mesh_object_t *o = script_paint_object(object);
+	if (!script_layer_valid(l) || o == NULL) {
+		return 0;
+	}
+	return util_geometry_mask_face_count(&slot_layer_geometry_owner(l)->geometry_mask, o);
+}
+
+void script_layer_clear_geometry_faces(slot_layer_t *l) {
+	if (!script_layer_valid(l)) {
+		return;
+	}
+	util_geometry_mask_clear_faces(l);
+}
+
+// Pixels of the 3D view at a world space point, like script_paint_world, false behind the camera
+static bool script_world_to_view(f32 x, f32 y, f32 z, f32 *sx, f32 *sy) {
+	vec4_t clip = vec4_apply_mat4((vec4_t){x, y, z, 1.0f}, scene_camera->vp);
+	if (clip.w <= 0.0f) {
+		return false;
+	}
+	*sx = (clip.x / clip.w + 1.0f) * 0.5f * sys_w();
+	*sy = (1.0f - clip.y / clip.w) * 0.5f * sys_h();
+	return true;
+}
+
+static bool script_layer_selects_faces(slot_layer_t *l, i32 mode) {
+	if (!script_layer_valid(l) || mode < GEOMETRY_SELECT_TRIANGLE || mode > GEOMETRY_SELECT_OBJECT) {
+		return false;
+	}
+	slot_layer_t *owner = slot_layer_geometry_owner(l);
+	return (slot_layer_is_layer(owner) || slot_layer_is_group(owner)) && owner->texpaint_sculpt == NULL;
+}
+
+// A click of the select tool with the Faces target at a world space point, one undo step. mode is a
+// geometry_select_mode_t. Returns the triangle hit or -1.
+i32 script_layer_select_faces_world(slot_layer_t *l, f32 x, f32 y, f32 z, i32 mode, bool selected) {
+	f32 sx;
+	f32 sy;
+	if (!script_layer_selects_faces(l, mode) || !script_world_to_view(x, y, z, &sx, &sy)) {
+		return -1;
+	}
+	util_geometry_mask_stroke_begin(slot_layer_geometry_owner(l), mode, selected);
+	i32 tri = util_geometry_mask_stroke_at(sx, sy);
+	util_geometry_mask_stroke_end();
+	return tri;
+}
+
+// A drag of the select tool from one world space point to another, one undo step. Returns the faces it changed.
+i32 script_layer_select_faces_drag_world(slot_layer_t *l, f32 x0, f32 y0, f32 z0, f32 x1, f32 y1, f32 z1, i32 mode, bool selected) {
+	f32 sx0;
+	f32 sy0;
+	f32 sx1;
+	f32 sy1;
+	if (!script_layer_selects_faces(l, mode) || !script_world_to_view(x0, y0, z0, &sx0, &sy0) || !script_world_to_view(x1, y1, z1, &sx1, &sy1)) {
+		return 0;
+	}
+	util_geometry_mask_stroke_begin(slot_layer_geometry_owner(l), mode, selected);
+	util_geometry_mask_stroke_at(sx0, sy0);
+	util_geometry_mask_stroke_at(sx1, sy1);
+	return util_geometry_mask_stroke_end();
+}
+
+// Triangle of the object under a world space point, -1 on a miss or when another object is in front
+i32 script_pick_face_world(object_t *object, f32 x, f32 y, f32 z) {
+	mesh_object_t *o = script_paint_object(object);
+	f32            sx;
+	f32            sy;
+	if (o == NULL || !script_world_to_view(x, y, z, &sx, &sy)) {
+		return -1;
+	}
+	mesh_object_t *hit = NULL;
+	i32            tri = util_geometry_mask_pick(sx, sy, &hit);
+	return hit == o ? tri : -1;
+}
+
+i32 script_object_triangle_count(object_t *object) {
+	mesh_object_t *o = script_paint_object(object);
+	return o != NULL ? o->data->index_array->length / 3 : 0;
+}
+
+// Selection like ctrl+click (toggle) and shift+click (range) in the layers tab, both false selects only l
+void script_layer_select(slot_layer_t *l, bool toggle, bool range) {
+	if (!script_layer_valid(l)) {
+		return;
+	}
+	layers_select(l, toggle, range);
+	ui_dock_redraw(TAB_AREA_SIDEBAR0);
+}
+
+i32 script_layer_selected_count(void) {
+	if (g_project == NULL || g_project->_ == NULL || g_context->layer == NULL) {
+		return 0;
+	}
+	return layers_get_selected()->length;
+}
+
+void script_layer_delete_selected(void) {
+	if (script_layer_selected_count() == 0) {
+		return;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	base_init_undo_layers();
+	layers_delete_selected();
+	script_layer_op_end(current, in_use);
+}
+
+slot_layer_t *script_layer_group_selected(void) {
+	if (script_layer_selected_count() == 0) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	slot_layer_t *group = layers_group_selected();
+	script_layer_op_end(current, in_use);
+	return group;
+}
+
+// Selected layers go into a new group which is flattened, returns the flattened layer
+slot_layer_t *script_layer_flatten_selected(void) {
+	if (script_layer_selected_count() == 0) {
+		return NULL;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	slot_layer_t *flat = layers_flatten_selected();
+	script_layer_op_end(current, in_use);
+	return flat;
+}
+
+// Moves the selected layers to index to keeping their order, like dragging them in the layers tab
+void script_layer_move_selected(i32 to) {
+	if (to < 0 || to >= script_layer_count()) {
+		return;
+	}
+	layers_move_selected(to);
+	g_context->ddirty = 2;
+}
+
+// Saves the layer or group with its children and masks as a project file
+bool script_layer_export_arm(slot_layer_t *l, char *path) {
+	if (!script_layer_valid(l) || path == NULL) {
+		return false;
+	}
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	export_arm_run_layers(path, l);
+	script_gpu_end(current, in_use);
+	return true;
+}
+
+void script_undo(void) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	history_undo();
+	script_layer_op_end(current, in_use);
+}
+
+void script_redo(void) {
+	gpu_texture_t *current;
+	bool           in_use;
+	script_gpu_begin(&current, &in_use);
+	history_redo();
+	script_layer_op_end(current, in_use);
+}
+
+i32 script_layer_get_channel_blending(slot_layer_t *l, i32 channel) {
+	if (!script_layer_valid(l) || channel < 0 || channel >= LAYER_CH_COUNT) {
+		return -1;
+	}
+	return l->blending[channel];
+}
+
+f32 script_layer_get_channel_opacity(slot_layer_t *l, i32 channel) {
+	if (!script_layer_valid(l) || channel < 0 || channel >= LAYER_CH_COUNT) {
+		return -1.0;
+	}
+	return l->opacity[channel];
 }
 
 bool script_layer_move(slot_layer_t *l, i32 to) {
@@ -967,14 +1368,18 @@ void script_layer_clear(slot_layer_t *l) {
 	}
 	else {
 		history_clear_layer();
-		slot_layer_clear(l, slot_layer_is_mask(l) ? 0xffffffff : 0x00000000, NULL, 1.0, layers_default_rough, 0.0);
+		// A mask clears to white, the strokes of a mask paint effect to none
+		slot_layer_clear(l, slot_layer_is_mask(l) && !l->effect_paint ? 0xffffffff : 0x00000000, NULL, 1.0, layers_default_rough, 0.0);
 		util_layer_clear_path_points(l);
+	}
+	if (layers_has_effects()) { // Effects read what was cleared
+		layers_update_effects();
 	}
 	script_layer_op_end(current, in_use);
 }
 
 bool script_layer_invert_mask(slot_layer_t *m) {
-	if (!script_layer_valid(m) || !slot_layer_is_mask(m) || m->fill_material != NULL) {
+	if (!script_layer_valid(m) || !slot_layer_is_mask(m) || m->fill_material != NULL || m->effect_paint) {
 		return false;
 	}
 	gpu_texture_t *current;
@@ -989,7 +1394,7 @@ bool script_layer_invert_mask(slot_layer_t *m) {
 }
 
 slot_layer_t *script_layer_apply_mask(slot_layer_t *m) {
-	if (!script_layer_valid(m) || !slot_layer_is_mask(m)) {
+	if (!script_layer_valid(m) || !slot_layer_is_mask(m) || m->effect || slot_layer_has_effects(m)) {
 		return NULL;
 	}
 	gpu_texture_t *current;
@@ -1007,7 +1412,8 @@ slot_layer_t *script_layer_apply_mask(slot_layer_t *m) {
 
 bool script_layer_to_fill(slot_layer_t *l) {
 	// Fills with the current material
-	if (!script_layer_valid(l) || slot_layer_is_group(l) || l->fill_material != NULL || l->path_material != NULL || g_context->material == NULL) {
+	if (!script_layer_valid(l) || slot_layer_is_group(l) || l->fill_material != NULL || l->path_material != NULL || l->effect_paint ||
+	    g_context->material == NULL) {
 		return false;
 	}
 	gpu_texture_t *current;
@@ -1722,6 +2128,7 @@ void script_material_update(void) {
 		util_render_make_decal_preview();
 	}
 	base_update_tools_nodes();
+	layers_update_fill_layers(); // Fill layers and effects using the material, like editing nodes in the node editor
 
 	script_gpu_end(current, in_use);
 

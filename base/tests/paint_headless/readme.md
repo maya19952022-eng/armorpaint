@@ -55,6 +55,14 @@ Regenerar o fixture da P0 (só se ele se perder):
 base/tests/paint_headless/run.sh make_fixture.c
 ```
 
+## Fixture da versão 22
+
+`fixtures/p1_v22_project.arm` é um projeto da versão 22 salvo antes da máscara geométrica (LAY-11) acrescentar campos às camadas, com seis camadas (uma travada, uma máscara preta a 50%, um grupo). `p1_geometry_mask.c` abre o arquivo e compara com `fixtures/p1_v22_project.json`: propriedades das camadas, nenhuma máscara geométrica e a média do `_base` exportado. Foi gerado por `make_fixture_p1_v22.c` com o build do commit `013316c`; um build mais novo grava os campos novos e o fixture deixaria de testar esse caso, então não o regenere.
+
+## Fixture da máscara geométrica sem faces
+
+`fixtures/p1_geometry_project.arm` é um projeto da versão 22 salvo com a máscara geométrica de objetos e tiles (44 campos por camada), antes da seleção de faces acrescentar os seus campos às camadas. Tem os quads `geo_a` e `geo_b` e quatro camadas sobre a base: `fx_red` inclui `geo_a`, `fx_blue` (opacidade 0.5) exclui o tile 1002, `fx_green` fica no grupo `fx_group`, que inclui `geo_b`. `p1_geometry_faces.c` abre o arquivo e compara com `fixtures/p1_geometry_project.json`: máscaras das camadas, nenhuma face e a média do `_base` exportado. Foi gerado por `make_fixture_p1_geometry.c` com o build do commit `8a03c95`; um build mais novo grava os campos de faces e o fixture deixaria de testar esse caso, então não o regenere.
+
 ## Teste de integração existente
 
 `paint/assets/plugins/dev/test.c` é um teste bem maior (82 passos, 220 checks) do upstream. Ele também roda com `--script`, mas grava em `/tmp/armorpaint`, deixa a config em modo Sculpt e é lento no llvmpipe. Veja o resultado de referência em `base/docs/building_cloud.md`.

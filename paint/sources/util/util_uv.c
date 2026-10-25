@@ -93,6 +93,7 @@ void util_uv_cache_dilate_map() {
 		gpu_delete_texture(util_uv_dilatemap);
 		util_uv_dilatemap        = NULL;
 		util_uv_dilatemap_cached = false;
+		util_geometry_mask_invalidate();
 	}
 
 	if (util_uv_dilatemap_cached)

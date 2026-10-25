@@ -17,7 +17,7 @@ Como atualizar:
 | Área | Itens em escopo | ✅ | 🟡 | ❌ | % ✅ |
 |---|---|---|---|---|---|
 | Projeto, texture sets e assets | 18 | 0 | 9 | 9 | 0% |
-| Layer stack | 18 | 1 | 8 | 9 | 6% |
+| Layer stack | 18 | 16 | 0 | 2 | 89% |
 | Ferramentas e pincel | 28 | 8 | 14 | 6 | 29% |
 | Projeções de fill | 7 | 2 | 1 | 4 | 29% |
 | Procedural e biblioteca | 10 | 1 | 5 | 4 | 10% |
@@ -25,9 +25,9 @@ Como atualizar:
 | Viewport, render e shading | 12 | 2 | 5 | 5 | 17% |
 | Import e export | 13 | 1 | 10 | 2 | 8% |
 | Interface, UX e scripting | 11 | 3 | 6 | 2 | 27% |
-| **Total** | **129** | **20 (16%)** | **61** | **48** | meta: 117 ✅ |
+| **Total** | **129** | **35 (27%)** | **53** | **41** | meta: 117 ✅ |
 
-Fora de escopo nas tabelas: 2. Faltam 97 itens ✅ para a meta.
+Fora de escopo nas tabelas: 2. Faltam 82 itens ✅ para a meta.
 
 <!-- placar:fim -->
 
@@ -38,6 +38,7 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 | Fase | PR | ✅ | 🟡 | ❌ | O que mudou |
 |---|---|---|---|---|---|
 | P0 | [PR 1](https://github.com/maya19952022-eng/armorpaint/pull/1) | 20 | 61 | 48 | Matriz criada a partir do plano; nenhum item muda de status na P0 (infraestrutura). |
+| P1 | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2) | 35 (+15) | 53 (−8) | 41 (−7) | Layer stack: LAY-01 a LAY-11 e LAY-14 a LAY-18 ✅ (LAY-05 com os efeitos Paint e Generator, LAY-11 com seleção de faces). |
 
 ## 4.1 Projeto, texture sets e assets
 
@@ -67,23 +68,23 @@ Meta final: ≥ 117 itens ✅ (90% de 129).
 
 | ID | Feature SP | Status | Situação no início (P0) | Tarefa | Fase | Tam. | Notas |
 |---|---|---|---|---|---|---|---|
-| LAY-01 | Blend mode e opacidade **por canal** | ❌ falta | um blend e uma opacidade por layer | Arrays `blending[ch]`/`opacity[ch]` em `slot_layer_t`; `layers_merge_layer` e `make_material.c` por canal (já há `pipes_merge_r/g/b`); UI em `tab_layers.c` com seletor de canal | P1 | M |  |
-| LAY-02 | Pass-through em grupos | ❌ falta | — | Flag `passthrough` no grupo; compositor ignora o grupo como unidade | P1 | S |  |
-| LAY-03 | Multi-seleção de layers (mover, apagar, agrupar, flatten) | ❌ falta | — | `g_context->layers_selected` (lista); ações aplicadas em lote; ctrl/shift-clique | P1 | M |  |
-| LAY-04 | Lock de layer | ❌ falta | — | Flag `locked`; `render_path_paint` recusa pintura; ícone | P1 | S |  |
-| LAY-05 | Effects stack em conteúdo **e** máscara (Fill, Paint, Generator, Filter, Levels, Compare Mask, Anchor, Color Selection) | 🟡 parcial | filtros só no conteúdo; fill mask; máscara pintável | Generalizar filtro para máscaras (`layers_create_filter` com alvo mask); "Paint effect" = sublayer pintável dentro do stack; UI do stack expandível por layer | P1 | L |  |
-| LAY-06 | Levels | ❌ falta | nó não existe | Nó `levels_node.c` (in/out black/white, gamma, por canal) + efeito rápido | P1 | S |  |
-| LAY-07 | HSL / Color Balance / Sharpen como efeitos rápidos | 🟡 parcial | HSV existe; sharpen e color balance não | Nós `color_balance_node.c`, `sharpen_node.c`; menu "Add effect" em `tab_layers.c` cria filtro com o nó pronto | P1 | S |  |
-| LAY-08 | Compare Mask | ❌ falta | — | Nó `compare_mask_node.c` (fonte: camada abaixo/anchor, operador, threshold) | P1 | S |  |
-| LAY-09 | Anchor points | 🟡 parcial | nós Layer/Layer Mask referenciam layers | Comando "Add Anchor Point" que nomeia e lista no menu de nós; nó `anchor_node.c` apontando por id | P1 | S |  |
-| LAY-10 | Color Selection (máscara por color ID) como efeito | 🟡 parcial | Color ID tool → To Mask (destrutivo) | Nó `color_selection_node.c` (lista de cores com tolerância) usável em fill mask | P1 | S |  |
-| LAY-11 | Geometry mask (UV tile/objeto/polígonos, include/exclude) | 🟡 parcial | object mask; fill por face | Máscara geométrica por layer: lista de tiles/objetos/ids de polígono, include/exclude; aplicada no `make_paint` e `make_material` | P1 | M |  |
+| LAY-01 | Blend mode e opacidade **por canal** | ✅ feito | um blend e uma opacidade por layer | Arrays `blending[ch]`/`opacity[ch]` em `slot_layer_t`; `layers_merge_layer` e `make_material.c` por canal (já há `pipes_merge_r/g/b`); UI em `tab_layers.c` com seletor de canal | P1 | M | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): blend e opacidade em base, normal (Mix/Combine), oclusão, roughness, metallic e altura; opacidade/emissão/subsurface só ligam/desligam; sem modos Normal Detail. `per_channel_blending.md` |
+| LAY-02 | Pass-through em grupos | ✅ feito | — | Flag `passthrough` no grupo; compositor ignora o grupo como unidade | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): grupos já compunham como pass-through (cada camada mistura com o que está abaixo do grupo); agora a linha do grupo mostra "Pass Through" e há teste. Grupo isolado não existe. `group_pass_through.md` |
+| LAY-03 | Multi-seleção de layers (mover, apagar, agrupar, flatten) | ✅ feito | — | `g_context->layers_selected` (lista); ações aplicadas em lote; ctrl/shift-clique | P1 | M | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): ctrl/shift-clique, mover (arrastar), apagar, agrupar e flatten em lote; mover é um passo de undo. `layer_multi_selection.md` |
+| LAY-04 | Lock de layer | ✅ feito | — | Flag `locked`; `render_path_paint` recusa pintura; ícone | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): lock por camada e grupo, herdado por máscaras e efeitos; bloqueia pincel, fill, bake e partículas; conta-gotas continuam. `layer_lock.md` |
+| LAY-05 | Effects stack em conteúdo **e** máscara (Fill, Paint, Generator, Filter, Levels, Compare Mask, Anchor, Color Selection) | ✅ feito | filtros só no conteúdo; fill mask; máscara pintável | Generalizar filtro para máscaras (`layers_create_filter` com alvo mask); "Paint effect" = sublayer pintável dentro do stack; UI do stack expandível por layer | P1 | L | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): pilhas de efeitos em camadas e máscaras (Filter, Fill, Paint, Generator, Levels, HSV, Color Balance, Sharpen, Blur, Compare Mask, Color Selection, Anchor Point), em cadeia e com olho por efeito. Paint: traços pintáveis por cima do que está abaixo na pilha, com borracha, blend e opacidade por canal. Generator: Edges (curvatura em espaço UV), 3D Gradient, Facing Up e Noise; Dirt, Metal Edge Wear e Thickness esperam os mesh maps (BAKE-01). `effect_stack.md` |
+| LAY-06 | Levels | ✅ feito | nó não existe | Nó `levels_node.c` (in/out black/white, gamma, por canal) + efeito rápido | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): nó Levels (in/out black/white, gamma, canal) e efeito rápido. `effect_nodes.md` |
+| LAY-07 | HSL / Color Balance / Sharpen como efeitos rápidos | ✅ feito | HSV existe; sharpen e color balance não | Nós `color_balance_node.c`, `sharpen_node.c`; menu "Add effect" em `tab_layers.c` cria filtro com o nó pronto | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): nós Color Balance e Sharpen; HSV, Color Balance, Sharpen e Blur como efeitos rápidos em Add Effect. `effect_nodes.md`, `effect_stack.md` |
+| LAY-08 | Compare Mask | ✅ feito | — | Nó `compare_mask_node.c` (fonte: camada abaixo/anchor, operador, threshold) | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): nó Compare Mask (Greater/Less/Equal/Not Equal, threshold, suavidade) e efeito de máscara; B lê outra camada ou Anchor Point pelo nó Layer. `effect_nodes.md` |
+| LAY-09 | Anchor points | ✅ feito | nós Layer/Layer Mask referenciam layers | Comando "Add Anchor Point" que nomeia e lista no menu de nós; nó `anchor_node.c` apontando por id | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): efeito Anchor Point (passa a entrada) lido por outras camadas com os nós Layer/Layer Mask, que acompanham reordenações. `effect_stack.md` |
+| LAY-10 | Color Selection (máscara por color ID) como efeito | ✅ feito | Color ID tool → To Mask (destrutivo) | Nó `color_selection_node.c` (lista de cores com tolerância) usável em fill mask | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): nó Color Selection (até 4 cores, tolerância, suavidade, inverter) e efeito de máscara; o mapa de ID é ligado pelo usuário. `effect_nodes.md` |
+| LAY-11 | Geometry mask (UV tile/objeto/polígonos, include/exclude) | ✅ feito | object mask; fill por face | Máscara geométrica por layer: lista de tiles/objetos/ids de polígono, include/exclude; aplicada no `make_paint` e `make_material` | P1 | M | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): máscara geométrica por camada/grupo com objetos e tiles UDIM, Include/Exclude, viewport/export/merge/pintura. Depois: seleção de faces com a ferramenta Select (triângulo, polígono, parte conectada, ilha UV, objeto), com destaque no viewport e salva no `.arm`. `geometry_mask.md` |
 | LAY-12 | Smart masks (criar, salvar, aplicar, merge/overwrite com ctrl) | ❌ falta | — | Serializar subárvore de máscara+efeitos para `.arm` (`export_arm.c`); categoria no Assets; drop em layer | P3 | M |  |
 | LAY-13 | Smart materials (criar de grupo, salvar, aplicar) | ❌ falta | — | Serializar grupo (layers, máscaras, efeitos, fill materials, blends) para `.arm`; instanciar em outro projeto/set | P3 | M |  |
-| LAY-14 | Flatten não destrutivo de grupo + export do resultado + salvar original como smart material (12.0) | 🟡 parcial | Merge Group destrutivo | `layers_flatten_copy(group)` cria layer "flattened" mantendo o grupo oculto; "Export flattened" chama `export_texture` com apenas esse layer; atalho ctrl+M | P1 | M |  |
-| LAY-15 | Copy/paste de layer, máscara e efeitos | 🟡 parcial | duplicate | Clipboard interno (ver PRJ-15) + "Paste as mask" | P1 | S |  |
-| LAY-16 | Fill effects em máscara começam brancos (12.1) | ❌ falta | — | Default no `layers_new_mask` para fill mask | P1 | S |  |
-| LAY-17 | Thumbnails de layer/máscara, isolar máscara (alt+clique), desabilitar temporariamente (shift+clique) | 🟡 parcial | preview existe | Atalhos em `tab_layers.c`; modo viewport "mask solo" (já há `VIEWPORT_MODE_MASK`) | P1 | S |  |
+| LAY-14 | Flatten não destrutivo de grupo + export do resultado + salvar original como smart material (12.0) | ✅ feito | Merge Group destrutivo | `layers_flatten_copy(group)` cria layer "flattened" mantendo o grupo oculto; "Export flattened" chama `export_texture` com apenas esse layer; atalho ctrl+M | P1 | M | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): Flatten mantém o grupo oculto e editável; Export do grupo/camada achatada; Export as .arm do grupo. Sem ctrl+M (já usado). Smart material é LAY-13. `group_flatten.md` |
+| LAY-15 | Copy/paste de layer, máscara e efeitos | ✅ feito | duplicate | Clipboard interno (ver PRJ-15) + "Paste as mask" | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): Copy/Paste de camada, grupo, máscara e efeito, Paste as Mask, ctrl+C/ctrl+V. `layer_clipboard.md` |
+| LAY-16 | Fill effects em máscara começam brancos (12.1) | ✅ feito | — | Default no `layers_new_mask` para fill mask | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): Fill Mask e o efeito Fill começam brancos. `mask_tools.md` |
+| LAY-17 | Thumbnails de layer/máscara, isolar máscara (alt+clique), desabilitar temporariamente (shift+clique) | ✅ feito | preview existe | Atalhos em `tab_layers.c`; modo viewport "mask solo" (já há `VIEWPORT_MODE_MASK`) | P1 | S | [PR 2](https://github.com/maya19952022-eng/armorpaint/pull/2): alt+clique isola a máscara no viewport, shift+clique liga/desliga; miniaturas já existiam. `mask_tools.md` |
 | LAY-18 | Undo unificado bake+paint (12.1) | ✅ feito | — | — | — | — |  |
 
 ## 4.3 Ferramentas e pincel

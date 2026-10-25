@@ -377,6 +377,9 @@ void box_preferences_usage_tab() {
 	}
 
 	ui_slider_int(&g_config->dilate_radius, tr("Dilate Radius"), 0.0, 16.0, true, true, UI_ALIGN_RIGHT, true);
+	if (ui_item_changed()) {
+		util_geometry_mask_invalidate(); // Padding of the geometry mask textures
+	}
 	if (g_ui->is_hovered) {
 		ui_tooltip(tr("Dilate painted textures to prevent seams"));
 	}

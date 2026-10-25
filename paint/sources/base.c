@@ -349,7 +349,12 @@ void base_update(void *_) {
 				ui_nodes_accept_layer_drop(array_index_of(g_project->_->layers, base_drag_layer));
 			}
 			else if (context_in_layers() && base_is_dragging) {
-				slot_layer_move(base_drag_layer, g_context->drag_dest);
+				if (layers_is_selected(base_drag_layer) && layers_get_selected()->length > 1) {
+					layers_move_selected(g_context->drag_dest);
+				}
+				else {
+					slot_layer_move(base_drag_layer, g_context->drag_dest);
+				}
 				make_material_parse_mesh_material();
 			}
 			base_drag_layer = NULL;

@@ -404,6 +404,9 @@ void render_path_paint_commands_paint(bool dilation) {
 		else {
 			tid          = g_context->layer->id;
 			bool is_mask = slot_layer_is_mask(g_context->layer);
+			// The picker reads what the stack of a paint effect shows, the material tool the live layer
+			bool  result   = g_context->tool == TOOL_TYPE_PICKER && slot_layer_is_paint_effect(g_context->layer) && g_context->layer->texpaint_result != NULL;
+			char *texpaint = result ? "texpaint_result" : "texpaint";
 			if (is_mask) {
 				string_array_t *additional = any_array_create_from_raw(
 				    (void *[]){
@@ -412,7 +415,7 @@ void render_path_paint_commands_paint(bool dilation) {
 				    1);
 				render_path_set_target("texpaint_picker", additional, NULL, GPU_CLEAR_NONE, 0, 0.0);
 				render_path_bind_target("gbuffer2", "gbuffer2");
-				render_path_bind_target(string_tmp("texpaint%d", tid), "texpaint");
+				render_path_bind_target(string_tmp("%s%d", texpaint, tid), "texpaint");
 				render_path_paint_draw_fullscreen_triangle();
 			}
 			else {
@@ -429,9 +432,9 @@ void render_path_paint_commands_paint(bool dilation) {
 				if (use_live_layer) {
 					render_path_paint_use_live_layer(true);
 				}
-				render_path_bind_target(string_tmp("texpaint%d", tid), "texpaint");
-				render_path_bind_target(string_tmp("texpaint_nor%d", tid), "texpaint_nor");
-				render_path_bind_target(string_tmp("texpaint_pack%d", tid), "texpaint_pack");
+				render_path_bind_target(string_tmp("%s%d", texpaint, tid), "texpaint");
+				render_path_bind_target(string_tmp("%s_nor%d", texpaint, tid), "texpaint_nor");
+				render_path_bind_target(string_tmp("%s_pack%d", texpaint, tid), "texpaint_pack");
 				render_path_paint_draw_fullscreen_triangle();
 				if (use_live_layer) {
 					render_path_paint_use_live_layer(false);
@@ -576,9 +579,14 @@ void render_path_paint_commands_paint(bool dilation) {
 			render_path_base_draw_gbuffer();
 		}
 
+		bool geometry_mask = util_geometry_mask_paints(g_context->layer);
+		if (geometry_mask) {
+			util_geometry_mask_texture(g_context->layer); // Read by the paint shader
+		}
+
 		char *texpaint = string_tmp("texpaint%d", tid);
-		if (g_context->tool == TOOL_TYPE_BAKE && g_context->brush_time == sys_delta()) {
-			// Clear to black on bake start
+		if (g_context->tool == TOOL_TYPE_BAKE && g_context->brush_time == sys_delta() && !geometry_mask) {
+			// Clear to black on bake start, with a geometry mask the texels outside of it keep their value
 			render_path_set_target(texpaint, NULL, NULL, GPU_CLEAR_COLOR, 0xff000000, 0.0);
 		}
 
@@ -763,6 +771,11 @@ void render_path_paint_commands_live_brush() {
 		return;
 	}
 
+	// The preview would paint over a copy of the strokes, the stack shows the result. The stroke refills it each frame.
+	if (slot_layer_is_paint_effect(g_context->layer)) {
+		return;
+	}
+
 	if (render_path_paint_live_layer == NULL) {
 		render_path_paint_live_layer = slot_layer_create("_live", LAYER_SLOT_TYPE_LAYER, NULL);
 	}
@@ -937,6 +950,10 @@ void render_path_paint_commands_cursor() {
 }
 
 bool render_path_paint_paint_enabled() {
+	if (slot_layer_is_paint_locked(g_context->layer)) { // Also stops bakes, particles and the undo step of a stroke
+		return false;
+	}
+
 	if (g_context->tool == TOOL_TYPE_BAKE) {
 		return true;
 	}
@@ -1283,15 +1300,16 @@ void render_path_paint_bind_layers() {
 	}
 
 	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
-		slot_layer_t *l = g_project->_->layers->buffer[i];
-		char         *n = string_tmp("texpaint%d", l->id);
-		render_path_bind_target(n, n);
+		slot_layer_t *l      = g_project->_->layers->buffer[i];
+		char         *n      = string_tmp("texpaint%d", l->id);
+		bool          result = slot_layer_is_paint_effect(l) && l->texpaint_result != NULL; // Shows its result, its textures hold the strokes
+		render_path_bind_target(result ? string_tmp("texpaint_result%d", l->id) : n, n);
 
 		if (slot_layer_is_layer(l)) {
 			n = string_tmp("texpaint_nor%d", l->id);
-			render_path_bind_target(n, n);
+			render_path_bind_target(result ? string_tmp("texpaint_result_nor%d", l->id) : n, n);
 			n = string_tmp("texpaint_pack%d", l->id);
-			render_path_bind_target(n, n);
+			render_path_bind_target(result ? string_tmp("texpaint_result_pack%d", l->id) : n, n);
 		}
 
 		if (l->texpaint_sculpt != NULL) {

@@ -142,6 +142,8 @@ static void export_arm_free_buffer(buffer_t *b) {
 	}
 }
 
+static slot_layer_t_array_t *export_arm_layers = NULL; // Saves only these layers when set
+
 buffer_t *export_arm_encode_project(char *path) {
 	// Path is where the project is imported from, asset paths are relative to it
 
@@ -230,9 +232,10 @@ buffer_t *export_arm_encode_project(char *path) {
 	i32 bits_pos = base_bits;
 	i32 bpp      = bits_pos == TEXTURE_BITS_BITS8 ? 8 : bits_pos == TEXTURE_BITS_BITS16 ? 16 : 32;
 
-	layer_data_t_array_t *ld = any_array_create_from_raw((void *[]){}, 0);
-	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
-		slot_layer_t *l = g_project->_->layers->buffer[i];
+	slot_layer_t_array_t *layers = export_arm_layers != NULL ? export_arm_layers : g_project->_->layers;
+	layer_data_t_array_t *ld     = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < layers->length; ++i) {
+		slot_layer_t *l = layers->buffer[i];
 		layer_data_t *d =
 		    ALLOC_INIT(layer_data_t, {.name               = l->name,
 		                              .res                = l->texpaint != NULL ? l->texpaint->width : g_project->_->layers->buffer[0]->texpaint->width,
@@ -246,8 +249,8 @@ buffer_t *export_arm_encode_project(char *path) {
 		                              .opacity_mask       = l->mask_opacity,
 		                              .fill_material      = l->fill_material != NULL ? array_index_of(g_project->_->materials, l->fill_material) : -1,
 		                              .object_mask        = l->object_mask,
-		                              .blending           = l->blending,
-		                              .parent             = l->parent != NULL ? array_index_of(g_project->_->layers, l->parent) : -1,
+		                              .blending           = l->blending[LAYER_CH_BASE],
+		                              .parent             = l->parent != NULL ? array_index_of(layers, l->parent) : -1,
 		                              .visible            = l->visible,
 		                              .texpaint_nor       = l->texpaint_nor != NULL ? lz4_encode(gpu_get_texture_pixels(l->texpaint_nor)) : NULL,
 		                              .texpaint_pack      = l->texpaint_pack != NULL ? lz4_encode(gpu_get_texture_pixels(l->texpaint_pack)) : NULL,
@@ -258,9 +261,9 @@ buffer_t *export_arm_encode_project(char *path) {
 		                              .paint_rough        = l->paint_rough,
 		                              .paint_met          = l->paint_met,
 		                              .paint_nor          = l->paint_nor,
-		                              .paint_nor_blend    = l->paint_nor_blend,
+		                              .paint_nor_blend    = l->blending[LAYER_CH_NOR] == BLEND_TYPE_NORMAL_COMBINE,
 		                              .paint_height       = l->paint_height,
-		                              .paint_height_blend = l->paint_height_blend,
+		                              .paint_height_blend = l->blending[LAYER_CH_HEIGHT] == BLEND_TYPE_ADD,
 		                              .paint_emis         = l->paint_emis,
 		                              .paint_subs         = l->paint_subs,
 		                              .path_points        = l->path_points,
@@ -270,7 +273,38 @@ buffer_t *export_arm_encode_project(char *path) {
 		                              .path_tool          = l->path_tool,
 		                              .path_curved        = l->path_curved,
 		                              .path_text          = l->path_text,
-		                              .path_material      = l->path_material != NULL ? array_index_of(g_project->_->materials, l->path_material) : -1});
+		                              .path_material      = l->path_material != NULL ? array_index_of(g_project->_->materials, l->path_material) : -1,
+		                              .blending_ch        = i32_array_create(LAYER_CH_COUNT),
+		                              .opacity_ch         = f32_array_create(LAYER_CH_COUNT),
+		                              .locked             = l->locked,
+		                              .effect             = l->effect,
+		                              .effect_paint       = l->effect_paint});
+		for (i32 j = 0; j < LAYER_CH_COUNT; ++j) {
+			d->blending_ch->buffer[j] = l->blending[j];
+			d->opacity_ch->buffer[j]  = l->opacity[j];
+		}
+		geometry_mask_t *g       = &l->geometry_mask; // Empty lists are written as null
+		d->geometry_mask_mode    = g->mode;
+		d->geometry_mask_tiles   = g->tiles != NULL && g->tiles->length > 0 ? g->tiles : NULL;
+		d->geometry_mask_objects = g->objects != NULL && g->objects->length > 0 ? g->objects : NULL;
+		if (g->faces != NULL && g->faces->length > 0) {
+			// Entries of a different triangle count than their object are written as they are
+			d->geometry_mask_face_objects = string_array_create(0);
+			d->geometry_mask_face_counts  = i32_array_create(0);
+			i32 bytes                     = 0;
+			for (i32 j = 0; j < g->faces->length; ++j) {
+				bytes += g->faces->buffer[j]->bits->length;
+			}
+			d->geometry_mask_faces = buffer_create(bytes);
+			i32 offset             = 0;
+			for (i32 j = 0; j < g->faces->length; ++j) {
+				geometry_mask_faces_t *f = g->faces->buffer[j];
+				string_array_push(d->geometry_mask_face_objects, f->object);
+				i32_array_push(d->geometry_mask_face_counts, f->triangles);
+				memcpy(d->geometry_mask_faces->buffer + offset, f->bits->buffer, f->bits->length);
+				offset += f->bits->length;
+			}
+		}
 		any_array_push(ld, d);
 	}
 
@@ -370,6 +404,9 @@ buffer_t *export_arm_encode_project(char *path) {
 	g_project->mesh_assets    = mesh_files;
 
 	tab_timeline_export(g_project);
+	if (export_arm_layers != NULL) {
+		tab_timeline_export_free(g_project); // Keyframes point at layers of the whole project
+	}
 
 #ifdef IRON_BGRA
 	g_project->is_bgra = true;
@@ -399,6 +436,11 @@ buffer_t *export_arm_encode_project(char *path) {
 			array_free(d->decal_mat);
 			free(d->decal_mat);
 		}
+		array_delete(d->blending_ch);
+		array_delete(d->opacity_ch);
+		array_delete(d->geometry_mask_face_objects); // The names belong to the layers
+		array_delete(d->geometry_mask_face_counts);
+		array_delete(d->geometry_mask_faces);
 		free(d);
 	}
 	array_free(ld);
@@ -407,6 +449,29 @@ buffer_t *export_arm_encode_project(char *path) {
 	tab_timeline_export_free(g_project);
 	tab_timeline_finish_save();
 	return buffer;
+}
+
+// Saves a layer or group with its children and masks as a project that holds only them
+void export_arm_run_layers(char *path, slot_layer_t *root) {
+	slot_layer_t_array_t *children = slot_layer_get_recursive_children(root);
+	slot_layer_t_array_t *layers   = any_array_create_from_raw((void *[]){}, 0);
+	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
+		slot_layer_t *l = g_project->_->layers->buffer[i];
+		if (l == root || (children != NULL && array_index_of(children, l) >= 0)) {
+			any_array_push(layers, l);
+		}
+	}
+	if (!ends_with(path, ".arm")) {
+		path = string("%s.arm", path);
+	}
+	export_arm_layers = layers;
+	buffer_t *buffer  = export_arm_encode_project(path);
+	export_arm_layers = NULL;
+	iron_file_save_bytes(path, buffer, buffer->length + 1);
+	array_free(buffer);
+	free(buffer);
+	array_free(layers);
+	free(layers);
 }
 
 void export_arm_run_project(char *path) {

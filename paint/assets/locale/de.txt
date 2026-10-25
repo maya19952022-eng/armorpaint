@@ -1,6 +1,6 @@
 (komprimiert)
+
 (gepackt)
-+
 -X
 -Y
 -Z
@@ -8,6 +8,7 @@
 2D
 2D Ansicht
 3D
+
 3D Ansicht
 A
 Über
@@ -15,6 +16,7 @@ A
 Absolutbetrag
 Hinzufügen
 Animation hinzufügen
+
 Farbfeld hinzufügen
 Neues Farbfeld hinzufügen
 Gewählte Farbe zu Farbfeldern hinzufügen
@@ -24,6 +26,7 @@ Kamera über Kopf erlauben
 Alpha
 Alpha verwerfen
 Stärke
+
 Winkel
 Winkel verwerfen
 Animation
@@ -36,16 +39,19 @@ Maske anwenden
 Nodes anwenden
 Skulptur anwenden
 Skinning anwenden
+
 Arkuskosinus
 Arkussinus
 Arkustangens 2
 Arkustangens
 Array
 Asset
+
 Atlas
 Atlanten
 Attribut
 Automatisch
+
 Mittelwert
 Achse
 B
@@ -55,7 +61,6 @@ Material baken...
 Textur baken
 Auf Textur backen
 Bänder
-Basis
 Base Color
 Gekrümmte Normalen
 Abschrägung
@@ -65,6 +70,7 @@ Schwarze Maske
 Blender Programm
 Blender Programmpfad nicht gesetzt
 Vermischen
+
 Bloom
 Unschärfe
 Hintergrundbild weichzeichnen
@@ -96,6 +102,7 @@ Kamera Rotationsgeschwindigkeit
 Kameratextur
 Kamera Zoomgeschwindigkeit
 Abbrechen
+
 Hintergrund aufnehmen
 Ausgabe aufnehmen
 Bildschirmfoto aufnehmen
@@ -103,6 +110,7 @@ Video aufnehmen
 Aufrunden
 Zellengröße in Pixeln
 Mitte
+
 Kanäle
 Auf Updates prüfen...
 Schach Textur
@@ -111,11 +119,12 @@ Faktor begrenzen
 Ergebnis begrenzen
 Ton
 Leeren
+
+
 Ebene leeren
 Farbfelder leeren
 Clip Ende
 Clip Start
-Clipping
 Klonen
 Schließen
 Stoff
@@ -126,17 +135,24 @@ Cloud-Projekte
 Farbe
 1. Farbe
 2. Farbe
+
+
+
 Farb ID
 Color ID Map
 Farbmaske
 Farbgradient
+
 Farbraum
 FarbID
 Kombinieren
 Farbe zusammenführen
 XYZ zusammenführen
+
 Kompass
+
 Bestätigen
+
 Konsole
 Konsolen Modell
 Konstant
@@ -151,9 +167,12 @@ Kosinus
 Download fehlgeschlagen:
 Anzahl
 Falte
+
 Farbebene erzeugen
 Material erzeugen
+
 Kreuzprodukt
+
 Rückseiten ausblenden
 Cursor
 Krümmung
@@ -162,6 +181,7 @@ Kurve
 Gebogen
 Benutzerdefiniert
 Ausschneiden
+
 Abdunkeln
 Debug
 Aufkleber
@@ -176,6 +196,7 @@ Pinsel löschen
 Ebene löschen
 Material Löschen
 Node Gruppe löschen
+
 Farbfeld löschen
 Unbenutzte löschen
 Delta
@@ -219,6 +240,7 @@ Pinsel duplizieren
 Ebene duplizieren
 Material duplizieren
 Farbfeld duplizieren
+
 Bearbeiten
 Bild bearbeiten
 Nodes bearbeiten
@@ -237,6 +259,7 @@ Umgebungswinkel
 Hintergrundbild
 Hintergrundbild Kugeln
 Hintergrundbild...
+
 Radiergummi
 Fehler: .arm Datei erwartet
 Fehler: .hdr Datei erwartet
@@ -245,6 +268,7 @@ Fehler: Textur konnte nicht gefunden werden
 Fehler: Fontdaten konnten nicht gelesen werden
 Fehler: Meshdaten konnten nicht gelesen werden
 Fehler: Unbekanntes Asset Format
+
 Ausschluss
 Beenden
 Experimentelle Funktionen
@@ -256,6 +280,7 @@ Material exportieren
 Mesh exportieren
 Player exportieren
 Texturen exportieren
+
 Farbfelder exportieren
 Texturdateien exportieren
 Mesh wird exportiert
@@ -264,6 +289,9 @@ F1
 F2
 Fac
 Face
+
+
+
 Faktor
 Material konnte nicht importiert werden
 Sound konnte nicht gelesen werden:
@@ -278,6 +306,9 @@ Filter
 Texturen filtern
 Flach
 Abflachen
+
+
+
 Float Kurve
 Abrunden
 Abgerundetes Modulo
@@ -300,13 +331,16 @@ Reibung
 Von Max
 Von Min
 Vorn
+
 Voll
 Unschärfe
 G
 Gabor Textur
 Gamma
 Generiert
+
 Geometrie
+
 Geometrie in den Ursprung
 Loslegen
 Greifen
@@ -314,19 +348,22 @@ Farbverlauf Textur
 Gravitation X
 Gravitation Y
 Gravitation Z
+
 Größer als
+
 Gitterzelle
 Gitterausrichtung
 Gruppe
 Gruppeneingabe
 Gruppenausgabe
+
 Härte
 Height
-Höhenmischung
 Hilfe
-3D Ansicht ausblenden
 High Poly
+
 Verlauf
+
 {action_paint} gedrückt halten um zu raddieren\n{brush_ruler} gedrückt halten und {action_paint} drücken um eine gerade Linie wegzuraddieren (Lineal)
 {action_paint} gedrückt halten um zu malen\n{brush_ruler} gedrückt halten und {action_paint} drücken um eine gerade Linie zu malen (Lineal)
 {brush_opacity} gedrückt halten und Maus nach links bewegen, um die Deckkraft zu verringern\n{brush_opacity} gedrückt halten und Maus nach rechts bewegen, um die Deckkraft zu erhöhen
@@ -354,6 +391,9 @@ Textur importieren
 Importieren...
 Mesh wird importiert
 Eingang
+
+
+
 Einkommend
 Aufblasen
 Info: Asset bereits importiert
@@ -379,6 +419,7 @@ Tastenbelegung
 Tastenbelegung importiert:
 Lakunarität
 Sprache
+
 Ebene
 Ebenenwinkel
 Ebenenüberblendung
@@ -393,6 +434,7 @@ Träger Radius
 Träger Schritt
 Links
 Länge
+
 Kleiner als
 Stufen
 Lebensdauer
@@ -404,6 +446,8 @@ Beleuchtet (Lit)
 Echtzeit Pinselvorschau
 Echtzeit Materialvorschau
 Position
+
+
 Logarithmus
 Magie Textur
 Einzigartig machen
@@ -432,6 +476,7 @@ Mesh-Ausgabe
 Mesh...
 Meshes
 Metallic
+
 Min
 Min Max
 Minumum
@@ -445,12 +490,14 @@ Modell
 Modelle
 Modelle Ordner...
 Modifikator
+
 Ändern
 Animation ändern
 Modulo
 Mörtelfarbe
 Mörtelgröße
 Mörtel Glättung
+
 Multiplizieren
 Name
 Neural
@@ -476,15 +523,16 @@ Keine Antwort
 Node
 Node Vorschauen
 Nodes
+
 Rausch Körnung
 Rausch Textur
 Keins
 Normale
-Normalen mischen
 Normal Map
 Normal Map 1
 Normal Map 2
 Normieren
+
 Nicht verfügbar im Debug Build
 Nicht implementiert
 OK
@@ -493,6 +541,7 @@ Objekt ID
 Objekt Index
 Objekt Information
 Objekt Normale
+
 Occlusion
 Offset
 Alte Farbe
@@ -515,8 +564,9 @@ Orientierung 3D
 Ursprung zur Geometrie
 Orthografisch
 Ausgang
+
+
 Überlagern
-PBR
 Assets zusammenpacken
 In Projekt packen
 Abstand
@@ -527,7 +577,9 @@ Parametrisch
 Eltern
 Partielle Ableitung
 Partikel
+
 Einfügen
+
 Pfad
 Pfadverfolgung
 Pfadverfolger
@@ -547,6 +599,7 @@ Zusammenziehen
 Ping-Pong
 Drehpunkt
 Pixelgröße
+
 Plateau
 Abspielen
 Player
@@ -555,15 +608,18 @@ Plugin importiert:
 Plugins
 Punkt
 Spitzheit
+
 Position
 Nachbearbeitung
 Potenz
 Einstellungen
 Einstellungen...
+
 Vorlage
 Vorlage importiert:
 Vorlagen
 Kontrolle für Anpressdruck
+
 Zurück
 Vorheriger Ordner
 Verarbeite...
@@ -574,6 +630,7 @@ Prompt
 Qualität
 Quantisieren
 R
+
 RGB Kurven
 RGB zu Graustufen
 RGBA
@@ -587,6 +644,7 @@ Neuste
 Wiederherstellen {step}
 Spiegeln
 Aktualisieren
+
 Erneut importieren
 Mesh neu importieren
 Texturen neu importieren
@@ -605,10 +663,11 @@ Funktion vorschlagen
 Zurücksetzen
 Hintergrundbild Zurücksetzen
 Layout zurücksetzen
+
+
 Auflösung
 Wiederherstellen
 Farbfelder wiederherstellen
-Standardfarbfelder wiederherstellen
 Rechts
 Ringe
 Drehen
@@ -618,6 +677,7 @@ Runden
 Reihenhöhe
 Ausführen
 Im Player ausführen
+
 Läuft...
 SSAO
 Samples
@@ -641,11 +701,13 @@ Skript geöffnet
 Skripte
 Skulptur
 Skulpturebene
+
 Suchen
 Nach Nodes suchen
 Segmente
 Auswählen
 Alles auswählen
+
 Verborgene auswählen
 Material wählen
 Sichtbare auswählen
@@ -661,9 +723,11 @@ Als Maske setzen
 Quelle wird gesetzt
 Einrichtung
 Shader
+
 Form
 Player-Link teilen
 Geteilt
+
 2D Ansicht anzeigen
 Namen der Assets anzeigen
 Gitter anzeigen
@@ -681,7 +745,9 @@ Anmeldung läuft...
 Sinus
 Größe
 Slot
+
 Glatt
+
 Verwischen
 Snap
 Snippets
@@ -711,12 +777,14 @@ Gerade
 Stärke
 Dehnen
 Unterteilen
+
 Subsurface
 Subtrahieren
 Supersampling
 Farbfelder
 Farbfelder...
 Symmetrie
+
 Tangente
 Ziel
 Vorlage
@@ -734,9 +802,11 @@ Textur...
 Texturen
 Texturen exportiert.
 Texturen...
+
 Theme
 Theme importiert:
 Dicke
+
 Kachel
 Kachel X
 Kachel Y
@@ -758,9 +828,11 @@ Zu Malebene
 Zu Zeichenmaske
 Nach Bogenmaß
 In Vollbild umschalten
-Werkzeugleiste umschalten
+
+
 Werkzeuge
 Oben
+
 Touch UI
 Transformation
 Objekt transformieren
@@ -780,6 +852,7 @@ UV
 UV Insel
 UV Map
 UV Skalierung
+
 UV Unwrap
 UV Map
 Konnte nicht nach Updates suchen.\nBitte {url} aufsuchen.
@@ -854,9 +927,9 @@ player
 Plugin aktiviert
 Eingabe
 sRGB
+
 Quelle
 Dreiecke
 Typ
 unbenannt
-x
 {shortcut} und Maus bewegen

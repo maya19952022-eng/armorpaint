@@ -149,25 +149,59 @@ typedef enum {
 } sculpt_type_t;
 
 typedef enum {
-	BLEND_TYPE_MIX          = 0,
-	BLEND_TYPE_DARKEN       = 1,
-	BLEND_TYPE_MULTIPLY     = 2,
-	BLEND_TYPE_BURN         = 3,
-	BLEND_TYPE_LIGHTEN      = 4,
-	BLEND_TYPE_SCREEN       = 5,
-	BLEND_TYPE_DODGE        = 6,
-	BLEND_TYPE_ADD          = 7,
-	BLEND_TYPE_OVERLAY      = 8,
-	BLEND_TYPE_SOFT_LIGHT   = 9,
-	BLEND_TYPE_LINEAR_LIGHT = 10,
-	BLEND_TYPE_DIFFERENCE   = 11,
-	BLEND_TYPE_SUBTRACT     = 12,
-	BLEND_TYPE_DIVIDE       = 13,
-	BLEND_TYPE_HUE          = 14,
-	BLEND_TYPE_SATURATION   = 15,
-	BLEND_TYPE_COLOR        = 16,
-	BLEND_TYPE_VALUE        = 17,
+	BLEND_TYPE_MIX            = 0,
+	BLEND_TYPE_DARKEN         = 1,
+	BLEND_TYPE_MULTIPLY       = 2,
+	BLEND_TYPE_BURN           = 3,
+	BLEND_TYPE_LIGHTEN        = 4,
+	BLEND_TYPE_SCREEN         = 5,
+	BLEND_TYPE_DODGE          = 6,
+	BLEND_TYPE_ADD            = 7,
+	BLEND_TYPE_OVERLAY        = 8,
+	BLEND_TYPE_SOFT_LIGHT     = 9,
+	BLEND_TYPE_LINEAR_LIGHT   = 10,
+	BLEND_TYPE_DIFFERENCE     = 11,
+	BLEND_TYPE_SUBTRACT       = 12,
+	BLEND_TYPE_DIVIDE         = 13,
+	BLEND_TYPE_HUE            = 14,
+	BLEND_TYPE_SATURATION     = 15,
+	BLEND_TYPE_COLOR          = 16,
+	BLEND_TYPE_VALUE          = 17,
+	BLEND_TYPE_NORMAL_COMBINE = 18, // Normal channel only, whiteout blend
 } blend_type_t;
+
+// Layer channels with their own blending and opacity
+typedef enum {
+	LAYER_CH_BASE   = 0,
+	LAYER_CH_NOR    = 1,
+	LAYER_CH_OCC    = 2,
+	LAYER_CH_ROUGH  = 3,
+	LAYER_CH_MET    = 4,
+	LAYER_CH_HEIGHT = 5,
+	LAYER_CH_COUNT  = 6,
+} layer_channel_t;
+
+// Geometry mask of a layer, the selected tiles and objects keep the layer or remove it
+typedef enum {
+	GEOMETRY_MASK_INCLUDE = 0,
+	GEOMETRY_MASK_EXCLUDE = 1,
+} geometry_mask_mode_t;
+
+// Part of a paint object where a layer applies with its geometry masks
+typedef enum {
+	GEOMETRY_MASK_COVER_NONE = 0,
+	GEOMETRY_MASK_COVER_SOME = 1, // Some of its faces
+	GEOMETRY_MASK_COVER_ALL  = 2,
+} geometry_mask_cover_t;
+
+// Faces a click of the select tool adds to the geometry mask or removes from it
+typedef enum {
+	GEOMETRY_SELECT_TRIANGLE  = 0,
+	GEOMETRY_SELECT_POLYGON   = 1,
+	GEOMETRY_SELECT_CONNECTED = 2,
+	GEOMETRY_SELECT_UV_ISLAND = 3,
+	GEOMETRY_SELECT_OBJECT    = 4,
+} geometry_select_mode_t;
 
 typedef enum {
 	CAMERA_CONTROLS_NONE   = -1,
@@ -253,6 +287,32 @@ typedef enum {
 	LAYER_SLOT_TYPE_MASK  = 1,
 	LAYER_SLOT_TYPE_GROUP = 2,
 } layer_slot_type_t;
+
+// Quick effects of the Add Effect menu, each one a node graph reading the layer or mask below it
+typedef enum {
+	EFFECT_TYPE_FILTER          = 0,
+	EFFECT_TYPE_FILL            = 1,
+	EFFECT_TYPE_LEVELS          = 2,
+	EFFECT_TYPE_HSV             = 3,
+	EFFECT_TYPE_COLOR_BALANCE   = 4,
+	EFFECT_TYPE_SHARPEN         = 5,
+	EFFECT_TYPE_BLUR            = 6,
+	EFFECT_TYPE_COMPARE_MASK    = 7,
+	EFFECT_TYPE_COLOR_SELECTION = 8,
+	EFFECT_TYPE_ANCHOR          = 9,
+	EFFECT_TYPE_PAINT           = 10, // Strokes painted over the element below, see slot_layer_is_paint_effect
+	EFFECT_TYPE_GENERATOR       = 11, // A fill whose factor is a generator_type_t node chain
+	EFFECT_TYPE_COUNT           = 12,
+} effect_type_t;
+
+// Presets of the Generator effect, each one a node chain driving the factor of a fill
+typedef enum {
+	GENERATOR_TYPE_EDGES     = 0, // Baked curvature of the mesh
+	GENERATOR_TYPE_GRADIENT  = 1, // World height
+	GENERATOR_TYPE_FACING_UP = 2, // World normal pointing up
+	GENERATOR_TYPE_NOISE     = 3,
+	GENERATOR_TYPE_COUNT     = 4,
+} generator_type_t;
 
 typedef enum {
 	TOOL_TYPE_BRUSH     = 0,
@@ -580,6 +640,9 @@ typedef enum {
 	HISTORY_ACTION_REPLACE_SWATCHES,
 	HISTORY_ACTION_EDIT_SWATCH,
 	HISTORY_ACTION_OBJECT_TRANSFORM,
+	HISTORY_ACTION_FLATTEN_GROUP,
+	HISTORY_ACTION_LAYER_LOCK,
+	HISTORY_ACTION_LAYER_GEOMETRY_MASK,
 } history_action_t;
 
 typedef enum {

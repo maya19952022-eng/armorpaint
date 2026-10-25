@@ -1,6 +1,6 @@
 (terkompresi)
+
 (dikemas)
-+
 -X
 -Y
 -Z
@@ -8,6 +8,7 @@
 2D
 Tampilan 2D
 3D
+
 Tampilan 3D
 A
 Tentang
@@ -15,6 +16,7 @@ Tentang...
 Mutlak
 Tambah
 Tambah Animasi
+
 Tambah Contoh Warna
 Tambah contoh warna baru
 Tambah warna yang dipilih ke contoh warna
@@ -24,6 +26,7 @@ Izinkan Kamera Terbalik
 Alfa
 Buang Alfa
 Jumlah
+
 Sudut
 Tolak Sudut
 Animasi
@@ -36,16 +39,19 @@ Terapkan Masker
 Terapkan Node
 Terapkan Sculpt
 Terapkan Skinning
+
 Arkuskosinus
 Arkusinus
 Arktangen2
 Arkutangen
 Array
 Aset
+
 Atlas
 Atlas
 Atribut
 Otomatis
+
 Rata-rata
 Sumbu
 B
@@ -55,7 +61,6 @@ Bake Material...
 Bake Tekstur
 Bake ke Tekstur
 Pita
-Dasar
 Warna Dasar
 Normal Bengkok
 Bevel
@@ -65,6 +70,7 @@ Masker Hitam
 Eksekusi Blender
 Path eksekusi Blender belum diatur
 Pencampuran
+
 Bloom
 Buram
 Buramkan Peta Lingkungan
@@ -96,6 +102,7 @@ Kecepatan Rotasi Kamera
 Tekstur Kamera
 Kecepatan Zoom Kamera
 Batal
+
 Tangkap Latar
 Tangkap Keluaran
 Tangkap Cuplikan Layar
@@ -103,6 +110,7 @@ Tangkap Video
 Langit-langit
 Ukuran sel dalam piksel
 Tengah
+
 Kanal
 Periksa Pembaruan...
 Tekstur Kotak-kotak
@@ -111,11 +119,12 @@ Batasi Faktor
 Batasi Hasil
 Tanah Liat
 Bersihkan
+
+
 Bersihkan Lapisan
 Bersihkan Contoh Warna
 Akhir Klip
 Awal Klip
-Kliping
 Klon
 Tutup
 Kain
@@ -126,17 +135,24 @@ Proyek awan
 Warna
 Warna 1
 Warna 2
+
+
+
 ID Warna
 Peta ID Warna
 Masker Warna
 Rampe Warna
+
 Ruang Warna
 IDWarna
 Gabungkan
 Gabung Warna
 Gabung XYZ
+
 Kompas
+
 Konfirmasi
+
 Konsol
 Model Konsol
 Konstan
@@ -151,9 +167,12 @@ Kosinus
 Tidak dapat mengunduh
 Jumlah
 Lipatan
+
 Buat Lapisan Warna
 Buat Material
+
 Hasil Kali Silang
+
 Buang Muka Belakang
 Kursor
 Kelengkungan
@@ -162,6 +181,7 @@ Kurva
 Melengkung
 Kustom
 Potong
+
 Gelapkan
 Debug
 Dekal
@@ -176,6 +196,7 @@ Hapus Kuas
 Hapus Lapisan
 Hapus Material
 Hapus Grup Node
+
 Hapus Contoh Warna
 Hapus yang Tidak Terpakai
 Delta
@@ -219,6 +240,7 @@ Duplikat Kuas
 Duplikat Lapisan
 Duplikat Material
 Duplikat Contoh Warna
+
 Sunting
 Sunting Gambar
 Sunting Node
@@ -237,6 +259,7 @@ Sudut Lingkungan
 Peta Lingkungan
 Bola Envmap
 Peta Lingkungan...
+
 Penghapus
 Kesalahan: berkas .arm diharapkan
 Kesalahan: berkas .hdr diharapkan
@@ -245,6 +268,7 @@ Kesalahan: Tidak dapat menemukan tekstur
 Kesalahan: Gagal membaca data font
 Kesalahan: Gagal membaca data mesh
 Kesalahan: Format aset tidak dikenal
+
 Eksklusi
 Keluar
 Fitur Eksperimental
@@ -256,6 +280,7 @@ Ekspor Material
 Ekspor Mesh
 Ekspor Pemutar
 Ekspor Tekstur
+
 Ekspor contoh warna
 Ekspor berkas tekstur
 Mengekspor mesh
@@ -264,6 +289,9 @@ F1
 F2
 Fac
 Muka
+
+
+
 Faktor
 Gagal mengimpor material
 Gagal membaca suara:
@@ -278,6 +306,9 @@ Filter
 Filter Tekstur
 Rata
 Ratakan
+
+
+
 Kurva Float
 Lantai
 Modulo Lantai
@@ -300,13 +331,16 @@ Gesekan
 Dari Maks
 Dari Min
 Depan
+
 Penuh
 Keburaman
 G
 Tekstur Gabor
 Gamma
 Dihasilkan
+
 Geometri
+
 Geometri ke Asal
 Mulai
 Tarik
@@ -314,19 +348,22 @@ Tekstur Gradasi
 Gravitasi X
 Gravitasi Y
 Gravitasi Z
+
 Lebih Besar Dari
+
 Sel Grid
 Snap ke Grid
 Grup
 Masukan Grup
 Keluaran Grup
+
 Kekerasan
 Tinggi
-Campur Tinggi
 Bantuan
-Sembunyikan Tampilan 3D
 Poly Tinggi
+
 Riwayat
+
 Tahan {action_paint} untuk menghapus\nTahan {brush_ruler} dan tekan {action_paint} untuk menghapus garis lurus (mode penggaris)
 Tahan {action_paint} untuk melukis\nTahan {brush_ruler} dan tekan {action_paint} untuk melukis garis lurus (mode penggaris)
 Tahan {brush_opacity} dan gerakkan mouse ke kiri untuk mengurangi opasitas\nTahan {brush_opacity} dan gerakkan mouse ke kanan untuk menambah opasitas
@@ -354,6 +391,9 @@ Impor berkas tekstur
 Impor...
 Mengimpor mesh
 Masuk
+
+
+
 Masuk
 Gembungkan
 Info: Aset sudah diimpor
@@ -379,6 +419,7 @@ Peta Tombol
 Peta tombol diimpor:
 Lakunaritas
 Bahasa
+
 Lapisan
 Sudut Lapisan
 Pencampuran Lapisan
@@ -393,6 +434,7 @@ Radius Malas
 Langkah Malas
 Kiri
 Panjang
+
 Kurang Dari
 Tingkat
 Masa Hidup
@@ -404,6 +446,8 @@ Tercahayai
 Pratinjau Kuas Langsung
 Pratinjau Material Langsung
 Lokasi
+
+
 Logaritma
 Tekstur Ajaib
 Jadikan Unik
@@ -432,6 +476,7 @@ Keluaran Mesh
 Mesh...
 Mesh
 Logam
+
 Min
 Min Maks
 Minimum
@@ -445,12 +490,14 @@ Model
 Model
 Direktori Model...
 Pengubah
+
 Ubah
 Ubah Animasi
 Modulo
 Mortir
 Ukuran Mortir
 Kehalusan Mortir
+
 Kalikan
 Nama
 Neural
@@ -476,15 +523,16 @@ Tidak ada respons
 Node
 Pratinjau Node
 Node
+
 Butiran Noise
 Tekstur Noise
 Tidak Ada
 Normal
-Campur Normal
 Peta Normal
 Peta Normal 1
 Peta Normal 2
 Normalisasi
+
 Tidak tersedia di build debug
 Belum diimplementasikan
 OK
@@ -493,6 +541,7 @@ ID Objek
 Indeks Objek
 Info Objek
 Normal Objek
+
 Okklusi
 Ofset
 Warna Lama
@@ -515,8 +564,9 @@ Orientasi 3D
 Origin ke Geometri
 Ortografis
 Keluar
+
+
 Hampar
-PBR
 Kemas Aset
 Kemas ke Proyek
 Padding
@@ -527,7 +577,9 @@ Parametrik
 Induk
 Turunan Parsial
 Partikel
+
 Tempel
+
 Jalur
 Jejak Jalur
 Pelacak Jalur
@@ -547,6 +599,7 @@ Cubit
 Ping-Pong
 Poros
 Ukuran Piksel
+
 Dataran
 Mainkan
 Pemutar
@@ -555,15 +608,18 @@ Plugin diimpor:
 Plugin
 Titik
 Ketajaman
+
 Posisi
 Pasca Proses
 Pangkat
 Preferensi
 Preferensi...
+
 Preset
 Preset diimpor:
 Preset
 Kontrol Tekanan
+
 Sebelumnya
 Folder sebelumnya
 Memproses...
@@ -574,6 +630,7 @@ Prompt
 Kualitas
 Kuantisasi
 R
+
 Kurva RGB
 RGB ke Hitam Putih
 RGBA
@@ -587,6 +644,7 @@ Terbaru
 Ulangi {step}
 Refleksikan
 Segarkan
+
 Impor Ulang
 Impor Ulang Mesh
 Impor Ulang Tekstur
@@ -605,10 +663,11 @@ Minta Fitur
 Atur Ulang
 Atur Ulang Peta Lingkungan
 Atur Ulang Tata Letak
+
+
 Resolusi
 Kembalikan
 Kembalikan Contoh Warna
-Kembalikan contoh warna bawaan
 Kanan
 Cincin
 Rotasi
@@ -618,6 +677,7 @@ Bulatkan
 Tinggi Baris
 Jalankan
 Jalankan di Pemutar
+
 Berjalan...
 SSAO
 Sampel
@@ -641,11 +701,13 @@ Skrip dibuka
 Skrip
 Sculpt
 Lapisan Sculpt
+
 Cari
 Cari node
 Segmen
 Pilih
 Pilih Semua
+
 Pilih yang Tersembunyi
 Pilih Material
 Pilih yang Terlihat
@@ -661,9 +723,11 @@ Atur sebagai Masker
 Mengatur Sumber
 Pengaturan
 Shader
+
 Bentuk
 Bagikan Tautan Pemutar
 Berbagi
+
 Tampilkan Tampilan 2D
 Tampilkan Nama Aset
 Tampilkan Grid
@@ -681,7 +745,9 @@ Sedang masuk...
 Sinus
 Ukuran
 Slot
+
 Haluskan
+
 Oleskan
 Snap
 Snippet
@@ -711,12 +777,14 @@ Lurus
 Kekuatan
 Regangkan
 Subdivide
+
 Subsurface
 Kurangi
 Super Sampel
 Contoh Warna
 Contoh Warna...
 Simetri
+
 Tangen
 Target
 Templat
@@ -734,9 +802,11 @@ Tekstur...
 Tekstur
 Tekstur diekspor
 Tekstur...
+
 Tema
 Tema diimpor:
 Ketebalan
+
 Petak
 Petak X
 Petak Y
@@ -758,9 +828,11 @@ Ke Lapisan Lukis
 Ke Masker Lukis
 Ke Radian
 Alihkan Layar Penuh
-Alihkan header
+
+
 Alat
 Atas
+
 UI Sentuh
 Transformasi
 Transformasi Objek
@@ -780,6 +852,7 @@ UV
 Pulau UV
 Peta UV
 Skala UV
+
 Buka Lipatan UV
 Peta UV
 Tidak dapat memeriksa pembaruan.\nSilakan kunjungi {url}.
@@ -854,9 +927,9 @@ player
 plugin diaktifkan
 prompt
 sRGB
+
 sumber
 segitiga
 jenis
 tanpa judul
-x
 {shortcut} dan gerakkan mouse

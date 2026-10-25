@@ -1,6 +1,6 @@
 (komprimované)
+
 (zabalené)
-+
 -X
 -Y
 -Z
@@ -8,6 +8,7 @@
 2D
 2D pohled
 3D
+
 3D pohled
 A
 O programu
@@ -15,6 +16,7 @@ O programu...
 Absolutní
 Přidat
 Přidat animaci
+
 Přidat vzorek
 Přidat nový vzorek
 Přidat vybranou barvu do vzorků
@@ -24,6 +26,7 @@ Povolit převrácenou kameru
 Alfa
 Zahodit alfa
 Množství
+
 Úhel
 Odmítnout úhel
 Animace
@@ -36,16 +39,19 @@ Použít masku
 Použít uzly
 Použít sochání
 Použít skinning
+
 Arkuskosinus
 Arkussinus
 Arktangens 2
 Arktangens
 Pole
 Asset
+
 Atlas
 Atlasy
 Atribut
 Automaticky
+
 Průměr
 Osa
 B
@@ -55,7 +61,6 @@ Zapékat materiál...
 Zapékání textury
 Zapékat do textur
 Pásy
-Základní
 Základní barva
 Ohnutá normála
 Zkosení
@@ -65,6 +70,7 @@ Bity
 Spustitelný soubor Blenderu
 Cesta ke spustitelnému souboru Blenderu není nastavena
 Míchání
+
 Bloom
 Rozostření
 Rozostřit mapu okolí
@@ -96,6 +102,7 @@ Rychlost otáčení kamery
 Textura kamery
 Rychlost přibližování kamery
 Zrušit
+
 Zachytit pozadí
 Zachytit výstup
 Zachytit snímek obrazovky
@@ -103,6 +110,7 @@ Zachytit video
 Zaokrouhlit nahoru
 Velikost buňky v pixelech
 Střed
+
 Kanály
 Zkontrolovat aktualizace...
 Šachovnicová textura
@@ -111,11 +119,12 @@ Omezit faktor
 Omezit výsledek
 Hlína
 Vyčistit
+
+
 Vyčistit vrstvu
 Vyčistit vzorky
 Konec ořezu
 Začátek ořezu
-Ořezání
 Klonovat
 Zavřít
 Látka
@@ -126,17 +135,24 @@ Cloudové projekty
 Barva
 Barva 1
 Barva 2
+
+
+
 ID barvy
 Mapa ID barev
 Maska barvy
 Barevný přechod
+
 Barevný prostor
 ID barvy
 Kombinovat
 Kombinovat barvu
 Kombinovat XYZ
+
 Kompas
+
 Potvrdit
+
 Konzole
 Model konzole
 Konstanta
@@ -151,9 +167,12 @@ Kosinus
 Nelze stáhnout
 Počet
 Záhyb
+
 Vytvořit barevnou vrstvu
 Vytvořit materiál
+
 Vektorový součin
+
 Vyřadit zadní plochy
 Kurzor
 Zakřivení
@@ -162,6 +181,7 @@ Křivka
 Zakřivený
 Vlastní
 Vyjmout
+
 Ztmavit
 Ladění
 Dekál
@@ -176,6 +196,7 @@ Smazat štětec
 Smazat vrstvu
 Smazat materiál
 Smazat skupinu uzlů
+
 Smazat vzorek
 Smazat nepoužité
 Delta
@@ -219,6 +240,7 @@ Duplikovat štětec
 Duplikovat vrstvu
 Duplikovat materiál
 Duplikovat vzorek
+
 Upravit
 Upravit obrázek
 Upravit uzly
@@ -237,6 +259,7 @@ Okolí
 Mapa okolí
 Kule mapy okolí
 Mapa okolí...
+
 Guma
 Chyba: Očekáván soubor .arm
 Chyba: Očekáván soubor .hdr
@@ -245,6 +268,7 @@ Chyba: Nelze najít texturu
 Chyba: Selhání čtení dat písma
 Chyba: Selhání čtení dat sítě
 Chyba: Neznámý formát assetu
+
 Vyloučení
 Ukončit
 Experimentální funkce
@@ -256,6 +280,7 @@ Exportovat materiál
 Exportovat síť
 Exportovat přehrávač
 Exportovat textury
+
 Exportovat vzorky
 Exportovat soubory textur
 Exportování sítě
@@ -264,6 +289,9 @@ F1
 F2
 Fak
 Plocha
+
+
+
 Faktor
 Selhal import materiálu
 Nepodařilo se načíst zvuk:
@@ -278,6 +306,9 @@ Filtr
 Filtrovat textury
 Plochý
 Zploštit
+
+
+
 Křivka čísla
 Zaokrouhlit dolů
 Modulo dolní
@@ -300,13 +331,16 @@ Tření
 Z maxima
 Z minima
 Přední
+
 Plný
 Neostrost
 G
 Gaborova textura
 Gama
 Generováno
+
 Geometrie
+
 Geometrie do počátku
 Začít
 Uchopit
@@ -314,19 +348,22 @@ Přechodová textura
 Gravitace X
 Gravitace Y
 Gravitace Z
+
 Větší než
+
 Buňka mřížky
 Přichytávání k mřížce
 Skupina
 Vstup skupiny
 Výstup skupiny
+
 Tvrdost
 Výška
-Míchání výšky
 Nápověda
-Skrýt 3D pohled
 Vysoký počet polygonů
+
 Historie
+
 Držte {action_paint} pro mazání\nDržte {brush_ruler} a stiskněte {action_paint} pro mazání přímky (režim pravítka)
 Držte {action_paint} pro malování\nDržte {brush_ruler} a stiskněte {action_paint} pro malování přímky (režim pravítka)
 Držte {brush_opacity} a pohybujte myší vlevo pro snížení krytí\nDržte {brush_opacity} a pohybujte myší vpravo pro zvýšení krytí
@@ -354,6 +391,9 @@ Importovat soubor textury
 Importovat...
 Importování sítě
 Vstup
+
+
+
 Příchozí
 Nafouknout
 Info: Asset již importován
@@ -379,6 +419,7 @@ Klávesová mapa
 Klávesová mapa importována:
 Lakunarita
 Jazyk
+
 Vrstva
 Úhel vrstvy
 Míchání vrstev
@@ -393,6 +434,7 @@ Líný poloměr
 Líný krok
 Vlevo
 Délka
+
 Menší než
 Úrovně
 Životnost
@@ -404,6 +446,8 @@ Osvětlený
 Živý náhled štětce
 Živý náhled materiálu
 Umístění
+
+
 Logaritmus
 Magická textura
 Učinit jedinečným
@@ -432,6 +476,7 @@ Výstup sítě
 Síť...
 Sítě
 Kovovost
+
 Min
 Min Max
 Minimum
@@ -445,12 +490,14 @@ Model
 Modely
 Adresář modelů...
 Modifikátor
+
 Upravit
 Upravit animaci
 Modulo
 Malta
 Velikost malty
 Vyhlazení malty
+
 Násobit
 Název
 Neuronový
@@ -476,15 +523,16 @@ Ne
 Uzel
 Náhledy uzlů
 Uzly
+
 Šum zrna
 Šumová textura
 Žádný
 Normála
-Míchání normál
 Normálová mapa
 Normálová mapa 1
 Normálová mapa 2
 Normalizovat
+
 Není dostupné v ladicím buildu
 Neimplementováno
 OK
@@ -493,6 +541,7 @@ ID objektu
 Index objektu
 Informace o objektu
 Normála objektu
+
 Okluze
 Posun
 Stará barva
@@ -515,8 +564,9 @@ Orientace 3D
 Počátek na geometrii
 Ortografie
 Výstup
+
+
 Překrytí
-PBR
 Zabalit assety
 Zabalit do projektu
 Odsazení
@@ -527,7 +577,9 @@ Parametrický
 Rodič
 Částečná derivace
 Částice
+
 Vložit
+
 Cesta
 Trasovaná cesta
 Trasovač cest
@@ -547,6 +599,7 @@ Sevřít
 Ping-pong
 Střed otáčení
 Velikost pixelu
+
 Plošina
 Přehrát
 Přehrávač
@@ -555,15 +608,18 @@ Plugin importován:
 Pluginy
 Bod
 Špičatost
+
 Pozice
 Postprodukce
 Mocnina
 Předvolby
 Předvolby...
+
 Předvolba
 Předvolba importována:
 Předvolby
 Ovládání tlakem
+
 Předchozí
 Předchozí složka
 Zpracovávání...
@@ -574,6 +630,7 @@ Prompt
 Kvalita
 Kvantizovat
 R
+
 Křivky RGB
 RGB na černobílý
 RGBA
@@ -587,6 +644,7 @@ Nedávné
 Znovu {step}
 Odrážet
 Obnovit
+
 Znovu importovat
 Znovu importovat síť
 Znovu importovat textury
@@ -605,10 +663,11 @@ Požádat o funkci
 Resetovat
 Resetovat mapu okolí
 Resetovat rozložení
+
+
 Rozlišení
 Obnovit
 Obnovit vzorky
-Obnovit výchozí vzorky
 Vpravo
 Kruhy
 Otáčet
@@ -618,6 +677,7 @@ Zaokrouhlit
 Výška řádku
 Spustit
 Spustit v přehrávači
+
 Probíhá...
 SSAO
 Vzorky
@@ -641,11 +701,13 @@ Skript otevřen
 Skripty
 Sochání
 Sochařská vrstva
+
 Hledat
 Hledat uzly
 Segmenty
 Vybrat
 Vybrat vše
+
 Vybrat skryté
 Vybrat materiál
 Vybrat viditelné
@@ -661,9 +723,11 @@ Nastavit jako masku
 Nastavování zdroje
 Nastavení
 Shader
+
 Tvar
 Sdílet odkaz na přehrávač
 Sdílené
+
 Zobrazit 2D pohled
 Zobrazit názvy assetů
 Zobrazit mřížku
@@ -681,7 +745,9 @@ Přihlašování...
 Sinus
 Velikost
 Slot
+
 Vyhladit
+
 Rozmazat
 Přichytit
 Úryvky
@@ -711,12 +777,14 @@ Přímý
 Síla
 Natáhnout
 Rozdělit
+
 Podpovrch
 Odečíst
 Supersampling
 Vzorky
 Vzorky...
 Symetrie
+
 Tangenta
 Cíl
 Šablona
@@ -734,9 +802,11 @@ Textura...
 Textury
 Textury exportovány
 Textury...
+
 Téma
 Téma importováno:
 Tloušťka
+
 Dlaždice
 Dlaždice X
 Dlaždice Y
@@ -758,9 +828,11 @@ Na malovací vrstvu
 Na malovací masku
 Na radiány
 Přepnout celou obrazovku
-Přepnout záhlaví
+
+
 Nástroje
 Horní
+
 Dotykové rozhraní
 Transformace
 Transformovat objekt
@@ -780,6 +852,7 @@ UV
 UV ostrov
 UV mapa
 Měřítko UV
+
 Rozbalení UV
 UV mapa
 Nelze zkontrolovat aktualizace.\nNavštivte prosím {url}.
@@ -854,9 +927,9 @@ player
 plugin povolen
 dotaz
 sRGB
+
 zdroj
 trojúhelníky
 typ
 bez názvu
-x
 {shortcut} a pohyb myší

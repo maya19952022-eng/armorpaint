@@ -221,6 +221,17 @@ project_t *import_arm_from_map_to_arm(any_map_t *old) {
 			ld->path_curved        = armpack_map_get_i32(old, "path_curved") > 0;
 			ld->path_material      = ld->path_points != NULL ? armpack_map_get_i32(old, "path_material") : -1;
 			ld->path_text          = armpack_map_get_i32(old, "path_text") > 0;
+			ld->blending_ch        = any_map_get(old, "blending_ch"); // Version 22, derived from blending when missing
+			ld->opacity_ch         = any_map_get(old, "opacity_ch");
+			ld->locked             = armpack_map_get_i32(old, "locked") > 0;
+			ld->effect             = armpack_map_get_i32(old, "effect") > 0;
+			ld->geometry_mask_mode    = armpack_map_get_i32(old, "geometry_mask_mode"); // Missing means no geometry mask
+			ld->geometry_mask_tiles   = any_map_get(old, "geometry_mask_tiles");
+			ld->geometry_mask_objects = any_map_get(old, "geometry_mask_objects");
+			ld->effect_paint               = armpack_map_get_i32(old, "effect_paint") > 0;
+			ld->geometry_mask_face_objects = any_map_get(old, "geometry_mask_face_objects");
+			ld->geometry_mask_face_counts  = any_map_get(old, "geometry_mask_face_counts");
+			ld->geometry_mask_faces        = any_map_get(old, "geometry_mask_faces");
 			any_array_push(project->layer_datas, ld);
 		}
 	}
@@ -320,6 +331,10 @@ project_t *import_arm_from_map_to_arm(any_map_t *old) {
 	project->mesh_paths         = any_map_get(old, "mesh_paths");
 
 	return project;
+}
+
+project_t *import_arm_from_version_21(any_map_t *old) {
+	return import_arm_from_map_to_arm(old); // Per channel blending is derived on import
 }
 
 project_t *import_arm_from_version_20(any_map_t *old) {
@@ -528,7 +543,7 @@ project_t *import_arm_from_old(buffer_t *b) {
 	    import_arm_from_version_5,  import_arm_from_version_6,  import_arm_from_version_7,  import_arm_from_version_8,  import_arm_from_version_9,
 	    import_arm_from_version_10, import_arm_from_version_11, import_arm_from_version_12, import_arm_from_version_13, import_arm_from_version_14,
 	    import_arm_from_version_15, import_arm_from_version_16, import_arm_from_version_17, import_arm_from_version_18, import_arm_from_version_19,
-	    import_arm_from_version_20,
+	    import_arm_from_version_20, import_arm_from_version_21,
 	};
 	for (i32 v = sizeof(fns) / sizeof(fns[0]) - 1; v >= 0; --v) {
 		if (import_arm_is_version(b, i32_to_string(v))) {

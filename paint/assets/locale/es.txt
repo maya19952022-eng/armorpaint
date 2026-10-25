@@ -1,6 +1,6 @@
 (comprimido)
+
 (empaquetado)
-+
 -X
 -Y
 -Z
@@ -8,6 +8,7 @@
 2D
 Vista 2D
 3D
+
 Vista 3D
 A
 Acerca de
@@ -15,6 +16,7 @@ Acerca de...
 Absoluto
 Añadir
 Añadir animación
+
 Añadir muestra
 Añadir nueva muestra
 Añadir color seleccionado a muestras
@@ -24,6 +26,7 @@ Permitir cámara invertida
 Alfa
 Descartar alfa
 Cantidad
+
 Ángulo
 Rechazar por ángulo
 Animación
@@ -36,16 +39,19 @@ Aplicar Máscara
 Aplicar nodos
 Aplicar escultura
 Aplicar skinning
+
 Arc coseno
 Arc seno
 Arc tangente 2
 Arc tangente
 Matriz
 Recurso
+
 Atlas
 Atlas
 Atributo
 Automático
+
 Promedio
 Ejes
 A
@@ -55,7 +61,6 @@ Hornear material...
 Hornear textura
 Hornear a texturas
 Bandas
-Base
 Color base
 Bent Normal
 Bisel
@@ -65,6 +70,7 @@ Mascara negra
 Ejecutable de Blender
 Ruta al ejecutable de Blender no establecida
 Fusión
+
 Resplandor
 Desenfocar
 Desenfoque de mapa de entorno
@@ -96,6 +102,7 @@ Velocidad de rotación de cámara
 Textura de cámara
 Velocidad de zoom de cámara
 Cancelar
+
 Capturar fondo
 Capturar salida
 Capturar captura de pantalla
@@ -103,6 +110,7 @@ Capturar vídeo
 Techo
 Tamaño de celda en píxeles
 Centro
+
 Canales
 Comprobar actualizaciones...
 Verificador
@@ -111,11 +119,12 @@ Limitar factor
 Limitar resultado
 Arcilla
 Limpiar
+
+
 Limpiar capa
 Limpiar muestras
 Finalizar recorte
 Comenzar a recortar
-Recorte
 Clonar
 Cerrar
 Tela
@@ -126,17 +135,24 @@ Proyectos en la nube
 Color
 Color 1
 Color 2
+
+
+
 ID de color
 Mapa de ID de colores
 Máscara de color
 Rampa de color
+
 Espacio de color
 Color ID
 Combinar
 Combinar color
 Combinar XYZ
+
 Gizmo orientación
+
 Confirmar
+
 Consola
 Modelo de consola
 Constante
@@ -151,9 +167,12 @@ Coseno
 No se pudo descargar
 Cantidad
 Pliegue
+
 Crear capa de color
 Crear material
+
 Producto vectorial
+
 Eliminar caras opuestas
 Cursor
 Curvatura
@@ -162,6 +181,7 @@ Curva
 Curva
 Personalizado
 Cortar
+
 Oscurecer
 Depuración
 Pegatina
@@ -176,6 +196,7 @@ Eliminar pincel
 Eliminar capa
 Eliminar material
 Eliminar grupo de nodos
+
 Eliminar muestra
 Eliminar no usadas
 Delta
@@ -219,6 +240,7 @@ Duplicar pincel
 Duplicar capa
 Duplicar material
 Duplicar muestra
+
 Editar
 Editar imagen
 Editar nodos
@@ -237,6 +259,7 @@ Entorno
 Mapa de entorno
 Esferas del mapa de entorno
 Mapa de entorno...
+
 Borrador
 Error: archivo .arm esperado
 Error: se esperaba archivo .hdr
@@ -245,6 +268,7 @@ Error: No se pudo localizar la textura
 Error: Fallo al leer datos de fuente
 Error: No se pudieron leer los datos de la malla
 Error: formato de recurso desconocido
+
 Exclusión
 Salir
 Funciones experimentales
@@ -256,6 +280,7 @@ Exportar material
 Exportar malla
 Exportar reproductor
 Exportar texturas
+
 Exportar muestras
 Exportar archivos de texturas
 Exportando malla
@@ -264,6 +289,9 @@ F1
 F2
 Fac
 Cara
+
+
+
 Factor
 Error al importar el material
 Error al leer el sonido:
@@ -278,6 +306,9 @@ Filtrar
 Filtrar texturas
 Plano
 Aplanar
+
+
+
 Curva de valor
 Piso
 Módulo hacia abajo
@@ -300,13 +331,16 @@ Fricción
 Desde Máx
 Desde Mín
 Frontal
+
 Completo
 Difuminado
 V
 Textura Gabor
 Gama
 Generado
+
 Geometría
+
 Geometria al origen
 Comenzar
 Agarrar
@@ -314,19 +348,22 @@ Gradiente
 Gravedad X
 Gravedad Y
 Gravedad Z
+
 Mayor que
+
 Celda de la rejilla
 Ajuste a rejilla
 Grupo
 Entrada de grupo
 Salida de grupo
+
 Dureza
 Altura
-Mezcla de altura
 Ayuda
-Ocultar vista 3D
 High Poly
+
 Historial
+
 Mantener {action_paint} para borrar\nMantener {brush_ruler} y presionar {action_paint} para borrar línea recta (modo regla)
 Mantener {action_paint} para pintar\nMantener {brush_ruler} y presionar {action_paint} para pintar línea recta (modo regla)
 Mantén {brush_opacity} y mueve el ratón a la izquierda para reducir la opacidad\nMantén {brush_opacity} y mueve el ratón a la derecha para aumentar la opacidad
@@ -354,6 +391,9 @@ Importar textura
 Importar...
 Importando malla
 Entrada
+
+
+
 Entrante
 Inflar
 Info: Recurso ya importado
@@ -379,6 +419,7 @@ Mapeado de teclas
 Mapa de teclas importado:
 Lacunaridad
 Idioma
+
 Capa
 Ángulo de capa
 Modo mezcla capa
@@ -393,6 +434,7 @@ Radio perezoso
 Paso perezoso
 Izquierda
 Longitud
+
 Menor que
 Niveles
 Tiempo de vida
@@ -404,6 +446,8 @@ Iluminado
 Previsualización de pincel
 Vista previa de material
 Posición
+
+
 Logaritmo
 Mágica
 Hacer único
@@ -432,6 +476,7 @@ Salida de malla
 Malla...
 Mallas
 Metálico
+
 Mín
 Mín Máx
 Mínimo
@@ -445,12 +490,14 @@ Modelo
 Modelos
 Directorio de modelos...
 Modificador
+
 Modificar
 Modificar animación
 Resto
 Mortero
 Tamaño del mortero
 Suavizado del mortero
+
 Multiplicar
 Nombre
 Neuronal
@@ -476,15 +523,16 @@ Sin respuesta
 Nodo
 Vistas previas de nodos
 Nodos
+
 Grano de ruido
 Ruido
 Ninguno
 Normal
-Mezcla de normales
 Mapa de normales
 Mapa de normales 1
 Mapa de normales 2
 Normalizar
+
 No disponible en la compilación de depuración
 No implementado
 OK
@@ -493,6 +541,7 @@ ID de objeto
 Índice de Objetos
 Información del objeto
 Normales del objeto
+
 Oclusión
 Compensación
 Color antiguo
@@ -515,8 +564,9 @@ Orientación 3D
 Origen a la geometría
 Ortográfica
 Salida
+
+
 Superponer
-PBR
 Empaquetar recursos
 Empaquetar en proyecto
 Relleno
@@ -527,7 +577,9 @@ Paramétrico
 Padre
 Derivada parcial
 Particulas
+
 Pegar
+
 Ruta
 Trazado de ruta
 Trazador de rutas
@@ -547,6 +599,7 @@ Pellizcar
 Ping - Pong
 Pivote
 Tamaño de píxel
+
 Meseta
 Reproducir
 Reproductor
@@ -555,15 +608,18 @@ Plugin importado:
 Complementos
 Punto
 Puntiagudez
+
 Posición
 Posprocesado
 Potencia
 Preferencias
 Preferencias...
+
 Preajuste
 Predefinición importada:
 Preajustes
 Controles de presión
+
 Anterior
 Carpeta anterior
 Procesando...
@@ -574,6 +630,7 @@ Prompt
 Calidad
 Cuantificar
 R
+
 Curvas RGB
 RVA a grises
 RVAA
@@ -587,6 +644,7 @@ Reciente
 Rehacer {step}
 Reflejar
 Actualizar
+
 Reimportar
 Reimportar malla
 Reimportar texturas
@@ -605,10 +663,11 @@ Solicitar una función
 Reiniciar
 Restablecer mapa de entorno
 Restablecer Diseño
+
+
 Resolución
 Restaurar
 Restaurar muestras
-Restaurar muestras predeterminadas
 Derecha
 Anillos
 Rotar
@@ -618,6 +677,7 @@ Redondear
 Altura de la fila
 Ejecutar
 Ejecutar en el reproductor
+
 Ejecutando...
 SSAO
 Muestras
@@ -641,11 +701,13 @@ Script abierto
 Scripts
 Escultura
 Capa de escultura
+
 Buscar
 Buscar nodos
 Segmentos
 Seleccionar
 Seleccionar todo
+
 Seleccionar ocultos
 Seleccionar material
 Seleccionar visibles
@@ -661,9 +723,11 @@ Establecer como máscara
 Estableciendo origen
 Configuración
 Sombreador
+
 Forma
 Compartir enlace del reproductor
 Compartido
+
 Mostrar vista 2D
 Mostrar nombres de recursos
 Mostrar rejilla
@@ -681,7 +745,9 @@ Iniciando sesión...
 Seno
 Tamaño
 Ranura
+
 Suavizar
+
 Difuminar
 Adherir
 Fragmentos
@@ -711,12 +777,14 @@ Recto
 Fuerza
 Estirar
 Subdividir
+
 Subsuperficie
 Sustraer
 Supermuestreado
 Muestras
 Muestras...
 Simetría
+
 Tangente
 Destino
 Plantilla
@@ -734,9 +802,11 @@ Textura...
 Texturas
 Texturas exportadas
 Texturas...
+
 Tema
 Tema importado:
 Grosor
+
 Mosaico
 Mosaico X
 Mosaico Y
@@ -758,9 +828,11 @@ Pintar Capa
 Pintar máscara
 A radianes
 Ventana a pantalla completa
-Alternar cabecera
+
+
 Herramientas
 Superior
+
 Interfaz táctil
 Transformar
 Transformar objeto
@@ -780,6 +852,7 @@ UV
 Isla UV
 Mapa UV
 Escala UV
+
 Desenvolver UV
 Mapa UV
 No se pudo buscar actualizaciones.\nVisita {url}.
@@ -854,9 +927,9 @@ player
 plugin habilitado
 prompt
 eRVA
+
 fuente
 Triángulos
 tipo
 Sin título
-x
 {shortcut} y mover ratón

@@ -234,6 +234,7 @@ static void import_arm_run_mesh_append_from_project(project_t *project, i32_arra
 	util_uv_seammap_cached     = false;
 	util_uv_dilatemap_cached   = false;
 	g_context->ddirty          = 4;
+	util_geometry_mask_invalidate();
 	ui_dock_redraw(TAB_AREA_SIDEBAR0);
 }
 
@@ -706,6 +707,91 @@ static void import_arm_sculpt_init(void *_) {
 	sys_remove_update(import_arm_sculpt_init);
 }
 
+// Per channel blending and opacity, projects before version 22 have one blending and two flags
+static void import_arm_layer_channels(slot_layer_t *l, layer_data_t *ld) {
+	slot_layer_reset_channels(l);
+	if (ld->blending_ch != NULL && ld->opacity_ch != NULL) {
+		for (i32 i = 0; i < LAYER_CH_COUNT && i < ld->blending_ch->length && i < ld->opacity_ch->length; ++i) {
+			l->blending[i] = ld->blending_ch->buffer[i];
+			l->opacity[i]  = ld->opacity_ch->buffer[i];
+		}
+		return;
+	}
+	l->blending[LAYER_CH_BASE]   = ld->blending;
+	l->blending[LAYER_CH_NOR]    = ld->paint_nor_blend ? BLEND_TYPE_NORMAL_COMBINE : BLEND_TYPE_MIX;
+	l->blending[LAYER_CH_HEIGHT] = ld->paint_height_blend ? BLEND_TYPE_ADD : BLEND_TYPE_MIX;
+}
+
+// Version 22 files are decoded by position and fields appended to layer_data_t after a file was saved are
+// missing from it, a layer map with fewer keys ends before them. Files of older versions go through
+// import_legacy.c, which fills in every field.
+#define IMPORT_ARM_LAYER_KEYS_EFFECT         41 // Keys up to effect
+#define IMPORT_ARM_LAYER_KEYS_GEOMETRY_MASK  44 // Keys up to geometry_mask_objects
+#define IMPORT_ARM_LAYER_KEYS_EFFECT_PAINT   45 // Keys up to effect_paint
+#define IMPORT_ARM_LAYER_KEYS_GEOMETRY_FACES 48 // Keys up to geometry_mask_faces
+static i32 import_arm_layer_keys = -1;          // Keys of each layer map, -1 when every field was filled in
+
+// Face entries of the geometry mask of a layer, in arrays of their own. NULL without faces, or when the
+// arrays do not add up: then all of them are dropped.
+static geometry_mask_faces_t_array_t *import_arm_layer_faces(layer_data_t *ld) {
+	string_array_t *names  = ld->geometry_mask_face_objects;
+	i32_array_t    *counts = ld->geometry_mask_face_counts;
+	buffer_t       *bits   = ld->geometry_mask_faces;
+	if (names == NULL && counts == NULL && bits == NULL) {
+		return NULL;
+	}
+	bool valid = names != NULL && counts != NULL && bits != NULL && names->length == counts->length;
+	i64  bytes = 0;
+	for (i32 i = 0; valid && i < counts->length; ++i) {
+		valid = counts->buffer[i] > 0 && names->buffer[i] != NULL;
+		bytes += ((i64)counts->buffer[i] + 7) / 8;
+	}
+	if (!valid || bytes != bits->length) {
+		console_info(string("%s %s", tr("Faces of the geometry mask could not be read:"), ld->name != NULL ? ld->name : ""));
+		return NULL;
+	}
+	geometry_mask_faces_t_array_t *faces  = NULL;
+	i32                            offset = 0;
+	for (i32 i = 0; i < counts->length; ++i) {
+		i32                    triangles = counts->buffer[i];
+		i32                    length    = (triangles + 7) / 8;
+		geometry_mask_faces_t *f         = ALLOC_INIT(geometry_mask_faces_t, {.object = string_copy(names->buffer[i]), .triangles = triangles, .count = 0});
+		f->bits                          = u8_array_create(length);
+		memcpy(f->bits->buffer, bits->buffer + offset, length);
+		offset += length;
+		if (triangles % 8 != 0) {
+			f->bits->buffer[length - 1] &= (1 << (triangles % 8)) - 1; // No bits past the last triangle
+		}
+		for (i32 j = 0; j < length; ++j) {
+			for (u8 b = f->bits->buffer[j]; b != 0; b &= b - 1) {
+				f->count++;
+			}
+		}
+		if (f->count == 0) {
+			slot_layer_geometry_mask_faces_free(f);
+			continue;
+		}
+		if (faces == NULL) {
+			faces = (geometry_mask_faces_t_array_t *)any_array_create(0);
+		}
+		any_array_push((any_array_t *)faces, f);
+	}
+	return faces;
+}
+
+static void import_arm_layer_geometry_mask(slot_layer_t *l, layer_data_t *ld) {
+	slot_layer_geometry_mask_free(&l->geometry_mask);
+	if (import_arm_layer_keys >= 0 && import_arm_layer_keys < IMPORT_ARM_LAYER_KEYS_GEOMETRY_MASK) {
+		return; // Saved before the geometry mask
+	}
+	// Own arrays, the decoded ones live in the file blob
+	geometry_mask_t g = {.mode = ld->geometry_mask_mode, .tiles = ld->geometry_mask_tiles, .objects = ld->geometry_mask_objects, .faces = NULL};
+	l->geometry_mask  = slot_layer_geometry_mask_copy(&g);
+	if (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_GEOMETRY_FACES) { // Saved after faces
+		l->geometry_mask.faces = import_arm_layer_faces(ld);
+	}
+}
+
 void import_arm_run_project(char *path) {
 	bool keep_script_trust       = import_arm_keep_script_trust;
 	bool was_trusted             = project_scripts_trusted;
@@ -718,6 +804,7 @@ void import_arm_run_project(char *path) {
 	}
 	project_t *project;
 	bool       import_as_mesh = false;
+	import_arm_layer_keys     = -1;
 	if (!import_arm_has_version(b)) {
 		import_as_mesh     = true;
 		scene_t *scene_raw = armpack_decode(b);
@@ -727,7 +814,11 @@ void import_arm_run_project(char *path) {
 		project = import_arm_from_old(b);
 	}
 	else {
-		project = armpack_decode(b);
+		project               = armpack_decode(b);
+		import_arm_layer_keys = armpack_array_map_key_count(b, "layer_datas");
+		if (import_arm_layer_keys < 0) {
+			import_arm_layer_keys = 0; // No layers, or none of the optional fields can be trusted
+		}
 	}
 
 	if (project->version != NULL && project->layer_datas == NULL) {
@@ -986,7 +1077,14 @@ void import_arm_run_project(char *path) {
 			l->name = string_copy(ld->name);
 		}
 		l->visible      = ld->visible;
+		l->locked       = ld->locked;
+		l->effect       = (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_EFFECT) && ld->effect; // Saved after effects
+		l->effect_paint = (import_arm_layer_keys < 0 || import_arm_layer_keys >= IMPORT_ARM_LAYER_KEYS_EFFECT_PAINT) && ld->effect_paint;
+		if (l->effect_paint) {
+			slot_layer_alloc_result(l); // Filled once the stack is loaded, results are not saved
+		}
 		l->mask_opacity = ld->opacity_mask; // Groups have an opacity too
+		import_arm_layer_geometry_mask(l, ld);
 		any_array_push(g_project->_->layers, l);
 		if (!is_group) {
 			gpu_texture_t *_texpaint      = NULL;
@@ -1052,7 +1150,7 @@ void import_arm_run_project(char *path) {
 				l->decal_mat = mat4_from_f32_array(ld->decal_mat, 0);
 			}
 			l->object_mask = ld->object_mask;
-			l->blending    = ld->blending;
+			import_arm_layer_channels(l, ld);
 
 			l->paint_base         = ld->paint_base;
 			l->paint_opac         = ld->paint_opac;
@@ -1060,9 +1158,7 @@ void import_arm_run_project(char *path) {
 			l->paint_rough        = ld->paint_rough;
 			l->paint_met          = ld->paint_met;
 			l->paint_nor          = ld->paint_nor;
-			l->paint_nor_blend    = ld->paint_nor_blend;
 			l->paint_height       = ld->paint_height;
-			l->paint_height_blend = ld->paint_height_blend;
 			l->paint_emis         = ld->paint_emis;
 			l->paint_subs         = ld->paint_subs;
 			l->path_points        = ld->path_points;
@@ -1169,6 +1265,7 @@ void import_arm_run_project(char *path) {
 			l->path_material = ld->path_material > -1 ? g_project->_->materials->buffer[ld->path_material] : NULL;
 		}
 	}
+	layers_update_paint_effects(); // Other effects keep the output saved in their textures
 
 	for (i32 i = 0; i < g_project->_->layers->length; ++i) {
 		if (g_project->_->layers->buffer[i]->texpaint_sculpt != NULL) {
@@ -1244,6 +1341,7 @@ void import_arm_run_project(char *path) {
 		}
 	}
 
+	util_geometry_mask_check_faces();
 	import_arm_progress(1.0);
 	sys_notify_on_next_frame(&import_arm_run_project_on_next_frame, NULL);
 

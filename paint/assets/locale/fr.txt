@@ -1,6 +1,6 @@
 (compressé)
+
 (empaqueté)
-+
 -X
 -Y
 -Z
@@ -8,6 +8,7 @@
 2D
 Vue 2D
 3D
+
 Vue 3D
 A
 À propos
@@ -15,6 +16,7 @@ A
 Absolu
 Ajouter
 Ajouter une animation
+
 Ajouter l'échantillon
 Ajouter nouvel échantillon
 Ajouter la couleur sélectionnée aux échantillons
@@ -24,6 +26,7 @@ Autoriser la caméra à l'envers
 Alpha
 Rejeter Alpha
 Quantité
+
 Angle
 Rejet par angle
 Animation
@@ -36,16 +39,19 @@ Appliquer le masque
 Appliquer les nœuds
 Appliquer la sculpture
 Appliquer le skinning
+
 Arc cosinus
 Arc sinus
 Arc tangente 2
 Arc tangente
 Réseau
 Asset
+
 Atlas
 Atlas
 Attributs
 Auto
+
 Moyenne
 Axe
 B
@@ -55,7 +61,6 @@ Exporter le matériau...
 Rendu de texture
 Rendu des textures
 Bandes
-Base
 Couleur de base
 Bent Normal
 Biseau
@@ -65,6 +70,7 @@ Masque noir
 Exécutable Blender
 Chemin vers l'exécutable Blender non défini
 Mode de fusion
+
 Éblouissement
 Flou
 Flouter l'environnement
@@ -96,6 +102,7 @@ Vitesse de rotation caméra
 Texture caméra
 Vitesse du zoom caméra
 Annuler
+
 Capturer l'arrière-plan
 Capturer sortie
 Capturer capture d'écran
@@ -103,6 +110,7 @@ Capturer une vidéo
 Plafond
 Taille de cellule en pixels
 Centre
+
 Canaux
 Vérifier les mises à jour...
 Texture d'échiquier
@@ -111,11 +119,12 @@ Resserrer le facteur
 Resserrer le résultat
 Argile
 Effacer
+
+
 Effacer le calque
 Effacer les échantillons
 Fin du clip
 Début du clip
-Découpage
 Clonage
 Fermer
 Tissu
@@ -126,17 +135,24 @@ Projets cloud
 Couleur
 Couleur 1
 Couleur 2
+
+
+
 Color ID
 Carte de Color ID
 Masque de couleur
 Plage de couleur
+
 Espace couleur
 ID Couleur
 Combiner
 Recomposer couleur
 Recomposer XYZ
+
 Gizmos XYZ
+
 Confirmer
+
 Console
 Modèle de console
 Constante
@@ -151,9 +167,12 @@ Cosinus
 Impossible de télécharger
 Nombre
 Pli
+
 Créer un calque de couleur
 Créer un matériau
+
 Produit vectoriel
+
 Éliminer les faces arrière
 Curseur
 Courbure
@@ -162,6 +181,7 @@ Courbe
 Courbé
 Personnalisé
 Couper
+
 Assombrir
 Débogage
 Décalcomanie
@@ -176,6 +196,7 @@ Supprimer la brosse
 Supprimer le calque
 Supprimer matériau
 Supprimer groupe de nœuds
+
 Supprimer l'échantillon
 Supprimer les inutilisées
 Delta
@@ -219,6 +240,7 @@ Dupliquer la brosse
 Dupliquer le calque
 Dupliquer matériau
 Dupliquer l'échantillon
+
 Modifier
 Éditer image
 Modifier nœuds
@@ -237,6 +259,7 @@ Rotation de l'environnement
 Environnement
 Sphères de la carte d'environnement
 Carte d'environnement...
+
 Gomme
 Erreur : fichier .arm attendu
 Erreur : fichier .hdr attendu
@@ -245,6 +268,7 @@ Erreur : Impossible de localiser la texture
 Erreur : Échec lecture données police
 Erreur : Échec lecture données maillage
 Erreur : Format de ressource inconnu
+
 Exclusion
 Quitter
 Fonctionnalités expérimentales
@@ -256,6 +280,7 @@ Exporter matériau
 Exporter le maillage
 Exporter le lecteur
 Exporter les textures
+
 Exporter échantillons
 Exporter des fichiers de textures
 Export du maillage
@@ -264,6 +289,9 @@ F1
 F2
 Fac
 Face
+
+
+
 Facteur
 Échec de l'importation du matériau
 Échec de la lecture du son :
@@ -278,6 +306,9 @@ Filtrer
 Filtrer les textures
 Plat
 Aplatir
+
+
+
 Courbe de flottant
 Plancher
 Modulo plancher
@@ -300,13 +331,16 @@ Friction
 De maximum
 De minimum
 Avant
+
 Complet
 Flou
 V
 Texture Gabor
 Gamma
 Générées
+
 Géométrie
+
 Géométrie vers origine
 Commencer
 Saisir
@@ -314,19 +348,22 @@ Texture de dégradé
 Gravité X
 Gravité Y
 Gravité Z
+
 Plus grand que
+
 Cellule de la grille
 Aimantation grille
 Groupe
 Entrée groupe
 Sortie groupe
+
 Dureté
 Hauteur
-Mélange hauteur
 Aide
-Masquer la vue 3D
 High Poly
+
 Historique
+
 Maintenir {action_paint} pour effacer\nMaintenir {brush_ruler} et appuyer {action_paint} pour effacer ligne droite (mode règle)
 Maintenir {action_paint} pour peindre\nMaintenir {brush_ruler} et appuyer {action_paint} pour peindre ligne droite (mode règle)
 Maintenez {brush_opacity} et déplacez la souris vers la gauche pour réduire l'opacité\nMaintenez {brush_opacity} et déplacez la souris vers la droite pour augmenter l'opacité
@@ -354,6 +391,9 @@ Importer le fichier de texture
 Importer...
 Import du maillage
 Entrée
+
+
+
 Entrante
 Gonfler
 Info : Ressource déjà importée
@@ -379,6 +419,7 @@ Raccourcis clavier
 Raccourcis importés :
 Lacunarité
 Langue
+
 Calque
 Angle du calque
 Mode de fusion calque
@@ -393,6 +434,7 @@ Rayon du ralenti
 Étape du ralenti
 Gauche
 Longueur
+
 Moins que
 Niveaux
 Durée de vie
@@ -404,6 +446,8 @@ Lumière linéaire
 Aperçu de brosse en live
 Aperçu de matière en live
 Position
+
+
 Logarithme
 Texture magique
 Rendre unique
@@ -432,6 +476,7 @@ Sortie du maillage
 Maillage...
 Maillages
 Métallique
+
 Min
 Min Max
 Minimum
@@ -445,12 +490,14 @@ Modèle
 Modèles
 Dossier modèles...
 Modificateur
+
 Modifier
 Modifier l'animation
 Modulo
 Mortier
 Taille du mortier
 Adoucissement du mortier
+
 Multiplier
 Nom
 Neuronal
@@ -476,15 +523,16 @@ Aucune réponse
 Nœud
 Aperçus de nœuds
 Nœuds
+
 Grain du bruit
 Texture de bruit
 Aucun
 Normale
-Mélange normales
 Carte de normales
 Carte de normales 1
 Carte de normales 2
 Normaliser
+
 Non disponible dans la version de débogage
 Non implémenté
 OK
@@ -493,6 +541,7 @@ ID objet
 Index d'objet
 Info d'objet
 Normale objet
+
 Occlusion
 Décalage
 Ancienne couleur
@@ -515,8 +564,9 @@ Orientation 3D
 Origine vers la géométrie
 Orthographique
 Sortie
+
+
 Superposer
-PBR
 Embarquer les assets
 Empaqueter dans projet
 Marge
@@ -527,7 +577,9 @@ Paramétrique
 Parent
 Dérivée partielle
 Particules
+
 Coller
+
 Chemin
 Tracé de chemin
 Traceur de chemins
@@ -547,6 +599,7 @@ Pincer
 Ping-pong
 Pivot
 Taille de pixel
+
 Plateau
 Lecture
 Lecteur
@@ -555,15 +608,18 @@ Plugin importé :
 Plugins
 Point
 Pointu
+
 Position
 Post-traitement
 Puissance
 Préférences
 Paramètres...
+
 Préréglage
 Préréglage importé :
 Préréglages
 Contrôles de pression
+
 Précédent
 Dossier précédent
 Traitement...
@@ -574,6 +630,7 @@ Prompt
 Qualité
 Quantifier
 R
+
 Courbes RGB
 RGB vers NB
 RGBA
@@ -587,6 +644,7 @@ Récent
 Refaire {step}
 Refléter
 Rafraîchir
+
 Ré-importer
 Ré-importer le maillage
 Ré-importer les textures
@@ -605,10 +663,11 @@ Demander une fonctionnalité
 Réinitialiser
 Réinitialiser carte d'environnement
 Réinitialiser la mise en page
+
+
 Résolution
 Rétablir
 Rétablir les échantillons
-Restaurer échantillons par défaut
 Droite
 Anneaux
 Rotation
@@ -618,6 +677,7 @@ Arrondi
 Hauteur de rangée
 Exécuter
 Exécuter dans le lecteur
+
 En cours...
 SSAO
 Échantillons
@@ -641,11 +701,13 @@ Script ouvert
 Scripts
 Sculpture
 Calque sculpture
+
 Rechercher
 Rechercher des nœuds
 Segments
 Sélectionner
 Tout sélectionner
+
 Sélectionner les masqués
 Sélectionner matériau
 Sélectionner les visibles
@@ -661,9 +723,11 @@ Définir comme masque
 Définition de la source
 Configuration
 Shader
+
 Forme
 Partager le lien du lecteur
 Partagé
+
 Afficher la vue 2D
 Montrer les noms des assets
 Afficher la grille
@@ -681,7 +745,9 @@ Connexion en cours...
 Sinus
 Taille
 Emplacement
+
 Adoucir
+
 Étaler
 Accrocher
 Extraits
@@ -711,12 +777,14 @@ Droit
 Force
 Étirer
 Subdiviser
+
 Sous-surface
 Soustraire
 Superéchantillonnage
 Échantillons
 Échantillons...
 Symétrie
+
 Tangente
 Cible
 Modèle
@@ -734,9 +802,11 @@ Texture...
 Textures
 Textures exportées
 Textures...
+
 Thème
 Thème importé :
 Épaisseur
+
 Tuile
 Tuile X
 Tuile Y
@@ -758,9 +828,11 @@ Vers calque de peinture
 Vers masque de peinture
 En radians
 Plein écran
-Basculer en-tête
+
+
 Outils
 Dessus
+
 Interface tactile
 Transformation
 Transformer l'objet
@@ -780,6 +852,7 @@ UV
 Îlot UV
 Carte UV
 Échelle UV
+
 Dépliage UV
 Carte UV
 Impossible de vérifier les mises à jour.\nVeuillez visiter {url}.
@@ -854,9 +927,9 @@ player
 plugin activé
 invite
 sRGB
+
 source
 triangles
 type
 sans titre
-x
 {shortcut} et déplacer la souris

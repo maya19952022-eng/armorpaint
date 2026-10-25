@@ -164,7 +164,9 @@ void step_edit_and_save() {
 	if (l != NULL) {
 		script_layer_set_name(l, "smoke_new");
 	}
-	iron_delete_file(file_save);
+	if (iron_file_exists(file_save)) {
+		iron_delete_file(file_save);
+	}
 	project_filepath_set(file_save);
 	project_save(false); // Writes on the next frame
 }
