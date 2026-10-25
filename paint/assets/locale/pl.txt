@@ -1,4 +1,5 @@
 (skompresowane)
+
 (spakowane)
 -X
 -Y
@@ -7,6 +8,7 @@
 2D
 Podgląd 2D
 3D
+
 Podgląd 3D
 A
 O programie
@@ -118,6 +120,7 @@ Ogranicz wynik
 Glina
 Wyczyść
 
+
 Wyczyść warstwę
 Wyczyść próbki kolorów
 Koniec clipu
@@ -149,6 +152,7 @@ Połącz XYZ
 Kompas
 
 Potwierdź
+
 Konsola
 Model konsoli
 Stała
@@ -236,6 +240,7 @@ Duplikuj pędzel
 Duplikuj warstwę
 Duplikuj materiał
 Duplikuj próbkę koloru
+
 Edytuj
 Edytuj obraz
 Edytuj węzły
@@ -284,6 +289,9 @@ F1
 F2
 Wsp.
 Ściana
+
+
+
 Współczynnik
 Nie udało się zaimportować materiału
 Nie udało się odczytać dźwięku:
@@ -330,6 +338,7 @@ G
 Tekstura Gabora
 Gamma
 Wygenerowane
+
 Geometria
 
 Geometria do początku układu
@@ -354,6 +363,7 @@ Pomoc
 Wysoki poly
 
 Historia
+
 Przytrzymaj {action_paint}, aby gumkować\nPrzytrzymaj {brush_ruler} i naciśnij {action_paint}, aby gumkować prostą linię (tryb linijki)
 Przytrzymaj {action_paint}, aby malować\nPrzytrzymaj {brush_ruler} i naciśnij {action_paint}, aby malować prostą linię (tryb linijki)
 Przytrzymaj {brush_opacity} i przesuń mysz w lewo, aby zmniejszyć krycie\nPrzytrzymaj {brush_opacity} i przesuń mysz w prawo, aby zwiększyć krycie
@@ -513,6 +523,7 @@ Brak odpowiedzi
 Węzeł
 Podglądy węzłów
 Węzły
+
 Ziarnistość szumu
 Tekstura szumu
 Brak
@@ -597,6 +608,7 @@ Plugin zaimportowany:
 Pluginy
 Punkt
 Ostrość
+
 Pozycja
 Postprodukcja
 Potęga
@@ -632,6 +644,7 @@ Ostatnie
 Powtórz {step}
 Odbij
 Odśwież
+
 Zaimportuj ponownie
 Zaimportuj model ponownie
 Zaimportuj tekstury ponownie
@@ -694,6 +707,7 @@ Szukaj węzłów
 Segmenty
 Zaznacz
 Zaznacz wszystko
+
 Zaznacz ukryte
 Wybierz materiał
 Zaznacz widoczne
@@ -788,6 +802,7 @@ Tekstura...
 Tekstury
 Tekstury wyeksportowane
 Tekstury...
+
 Motyw
 Motyw zaimportowany:
 Grubość

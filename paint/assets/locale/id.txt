@@ -1,4 +1,5 @@
 (terkompresi)
+
 (dikemas)
 -X
 -Y
@@ -7,6 +8,7 @@
 2D
 Tampilan 2D
 3D
+
 Tampilan 3D
 A
 Tentang
@@ -118,6 +120,7 @@ Batasi Hasil
 Tanah Liat
 Bersihkan
 
+
 Bersihkan Lapisan
 Bersihkan Contoh Warna
 Akhir Klip
@@ -149,6 +152,7 @@ Gabung XYZ
 Kompas
 
 Konfirmasi
+
 Konsol
 Model Konsol
 Konstan
@@ -236,6 +240,7 @@ Duplikat Kuas
 Duplikat Lapisan
 Duplikat Material
 Duplikat Contoh Warna
+
 Sunting
 Sunting Gambar
 Sunting Node
@@ -284,6 +289,9 @@ F1
 F2
 Fac
 Muka
+
+
+
 Faktor
 Gagal mengimpor material
 Gagal membaca suara:
@@ -330,6 +338,7 @@ G
 Tekstur Gabor
 Gamma
 Dihasilkan
+
 Geometri
 
 Geometri ke Asal
@@ -354,6 +363,7 @@ Bantuan
 Poly Tinggi
 
 Riwayat
+
 Tahan {action_paint} untuk menghapus\nTahan {brush_ruler} dan tekan {action_paint} untuk menghapus garis lurus (mode penggaris)
 Tahan {action_paint} untuk melukis\nTahan {brush_ruler} dan tekan {action_paint} untuk melukis garis lurus (mode penggaris)
 Tahan {brush_opacity} dan gerakkan mouse ke kiri untuk mengurangi opasitas\nTahan {brush_opacity} dan gerakkan mouse ke kanan untuk menambah opasitas
@@ -513,6 +523,7 @@ Tidak ada respons
 Node
 Pratinjau Node
 Node
+
 Butiran Noise
 Tekstur Noise
 Tidak Ada
@@ -597,6 +608,7 @@ Plugin diimpor:
 Plugin
 Titik
 Ketajaman
+
 Posisi
 Pasca Proses
 Pangkat
@@ -632,6 +644,7 @@ Terbaru
 Ulangi {step}
 Refleksikan
 Segarkan
+
 Impor Ulang
 Impor Ulang Mesh
 Impor Ulang Tekstur
@@ -694,6 +707,7 @@ Cari node
 Segmen
 Pilih
 Pilih Semua
+
 Pilih yang Tersembunyi
 Pilih Material
 Pilih yang Terlihat
@@ -788,6 +802,7 @@ Tekstur...
 Tekstur
 Tekstur diekspor
 Tekstur...
+
 Tema
 Tema diimpor:
 Ketebalan

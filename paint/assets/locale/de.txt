@@ -1,4 +1,5 @@
 (komprimiert)
+
 (gepackt)
 -X
 -Y
@@ -7,6 +8,7 @@
 2D
 2D Ansicht
 3D
+
 3D Ansicht
 A
 Über
@@ -118,6 +120,7 @@ Ergebnis begrenzen
 Ton
 Leeren
 
+
 Ebene leeren
 Farbfelder leeren
 Clip Ende
@@ -149,6 +152,7 @@ XYZ zusammenführen
 Kompass
 
 Bestätigen
+
 Konsole
 Konsolen Modell
 Konstant
@@ -236,6 +240,7 @@ Pinsel duplizieren
 Ebene duplizieren
 Material duplizieren
 Farbfeld duplizieren
+
 Bearbeiten
 Bild bearbeiten
 Nodes bearbeiten
@@ -284,6 +289,9 @@ F1
 F2
 Fac
 Face
+
+
+
 Faktor
 Material konnte nicht importiert werden
 Sound konnte nicht gelesen werden:
@@ -330,6 +338,7 @@ G
 Gabor Textur
 Gamma
 Generiert
+
 Geometrie
 
 Geometrie in den Ursprung
@@ -354,6 +363,7 @@ Hilfe
 High Poly
 
 Verlauf
+
 {action_paint} gedrückt halten um zu raddieren\n{brush_ruler} gedrückt halten und {action_paint} drücken um eine gerade Linie wegzuraddieren (Lineal)
 {action_paint} gedrückt halten um zu malen\n{brush_ruler} gedrückt halten und {action_paint} drücken um eine gerade Linie zu malen (Lineal)
 {brush_opacity} gedrückt halten und Maus nach links bewegen, um die Deckkraft zu verringern\n{brush_opacity} gedrückt halten und Maus nach rechts bewegen, um die Deckkraft zu erhöhen
@@ -513,6 +523,7 @@ Keine Antwort
 Node
 Node Vorschauen
 Nodes
+
 Rausch Körnung
 Rausch Textur
 Keins
@@ -597,6 +608,7 @@ Plugin importiert:
 Plugins
 Punkt
 Spitzheit
+
 Position
 Nachbearbeitung
 Potenz
@@ -632,6 +644,7 @@ Neuste
 Wiederherstellen {step}
 Spiegeln
 Aktualisieren
+
 Erneut importieren
 Mesh neu importieren
 Texturen neu importieren
@@ -694,6 +707,7 @@ Nach Nodes suchen
 Segmente
 Auswählen
 Alles auswählen
+
 Verborgene auswählen
 Material wählen
 Sichtbare auswählen
@@ -788,6 +802,7 @@ Textur...
 Texturen
 Texturen exportiert.
 Texturen...
+
 Theme
 Theme importiert:
 Dicke

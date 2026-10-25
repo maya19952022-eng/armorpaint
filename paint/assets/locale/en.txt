@@ -1,4 +1,5 @@
 (compressed)
+(mesh changed)
 (packed)
 -X
 -Y
@@ -7,6 +8,7 @@
 2D
 2D View
 3D
+3D Gradient
 3D View
 A
 About
@@ -117,6 +119,7 @@ Clamp Factor
 Clamp Result
 Clay
 Clear
+Clear Faces
 Clear Geometry Mask
 Clear Layer
 Clear Swatches
@@ -149,6 +152,7 @@ Compare Mask
 Compass
 Cone
 Confirm
+Connected
 Console
 Console Model
 Constant
@@ -236,6 +240,7 @@ Duplicate Brush
 Duplicate Layer
 Duplicate Material
 Duplicate Swatch
+Edges
 Edit
 Edit Image
 Edit Nodes
@@ -284,6 +289,9 @@ F1
 F2
 Fac
 Face
+Faces
+Faces of the geometry mask could not be read:
+Facing Up
 Factor
 Failed to import material
 Failed to read sound:
@@ -330,6 +338,7 @@ G
 Gabor Texture
 Gamma
 Generated
+Generator
 Geometry
 Geometry Mask
 Geometry to Origin
@@ -354,6 +363,7 @@ Help
 High Poly
 Highlights
 History
+Hold ctrl to switch between add and remove
 Hold {action_paint} to erase\nHold {brush_ruler} and press {action_paint} to erase a straight line (ruler mode)
 Hold {action_paint} to paint\nHold {brush_ruler} and press {action_paint} to paint a straight line (ruler mode)
 Hold {brush_opacity} and move mouse to the left to decrease the opacity\nHold {brush_opacity} and move mouse to the right to increase the opacity
@@ -513,6 +523,7 @@ No response
 Node
 Node Previews
 Nodes
+Noise
 Noise Grain
 Noise Texture
 None
@@ -597,6 +608,7 @@ Plugin imported:
 Plugins
 Point
 Pointiness
+Polygon
 Position
 Post Process
 Power
@@ -632,6 +644,7 @@ Recent
 Redo {step}
 Reflect
 Refresh
+Region
 Reimport
 Reimport Mesh
 Reimport Textures
@@ -694,6 +707,7 @@ Search for nodes
 Segments
 Select
 Select All
+Select Faces
 Select Hidden
 Select Material
 Select Visible
@@ -788,6 +802,7 @@ Texture...
 Textures
 Textures exported
 Textures...
+The mesh changed, the faces of some geometry masks no longer apply
 Theme
 Theme imported:
 Thickness
